@@ -1,37 +1,45 @@
 {
-  "name": "strudel-lsp-server",
+  "name": "strudel-lsp",
   "displayName": "strudel-lsp-server",
-  "description": "",
+  "description": "A language server for Strudel",
+	"author": "Zedro",
+	"license": "MIT",
   "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PedroZappa/strudel-lsp-server"
+  },
+  "publisher": "Zedro",
+  "categories": [
+    "LSP"
+  ],
+  "keywords": [
+    "strudel",
+    "lsp"
+  ],
   "engines": {
     "vscode": "^1.103.0"
   },
-  "categories": [
-    "Other"
+  "activationEvents": [
+    "onLanguage:plaintext"
   ],
-  "activationEvents": [],
-  "main": "./dist/extension.js",
+  "main": "./client/out/extension",
   "contributes": {
-    "commands": [
-      {
-        "command": "strudel-lsp-server.helloWorld",
-        "title": "Hello World"
+    "configuration": {
+      "type": "object",
+      "title": "Default Configuration",
+      "properties": {
+        
       }
-    ]
+    }
   },
   "scripts": {
-    "vscode:prepublish": "npm run package",
-    "compile": "npm run check-types && npm run lint && node esbuild.js",
-    "watch": "npm-run-all -p watch:*",
-    "watch:esbuild": "node esbuild.js --watch",
-    "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
-    "package": "npm run check-types && npm run lint && node esbuild.js --production",
-    "compile-tests": "tsc -p . --outDir out",
-    "watch-tests": "tsc -p . -w --outDir out",
-    "pretest": "npm run compile-tests && npm run compile && npm run lint",
-    "check-types": "tsc --noEmit",
-    "lint": "eslint src",
-    "test": "vscode-test"
+		"vscode:prepublish": "npm run compile",
+		"compile": "tsc -b",
+		"watch": "tsc -b -w",
+		"lint": "eslint",
+		"postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
+		"test": "sh ./scripts/e2e.sh"
   },
   "devDependencies": {
     "@types/vscode": "^1.103.0",
@@ -39,11 +47,15 @@
     "@types/node": "22.x",
     "@typescript-eslint/eslint-plugin": "^8.39.0",
     "@typescript-eslint/parser": "^8.39.0",
+		"typescript-eslint": "^8.39.0",
+		"@stylistic/eslint-plugin": "^2.9.0",
+		"@eslint/js": "^9.13.0",
     "eslint": "^9.32.0",
     "esbuild": "^0.25.8",
     "npm-run-all": "^4.1.5",
     "typescript": "^5.9.2",
     "@vscode/test-cli": "^0.0.11",
-    "@vscode/test-electron": "^2.5.2"
+    "@vscode/test-electron": "^2.5.2",
+		"mocha": "^10.3.0"
   }
 }
