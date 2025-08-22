@@ -53,7 +53,7 @@ export function activate(ctx: ExtensionContext): void {
 
   // Create the language client and start the client.
   client = new LanguageClient(
-    'strudel-lsp-server',
+    'strudelLanguageServer',
     'Strudel Language Server',
     serverOpts,
     clientOpts
