@@ -228,7 +228,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<Diagnos
             uri: textDocument.uri,
             range: Object.assign({}, errorDiagnostic.range)
           },
-          message: 'Specially for names'
+          message: 'Especially for names'
 
         }
       ];
