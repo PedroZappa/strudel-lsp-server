@@ -21,7 +21,7 @@
     "vscode": "^1.103.0"
   },
   "activationEvents": [
-    "onLanguage:plaintext"
+    "onLanguage:strudel"
   ],
   "main": "./client/out/extension",
   "contributes": {
