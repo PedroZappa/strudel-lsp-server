@@ -3,3 +3,8 @@ node_modules/
 dist/
 
 # Files
+*.tsbuildinfo
+
+# Trannspiled files
+*.js
+*.js.map
