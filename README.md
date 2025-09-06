@@ -65,7 +65,18 @@ You can author your README using Visual Studio Code. Here are some useful editor
 
 ## For more information
 
+- [LSP Spec](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/)
+- [LSP in VSCode Extension](https://symflower.com/en/company/blog/2022/lsp-in-vscode-extension/)
+- [Testing Neovim LSP Plugins](https://zignar.net/2022/10/26/testing-neovim-lsp-plugins/)
+- [Hands-On LSP Tutorial: Building a Custom Auto-Complete](https://prefab.cloud/blog/lsp-language-server-from-zero-to-completion/)
+
 * [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
 * [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
 
 **Enjoy!**
+
+## Development & Debugging
+
+```bash
+tail -f ~/.local/state/nvim/lsp.log | grep "strudel-lsp"
+```

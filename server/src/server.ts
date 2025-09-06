@@ -5,6 +5,7 @@
  *
  * @requires vscode-languageserver/node
  * @requires vscode-languageserver-textdocument
+ * @requires ./log
  *
  * @exports activate
  * @exports deactivate
@@ -19,23 +20,19 @@ import {
   TextDocumentSyncKind,
   DidChangeConfigurationNotification,
   DocumentDiagnosticReportKind,
-  type DocumentDiagnosticReport,
-  Diagnostic,
   TextDocumentPositionParams,
   CompletionItem,
   CompletionItemKind,
-} from 'vscode-languageserver/node'
+  type DocumentDiagnosticReport,
+  Diagnostic,
+  DiagnosticSeverity
+} from 'vscode-languageserver/node';
 
 import {
   TextDocument
-} from 'vscode-languageserver-textdocument'
-  DiagnosticSeverity,
-} from 'vscode-languageserver/node'
+} from 'vscode-languageserver-textdocument';
 
-import {
-  TextDocument
-} from 'vscode-languageserver-textdocument'
-
+import log from "./log";
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -75,7 +72,9 @@ conn.onInitialize((params: InitializeParams) => {
       textDocumentSync: TextDocumentSyncKind.Incremental,
       // Tell the client that this server supports code completion.
       completionProvider: {
-        resolveProvider: true
+        resolveProvider: true,
+        // We want to listen for the "#" character to trigger our completions
+        triggerCharacters: ["#"],
       },
       // Diagnostics support
       diagnosticProvider: {
@@ -134,6 +133,8 @@ conn.onDidChangeConfiguration(change => {
       (change.settings.strudelLanguageServer || defaultSettings)
     );
   }
+  // Debug Notification
+  conn.console.log('Strudel Settings have changed.');
 
   // Refresh the diagnostics since the `strudel` setting could have changed.
   // We could optimize things here and re-fetch the setting first can compare it
@@ -144,7 +145,7 @@ conn.onDidChangeConfiguration(change => {
 // Keep only settings for open docs
 documents.onDidClose(e => {
   documentSettings.delete(e.document.uri);
-})
+});
 
 /** 
   * @method getDocumentSettings
@@ -170,6 +171,12 @@ conn.onDidChangeWatchedFiles(_change => {
   conn.console.log('We received a file change event');
 });
 
+documents.onDidChangeContent((change) => {
+  conn.window.showInformationMessage(
+    "onDidChangeContent: " + change.document.uri
+  );
+});
+
 // ************************************************************************** //
 //                                Diagnostics                                 //
 // ************************************************************************** //
@@ -180,7 +187,7 @@ conn.languages.diagnostics.on(async (params) => {
     return {
       kind: DocumentDiagnosticReportKind.Full,
       items: await validateTextDocument(doc)
-    } satisfies DocumentDiagnosticReport
+    } satisfies DocumentDiagnosticReport;
   } else {
     // We don't know the document. We can either try to read it from disk
     // or we don't report problems for it.
@@ -203,7 +210,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<Diagnos
 
   // The validator creates diagnostics for all uppercase words length 2 and more
   const text: string = textDocument.getText();
-  const pattern: RegExp = /\b[A-Z]{2,}\b/g;
+  const pattern = /\b[A-Z]{2,}\b/g;
   let m: RegExpExecArray | null;
 
   let errors = 0;
@@ -217,7 +224,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<Diagnos
         end: textDocument.positionAt(m.index + m[0].length)
       },
       message: `${m[0]} is all uppercase.`,
-      source: 'strudel'
+      source: 'strdl'
     };
     if (hasDiagnosticRelatedInformationCapability) {
       errorDiagnostic.relatedInformation = [
@@ -265,24 +272,28 @@ conn.onCompletion(
         kind: CompletionItemKind.Text,
         data: 2
       }
-    ]
+    ];
   }
 );
 
 // This handler resolves additional information for the item selected in
 // the completion list.
 conn.onCompletionResolve(
-	(item: CompletionItem): CompletionItem => {
-		if (item.data === 1) {
-			item.detail = 'TypeScript details';
-			item.documentation = 'TypeScript documentation';
-		} else if (item.data === 2) {
-			item.detail = 'JavaScript details';
-			item.documentation = 'JavaScript documentation';
-		}
-		return item;
-	}
+  (item: CompletionItem): CompletionItem => {
+    if (item.data === 1) {
+      item.detail = 'TypeScript details';
+      item.documentation = 'TypeScript documentation';
+    } else if (item.data === 2) {
+      item.detail = 'JavaScript details';
+      item.documentation = 'JavaScript documentation';
+    }
+    return item;
+  }
 );
+
+// ************************************************************************** //
+//                                  Run                                       //
+// ************************************************************************** //
 
 // Make the text document manager listen on the connection
 // for open, change and close text document events
@@ -290,3 +301,32 @@ documents.listen(conn);
 
 // Listen on the connection
 conn.listen();
+
+// ************************************************************************** //
+//                                  Logging                                   //
+// ************************************************************************** //
+
+let buf = "";
+process.stdin.on('data', (chunk) => {
+  buf += chunk;
+
+  while (true) {
+    const lenMatch = buf.match(/Content-Length: (\d+)\r\n/);
+    if (!lenMatch) { break; };
+
+    const contentLen = parseInt(lenMatch[1], 10);
+    const msgStart = buf.indexOf('\r\n\r\n') + 4;
+
+    // Continue until full message is received
+    if (buf.length < msgStart + contentLen) { break; };
+
+    const rawMsg = buf.slice(msgStart, msgStart + contentLen);
+    const msg = JSON.parse(rawMsg);
+
+    log.write({ id: msg.id, method: msg.method });
+
+    // Remove processed message from buf
+    buf = buf.slice(msgStart + contentLen);
+  }
+});
+

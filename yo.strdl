@@ -1,0 +1,8 @@
+setcpm(30)
+
+// Drums
+$: s("bd sd bd rim, hh*8")
+
+
+// Synths
+

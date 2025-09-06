@@ -44,7 +44,10 @@ export function activate(ctx: ExtensionContext): void {
   // Set options to control the client
   const clientOpts: LanguageClientOptions = {
     // Register server for strudel documents
-    documentSelector: [{ scheme: 'file', language: 'strudel' }],
+    documentSelector: [
+      { scheme: 'file', language: 'strudel' },
+      { scheme: 'file', language: 'strdl' }
+    ],
     synchronize: {
       // Notify the server about file changes to '.clientrc files contained in the workspace
       fileEvents: workspace.createFileSystemWatcher('**/.clientrc')
