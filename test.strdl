@@ -1,0 +1,9 @@
+-- Test Strudel file
+-- Type sound(" or . to trigger completion
+
+sound("bd hh sd")
+
+note("c4 e4 g4").s("piano Trigger")
+
+-- completion after the dot:
+sound("bd").s

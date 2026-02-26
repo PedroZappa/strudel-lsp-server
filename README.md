@@ -1,71 +1,106 @@
-# strudel-lsp-server README
+# Strudel LSP Server
 
-This is the README for your extension "strudel-lsp-server". After writing up a brief description, we recommend including the following sections.
+A Language Server Protocol (LSP) implementation for [Strudel](https://strudel.cc/) - a browser-based live coding language for algorithmic music patterns.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+- **Completion**: 85+ Strudel functions and 70+ sample names
+- **Hover**: Function documentation
+- **Diagnostics**: Basic syntax validation (bracket matching)
+- **Supported Editors**: Neovim (0.10+), VS Code
 
-For example if there is an image subfolder under your extension project workspace:
+## Strudel Functions Included
 
-\!\[feature X\]\(images/feature-x.png\)
+Pattern functions: `sound`, `note`, `s`, `n`, `fast`, `slow`, `stack`, `cat`, `seq`, `jux`, `rev`, `room`, `delay`, `cutoff`, `gain`, `pan`, `speed`, `shape`, `vowel`, `crush`, `chop`, `sometimes`, `every`, `when`, `layer`, `linger`, `ply`, `repeat`, `arp`, `stride`, `begin`, `end`, and more.
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+Samples: `bd`, `sd`, `hh`, `cp`, `808`, `909`, `kick`, `snare`, `hihat`, and more.
 
-## Requirements
+## Installation
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+```bash
+# Install dependencies
+npm install
 
-## Extension Settings
+# Compile TypeScript
+cd server && npx tsc
+```
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+## Testing with Neovim
 
-For example:
+### Quick Start
 
-This extension contributes the following settings:
+1. **Start the LSP server** (Terminal 1):
+   ```bash
+   cd server/out
+   node server.js --tcp
+   ```
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+2. **Open Neovim** (Terminal 2):
+   ```bash
+   nvim -u neovim-test.lua test.strudel
+   ```
 
-## Known Issues
+3. **Test completion**: Type `sound("` and press `Ctrl+x` `Ctrl+o`
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+4. **Test hover**: Press `K` on a function name
 
-## Release Notes
+### Configuration Options
 
-Users appreciate release notes as you update your extension.
+The server supports two modes:
 
-### 1.0.0
+- **stdio mode** (default, for VS Code):
+  ```bash
+  node server.js
+  ```
 
-Initial release of ...
+- **TCP mode** (for Neovim debugging):
+  ```bash
+  node server.js --tcp
+  ```
 
-### 1.0.1
+### Port
 
-Fixed issue #.
+TCP mode listens on port `5007`.
 
-### 1.1.0
+### Troubleshooting
 
-Added features X, Y, and Z.
+- Check LSP status in Neovim:
+  ```vim
+  :LspStatus
+  ```
 
----
+- View LSP logs:
+  ```vim
+  :lua vim.lsp.set_log_level('debug')
+  :lua print(vim.lsp.get_log_path())
+  ```
 
-## Following extension guidelines
+- Ensure port 5007 is available:
+  ```bash
+  lsof -i :5007
+  ```
 
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
+## Development
 
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
+### Building
 
-## Working with Markdown
+```bash
+npm run compile
+```
 
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
+### Project Structure
 
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
+```
+strudel-lsp-server/
+├── client/           # VS Code extension (language client)
+├── server/           # LSP server implementation
+│   ├── src/server.ts # Main server code
+│   └── out/          # Compiled JavaScript
+├── neovim-test.lua   # Neovim test configuration
+├── test.strudel      # Test file
+└── package.json      # Root package config
+```
 
-## For more information
+## License
 
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+MIT
