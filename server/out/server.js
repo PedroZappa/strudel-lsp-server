@@ -223,7 +223,8 @@ function setupServer(conn, socket) {
         }
         return diagnostics;
     }
-    conn.onCompletion((_params) => {
+    conn.onCompletion((params) => {
+        console.error(`[Strudel LSP] Completion request received at position: ${params.position.line}:${params.position.character}`);
         const items = [];
         STRUDEL_FUNCTIONS.forEach((fn, index) => {
             items.push({
@@ -256,6 +257,7 @@ function setupServer(conn, socket) {
         return items;
     });
     conn.onCompletionResolve((item) => {
+        console.error(`[Strudel LSP] Completion resolve request for: ${item.label}`);
         if (item.data === 9999) {
             item.detail = 'Mini-notation pattern template';
             item.documentation = 'Strudel mini-notation examples:\n' +
@@ -267,6 +269,41 @@ function setupServer(conn, socket) {
                 '"bd/2" - slow down';
         }
         return item;
+    });
+    // Hover handler
+    conn.onHover((params) => {
+        console.error(`[Strudel LSP] Hover request at position: ${params.position.line}:${params.position.character}`);
+        const text = documents.get(params.textDocument.uri)?.getText() || '';
+        // Find the word at cursor
+        const lines = text.split('\n');
+        const line = lines[params.position.line] || '';
+        const wordMatch = line.match(/[a-zA-Z_][a-zA-Z0-9_]*/);
+        const word = wordMatch ? wordMatch[0] : '';
+        // Find matching function
+        const fn = STRUDEL_FUNCTIONS.find(f => f.label === word);
+        if (fn) {
+            return {
+                contents: {
+                    kind: 'markdown',
+                    value: `**${fn.label}**\n\n${fn.detail}\n\n${fn.documentation}`
+                }
+            };
+        }
+        return {
+            contents: {
+                kind: 'markdown',
+                value: 'Strudel LSP - Type a function name to see docs'
+            }
+        };
+    });
+    // Definition handler
+    conn.onDefinition((params) => {
+        console.error(`[Strudel LSP] Definition request at position: ${params.position.line}:${params.position.character}`);
+        return null;
+    });
+    conn.onReferences((params) => {
+        console.error(`[Strudel LSP] References request at position: ${params.position.line}:${params.position.character}`);
+        return [];
     });
     documents.listen(conn);
     conn.listen();

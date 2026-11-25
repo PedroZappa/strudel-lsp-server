@@ -12,6 +12,7 @@ vim.opt.tabstop = 2
 vim.opt.shiftwidth = 2
 vim.opt.expandtab = true
 vim.opt.termguicolors = true
+vim.opt.updatetime = 300
 
 -- Register .strudel filetype
 vim.filetype.add({
@@ -41,18 +42,31 @@ vim.api.nvim_create_autocmd('FileType', {
   end,
 })
 
--- Start LSP client - connect to TCP server using vim.lsp.rpc.connect
-local lsp_client = vim.lsp.start({
-  name = 'strudel-lsp',
-  cmd = vim.lsp.rpc.connect('127.0.0.1', 5007),
-  filetypes = { 'strudel' },
-  root_dir = vim.fn.getcwd(),
-  on_attach = function(client, bufnr)
-    vim.cmd('echo "LSP attached: ' .. client.name .. '"')
-  end,
-})
+-- Start LSP client using vim.lsp.start_client for more control
+local function start_lsp()
+  local lsp_client = vim.lsp.start({
+    name = 'strudel-lsp',
+    cmd = { 'node', vim.fn.getcwd() .. '/server/out/server.js', '--tcp' },
+    cmd_cwd = vim.fn.getcwd(),
+    filetypes = { 'strudel' },
+    root_dir = vim.fn.getcwd(),
+    on_attach = function(client, bufnr)
+      vim.cmd('echo "LSP attached: ' .. client.name .. '"')
+      
+      -- Enable completion capabilities
+      local capabilities = client.server_capabilities
+      vim.print("Server capabilities:", capabilities)
+      
+      -- Set up completion
+      require('vim.lsp.completion').on_attach(client, bufnr)
+    end,
+  })
+  return lsp_client
+end
 
--- Automatically attach LSP to strudel buffers
+local lsp_client = start_lsp()
+
+-- Attach LSP to strudel buffers when they open
 vim.api.nvim_create_autocmd('FileType', {
   pattern = 'strudel',
   callback = function(args)
@@ -62,15 +76,18 @@ vim.api.nvim_create_autocmd('FileType', {
   end,
 })
 
--- Keymaps
-vim.api.nvim_set_keymap('n', 'gd', ':lua vim.lsp.buf.definition()<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', 'K', ':lua vim.lsp.buf.hover()<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', 'gr', ':lua vim.lsp.buf.references()<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', 'gn', ':lua vim.diagnostic.goto_next()<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', 'gp', ':lua vim.diagnostic.goto_prev()<CR>', { noremap = true, silent = true })
+-- Keymaps - using vim.keymap.set instead of nvim_set_keymap
+vim.keymap.set('n', 'gd', vim.lsp.buf.definition, { buffer = 0, silent = true })
+vim.keymap.set('n', 'K', vim.lsp.buf.hover, { buffer = 0, silent = true })
+vim.keymap.set('n', 'gr', vim.lsp.buf.references, { buffer = 0, silent = true })
+vim.keymap.set('n', 'gn', vim.diagnostic.goto_next, { buffer = 0, silent = true })
+vim.keymap.set('n', 'gp', vim.diagnostic.goto_prev, { buffer = 0, silent = true })
 
--- Completion
-vim.api.nvim_set_keymap('i', '<C-x><C-o>', '<cmd>lua vim.lsp.buf.completion()<CR>', { noremap = true, silent = true })
+-- Completion keymap
+vim.keymap.set('i', '<C-x><C-o>', vim.lsp.buf.completion, { buffer = 0, silent = true })
+
+-- Set up completion with completeopt
+vim.opt.completeopt = { 'menu', 'menuone', 'noselect' }
 
 -- Command to check LSP status
 vim.api.nvim_create_user_command('LspStatus', function()
@@ -80,8 +97,14 @@ vim.api.nvim_create_user_command('LspStatus', function()
   else
     for _, client in ipairs(clients) do
       print('LSP: ' .. client.name .. ' (id: ' .. client.id .. ')')
+      print('  capabilities:', vim.inspect(client.server_capabilities))
     end
   end
 end, {})
 
-vim.cmd('echo "Strudel LSP configured. Start server first: cd server/out && node server.js --tcp"')
+-- Command to manually trigger completion
+vim.api.nvim_create_user_command('TestCompletion', function()
+  vim.lsp.buf.completion()
+end, {})
+
+vim.cmd('echo "Strudel LSP. Start server: cd server/out && node server.js --tcp"')

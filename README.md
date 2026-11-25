@@ -37,7 +37,7 @@ cd server && npx tsc
 
 2. **Open Neovim** (Terminal 2):
    ```bash
-   nvim -u neovim-test.lua test.strudel
+   nvim -u neovim-test.lua test.strdl
    ```
 
 3. **Test completion**: Type `sound("` and press `Ctrl+x` `Ctrl+o`
