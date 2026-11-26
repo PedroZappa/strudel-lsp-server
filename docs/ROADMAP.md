@@ -1,6 +1,7 @@
 # Roadmap
 
-Status: re-implementation roadmap updated with resolved blocker decisions, 2026-11-25. Priorities are proposals and remain subject to approval.  
+Status: re-implementation roadmap updated with resolved blocker decisions and Phase 2 completion, 2026-11-26. Priorities are proposals and remain subject to approval.
+
 Authority: `AGENTS.md` sections 2–9 and the other documents in `docs/`.
 
 ## Phase 0 — Preparation
@@ -46,25 +47,28 @@ Exit criteria:
 
 ## Phase 2 — Toolchain scaffold
 
-**Status: dependency installation approved; scaffold replacement not yet performed.**
+**Status: complete; changes are not committed.**
 
 Dependencies: Phase 1 testing decision is resolved; dependency installation approval is complete.
 
 Tasks:
 
-- [ ] Replace the multi-project VS Code extension scaffold with a single npm package for the server.
-- [ ] Configure strict TypeScript and ESM.
-- [ ] Configure ESLint with TypeScript-aware rules and Prettier.
-- [ ] Establish scripts for type checking, linting, formatting verification, tests and benchmarks.
-- [ ] Keep the existing ESLint config working during transition by retaining `@stylistic/eslint-plugin`.
-- [ ] Resolve the current prototype lint, type-check and test failures recorded in `docs/TESTING_STRATEGY.md`.
-- [ ] Choose editor/client examples outside the server core.
+- [x] Replace the multi-project VS Code extension scaffold with a single npm package for the server.
+- [x] Configure strict TypeScript and ESM.
+- [x] Configure ESLint with TypeScript-aware rules and Prettier.
+- [x] Establish scripts for type checking, linting, formatting verification, tests and benchmarks.
+- [x] Keep the existing ESLint config working during transition by retaining `@stylistic/eslint-plugin`.
+- [x] Resolve the current prototype lint, type-check and test failures recorded in `docs/TESTING_STRATEGY.md`.
+- [x] Choose editor/client examples outside the server core.
+- [x] Add Makefile wrappers for developer and agent workflows.
+
+The prototype's `client/`, `server/` and editor files remain untouched and are excluded from the new package build, lint and test scopes. The existing Neovim prototype file remains outside the server core; no new editor example was added. The Makefile delegates to the root npm scripts and is not a second source of build or validation logic.
 
 Exit criteria:
 
-- [ ] Clean install from committed `package-lock.json`.
-- [ ] All validation commands run successfully.
-- [ ] Editor-specific code is not required by the server core.
+- [x] Clean install from committed `package-lock.json`.
+- [x] All validation commands run successfully.
+- [x] Editor-specific code is not required by the server core.
 
 ## Phase 3 — Syntax layer
 

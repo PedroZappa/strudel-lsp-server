@@ -67,7 +67,7 @@ Status: accepted on 2026-11-25.
 
 The selected baseline is Node's built-in `node:test` runner over compiled ESM JavaScript, with the TypeScript compiler producing test output. This avoids a separate test-framework dependency while still supporting module, protocol and subprocess tests.
 
-Vitest remains a documented alternative if richer ergonomics become necessary. No test files exist yet; the choice establishes the eventual validation approach.
+Vitest remains a documented alternative if richer ergonomics become necessary. Phase 2 added the first stdio transport smoke test; language-feature and semantic suites remain to be added.
 
 ## ADR-009 — Repository licence metadata
 
@@ -183,3 +183,18 @@ Resulting patched versions:
 | `minimatch`       | 3.1.2    | 3.1.5   |
 
 `npm audit` and `npm audit --omit=dev` both report zero vulnerabilities. A subsequent `npm install --ignore-scripts` remains clean, and all fifteen direct dependency versions are unchanged. The separate `tree-sitter` peer-range override in ADR-013 remains in force; a full-tree `npm ls --all` reports that stale peer mismatch as expected.
+
+## ADR-016 — Single-package server scaffold
+
+Status: accepted on 2026-11-26.
+
+Decision: the repository root is now the npm package `strudel-lsp-server`. It is ESM, strictly typed, and exposes an executable stdio LSP entry point at `dist/src/server.js`. Source and tests live under `src/` and `test/`; prototype `client/`, `server/`, `dist/` and editor-specific files are excluded from build, lint, format and test scopes. `@stylistic/eslint-plugin` remains a development dependency because the ESLint configuration uses it.
+
+The initial server entry point explicitly uses `process.stdin`/`process.stdout` and advertises only `textDocumentSync: None`. This satisfies the editor-agnostic transport scaffold without claiming language features that do not yet exist. A stdio handshake smoke test verifies that contract. The benchmark script is a runner placeholder; Phase 8 establishes workloads and measured p50/p95/p99 targets.
+
+Consequences:
+
+- Prototype sources and the six tracked files modified before preparation remain untouched.
+- A `Makefile` provides the canonical developer and agent entry point, with targets that delegate to the authoritative root npm scripts.
+- Pre-existing root `README.md` still describes the prototype and is not authoritative for the npm package; packaging documentation is revisited in Phase 9.
+- `npm ci --ignore-scripts`, audits, typecheck, lint, format verification, tests and the combined `npm run check` gate pass. The documented ADR-013 parser peer-range warning remains expected.

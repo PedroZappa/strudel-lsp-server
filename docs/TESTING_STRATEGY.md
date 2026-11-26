@@ -1,13 +1,14 @@
 # Testing Strategy
 
-Status: authoritative. `AGENTS.md` section 9 was completed and approved on 2026-11-25.  
+Status: authoritative. `AGENTS.md` section 9 was completed and approved on 2026-11-25; Phase 2 validation results added on 2026-11-26.
+
 Authority: `AGENTS.md` section 9 and global project requirements.
 
 ## Mandate
 
 Testing is mandatory. The framework and supporting tooling were evaluated and selected based on project requirements, and the decision is recorded here.
 
-There are currently no meaningful automated tests. The prototype declares Mocha and VS Code test tooling, but its test script points at missing compiled files and fixture directories, and no test cases exist.
+The prototype declared Mocha and VS Code test tooling, but its test script pointed at missing compiled files and fixture directories. Phase 2 replaced that path with a compiled ESM smoke test for the stdio transport. Language-feature, semantic, metadata and performance suites remain to be added in later phases.
 
 ## Test layers
 
@@ -61,32 +62,34 @@ The user approved and the project installed these pinned root dependencies on 20
 
 ## Validation gates
 
-Specific commands cannot be finalised until the new package and scripts exist. The eventual validation set must include:
+Phase 2 established these root scripts:
 
-- TypeScript type checking.
-- ESLint with TypeScript-aware rules.
-- Prettier formatting verification.
-- The full `node --test` correctness suite.
-- The dedicated performance harness reporting p50, p95 and p99.
-- Relevant focused and integration checks after each change.
+- `npm run typecheck` — TypeScript strict-mode check with no emit.
+- `npm run lint` — ESLint with TypeScript-aware rules over managed source and test files.
+- `npm run format:check` — Prettier verification with prototype and generated files excluded.
+- `npm test` — compile to ESM, then run `node --test dist/test`.
+- `npm run benchmark` — benchmark command runner; workloads and p50/p95/p99 targets arrive in Phase 8.
+- `npm run check` — chains the four correctness gates above.
 
-The current root scripts still belong to the prototype. Final scripts are established in Phase 2. Results must be reported honestly; failures are not suppressed to make validation pass.
+The `Makefile` provides convenience targets for these commands; `make check` runs the same combined gate as `npm run check`.
 
-## Current validation status (2026-11-25)
+Prototype and generated directories are outside the lint/format/build scopes. Results must be reported honestly; failures are not suppressed to make validation pass.
 
-| Command                                                                                                                                                  | Result | Notes                                                                                                                                                                                                                                                                                                  |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `npm ls --depth=0`                                                                                                                                       | Pass   | All fifteen pinned root packages are installed at the selected versions.                                                                                                                                                                                                                               |
-| `npm audit --omit=dev`                                                                                                                                   | Pass   | Zero runtime vulnerabilities.                                                                                                                                                                                                                                                                          |
-| `npm audit`                                                                                                                                              | Pass   | Zero vulnerabilities after the approved `npm audit fix --ignore-scripts` transitive dev-dependency patches.                                                                                                                                                                                            |
-| `npm install --ignore-scripts`                                                                                                                           | Pass   | Clean install succeeds with `.npmrc` legacy-peer override for the parser's stale peer range.                                                                                                                                                                                                           |
-| `npm ls --all --json`                                                                                                                                    | Note   | Reports `tree-sitter@0.25.1` as invalid against the parser's stale `^0.22.4` peer range. This is the documented ADR-013 override; direct-version checks and clean installs pass.                                                                                                                       |
-| Parser smoke validation via temporary `node --test`-independent script                                                                                   | Pass   | `tree-sitter-strudel@1.1.8` loads in `tree-sitter@0.25.1`; parse, source ranges, incremental reparse and malformed-input recovery all behaved as recorded in `docs/PARSER_INTEGRATION.md`.                                                                                                             |
-| Metadata source validation via temporary Node ESM command                                                                                                | Pass   | `@strudel/reference@1.2.2` exposes `reference.docs` with 577 JSDoc records. Direct Node ESM imports of core/mini/transpiler are unavailable because of upstream `@kabelsalat/web@0.4.1` packaging; recorded in `docs/DECISIONS.md` ADR-014.                                                            |
-| `npx prettier --check AGENTS.md package.json docs/DECISIONS.md docs/PARSER_INTEGRATION.md docs/TESTING_STRATEGY.md docs/PROJECT_SPEC.md docs/ROADMAP.md` | Pass   | Checked after formatting the changed Markdown files.                                                                                                                                                                                                                                                   |
-| `npm run lint`                                                                                                                                           | Fail   | Pre-existing prototype sources produce 19 errors and 6 warnings in `client/src/extension.ts`, `dist/extension.js`, `server/src/server.js` and `server/src/server.ts`. The ESLint configuration itself loads correctly after retaining `@stylistic/eslint-plugin`. Prototype sources were not modified. |
-| `npx tsc --noEmit -p tsconfig.json`                                                                                                                      | Fail   | `TS6059`: the root `tsconfig.json` sets `rootDir: src` while the prototype sources live in `client/` and `server/`. This is a pre-existing scaffold configuration issue.                                                                                                                               |
-| `npm test`                                                                                                                                               | Fail   | The prototype script calls `client/out/test/runTest`, which is absent. No new test suite exists yet.                                                                                                                                                                                                   |
-| `git diff --check`                                                                                                                                       | Fail   | Reports pre-existing whitespace issues in `.gitignore`, `neovim-test.lua` and `server/src/server.ts`. Those user changes were not altered.                                                                                                                                                             |
+## Current validation status (2026-11-26)
 
-These failures are recorded, not suppressed. They belong to the prototype scaffold that Phase 2 will replace; no correctness, integration or performance suite has been established yet.
+| Command                   | Result | Notes                                                                                                                                                                                  |
+| ------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm ci --ignore-scripts` | Pass   | Clean install from `package-lock.json`: 137 packages added, 0 vulnerabilities.                                                                                                         |
+| `npm ls --depth=0`        | Pass   | All fifteen pinned root packages are installed at the selected versions.                                                                                                               |
+| `npm audit --omit=dev`    | Pass   | Zero runtime vulnerabilities.                                                                                                                                                          |
+| `npm audit`               | Pass   | Zero vulnerabilities.                                                                                                                                                                  |
+| `npm run typecheck`       | Pass   | Strict TypeScript check succeeds for `src/` and `test/`.                                                                                                                               |
+| `npm run lint`            | Pass   | ESLint succeeds with type-aware rules and the retained `@stylistic/eslint-plugin`.                                                                                                     |
+| `npm run format:check`    | Pass   | Prettier succeeds for managed files.                                                                                                                                                   |
+| `npm test`                | Pass   | One stdio transport smoke test passes; it performs an LSP initialize/shutdown/exit handshake and verifies that only `textDocumentSync: None` is advertised before providers exist.     |
+| `npm run benchmark`       | Pass   | The runner starts and reports that no workloads are registered; no latency figures are claimed.                                                                                        |
+| `npm run check`           | Pass   | The combined typecheck, lint, format and test gate passes.                                                                                                                             |
+| `git diff --check`        | Pass   | Working-tree diff has no whitespace errors.                                                                                                                                            |
+| `npm ls --all --json`     | Note   | Still reports `tree-sitter@0.25.1` as invalid against the parser's stale `^0.22.4` peer range. This is the documented ADR-013 override; direct-version checks and clean installs pass. |
+
+Phase 1 parser smoke and metadata-source validation evidence remains recorded in `docs/PARSER_INTEGRATION.md` and `docs/DECISIONS.md`. No language-feature, semantic-engine, metadata-generation or performance suites exist yet.

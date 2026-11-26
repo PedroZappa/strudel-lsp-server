@@ -1,43 +1,35 @@
 {
-  "name": "strudel-lsp",
-  "displayName": "strudel-lsp-server",
-  "description": "A language server for Strudel",
+  "name": "strudel-lsp-server",
+  "description": "Editor-agnostic Language Server Protocol implementation for Strudel",
   "author": "Zedro",
   "license": "MIT",
   "version": "0.0.1",
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "https://github.com/PedroZappa/strudel-lsp-server"
   },
-  "publisher": "Zedro",
-  "categories": [
-    "LSP"
-  ],
   "keywords": [
     "strudel",
-    "lsp"
+    "lsp",
+    "language-server"
   ],
-  "engines": {
-    "vscode": "^1.103.0"
+  "bin": {
+    "strudel-lsp-server": "./dist/src/server.js"
   },
-  "activationEvents": [
-    "onLanguage:strudel"
+  "files": [
+    "dist/src",
+    "LICENSE"
   ],
-  "main": "./client/out/extension",
-  "contributes": {
-    "configuration": {
-      "type": "object",
-      "title": "Default Configuration",
-      "properties": {}
-    }
-  },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -b",
-    "watch": "tsc -b -w",
-    "lint": "eslint",
-    "postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
-    "test": "sh ./scripts/e2e.sh"
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "npm run build && node --test dist/test",
+    "benchmark": "node scripts/benchmark.mjs",
+    "check": "npm run typecheck && npm run lint && npm run format:check && npm test"
   },
   "dependencies": {
     "tree-sitter": "0.25.1",

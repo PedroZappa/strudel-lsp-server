@@ -1,44 +1,54 @@
-/**
- * ESLint configuration for the project.
- * 
- * See https://eslint.style and https://typescript-eslint.io for additional linting options.
- */
-// @ts-check
 import js from '@eslint/js';
-import tseslint from 'typescript-eslint';
 import stylistic from '@stylistic/eslint-plugin';
+import tseslint from 'typescript-eslint';
+
+const typeCheckedFiles = ['src/**/*.ts', 'test/**/*.ts'];
+const typeCheckedConfigs = [
+  ...tseslint.configs.recommendedTypeChecked,
+  ...tseslint.configs.stylisticTypeChecked,
+].map((config) => ({ ...config, files: typeCheckedFiles }));
 
 export default tseslint.config(
-	{
-		ignores: [
-			'**/.vscode-test',
-			'**/out',
-		]
-	},
-	js.configs.recommended,
-	...tseslint.configs.recommended,
-	...tseslint.configs.stylistic,
-	{
-		plugins: {
-			'@stylistic': stylistic
-		},
-		rules: {
-			'curly': 'warn',
-			'@stylistic/semi': ['warn', 'always'],
-			'@typescript-eslint/no-empty-function': 'off',
-			'@typescript-eslint/naming-convention': [
-				'warn',
-				{
-					'selector': 'import',
-					'format': ['camelCase', 'PascalCase']
-				}
-			],
-			'@typescript-eslint/no-unused-vars': [
-				'error',
-				{
-					'argsIgnorePattern': '^_'
-				}
-			]
-		}
-	}
+  {
+    ignores: [
+      '**/node_modules/**',
+      'client/**',
+      'dist/**',
+      'server/**',
+      'scripts/e2e.sh',
+      '*.tsbuildinfo',
+    ],
+  },
+  js.configs.recommended,
+  ...tseslint.configs.recommended,
+  ...typeCheckedConfigs,
+  {
+    files: typeCheckedFiles,
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+    plugins: {
+      '@stylistic': stylistic,
+    },
+    rules: {
+      '@stylistic/comma-dangle': ['error', 'always-multiline'],
+      '@stylistic/quotes': ['error', 'single'],
+      '@stylistic/semi': ['error', 'always'],
+      '@typescript-eslint/consistent-type-imports': 'error',
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      curly: ['error', 'all'],
+    },
+  },
+  {
+    files: ['scripts/**/*.mjs'],
+    languageOptions: {
+      globals: {
+        console: 'readonly',
+        process: 'readonly',
+      },
+    },
+  },
 );

@@ -18,8 +18,8 @@ Sources:
 Verified examples from authoritative sources include:
 
 ```js
-s("bd").fast(2)
-note("c e g b")
+s('bd').fast(2);
+note('c e g b');
 ```
 
 Constructs to model:
@@ -53,7 +53,7 @@ Mini-notation is a compact rhythm/pattern language embedded in strings. Accordin
 Example from the official documentation:
 
 ```js
-note("<[g3,b3,e4] [a3,c3,e4] [b3,d3,f#4]>*2")
+note('<[g3,b3,e4] [a3,c3,e4] [b3,d3,f#4]>*2');
 ```
 
 ## Semantic information to model

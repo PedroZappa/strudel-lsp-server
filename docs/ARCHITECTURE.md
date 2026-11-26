@@ -1,6 +1,7 @@
 # Architecture
 
-Status: proposed architecture for the re-implementation; not yet implemented.  
+Status: transport scaffold implemented on 2026-11-26; remaining layers are proposed and not yet implemented.
+
 Authority: `AGENTS.md` sections 3–6.
 
 ## Architectural principles
@@ -50,6 +51,8 @@ Side inputs:
   - Reproducible language database (generated, manual and runtime-derived metadata)
   - User configuration (focused, user-facing options only)
 ```
+
+The current `src/server.ts` implements only the LSP transport lifecycle and advertises `textDocumentSync: None`. Feature providers, the semantic engine, the syntax adapter and the language database are not yet implemented.
 
 ## Responsibilities
 

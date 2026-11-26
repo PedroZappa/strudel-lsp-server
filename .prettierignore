@@ -1,0 +1,10 @@
+**/node_modules/
+.vscode/
+client/
+dist/
+server/
+CHANGELOG.md
+README.md
+vsc-extension-quickstart.md
+package-lock.json
+*.tsbuildinfo
