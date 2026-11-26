@@ -51,7 +51,7 @@ _INFO    = [$(BLU)INFO$(D)]
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install install-dev build typecheck lint format format-check test benchmark pack-check check verify verify-all ci check-static audit clean docs docs-open
+.PHONY: help install install-dev build typecheck lint format format-check test test-parser benchmark pack-check check verify verify-all ci check-static audit clean docs docs-open
 
 #==============================================================================#
 #                                  RULES                                       #
@@ -100,6 +100,11 @@ test:	## Build and run the node:test suite
 	@echo "$(YEL)Running tests...$(D)"
 	@$(NPM) test
 	@echo "$(YEL)* $(_SUCCESS) Tests completed$(D)"
+
+test-parser:	## Build and run parser/grammar integration tests only
+	@echo "$(YEL)Running parser integration tests...$(D)"
+	@$(NPM) run test:parser
+	@echo "$(YEL)* $(_SUCCESS) Parser tests completed$(D)"
 
 benchmark:	## Run the benchmark command runner (workloads arrive in Phase 8)
 	@echo "$(YEL)Running benchmarks...$(D)"

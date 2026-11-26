@@ -1,6 +1,6 @@
 # Architecture
 
-Status: transport scaffold implemented on 2026-11-26; remaining layers are proposed and not yet implemented.
+Status: transport and syntax adapter layers implemented on 2026-11-26; remaining layers are proposed and not yet implemented.
 
 Authority: `AGENTS.md` sections 3–6.
 
@@ -52,7 +52,7 @@ Side inputs:
   - User configuration (focused, user-facing options only)
 ```
 
-The current `src/server.ts` implements only the LSP transport lifecycle and advertises `textDocumentSync: None`. Feature providers, the semantic engine, the syntax adapter and the language database are not yet implemented.
+The current `src/server.ts` implements only the LSP transport lifecycle and advertises `textDocumentSync: None`. `src/syntax/` implements the pinned Tree-sitter adapter and the parser-independent `SyntaxDocument` contract. Feature providers, the semantic engine and the language database are not yet implemented.
 
 ## Responsibilities
 
@@ -116,13 +116,17 @@ The current `src/server.ts` implements only the LSP transport lifecycle and adve
 3. Results are mapped to LSP response types.
 4. Obsolete requests are cancelled or discarded when a newer document version supersedes them.
 
-## Proposed stable contracts
+## Stable contracts
 
-Names below are proposals for implementation, not existing code:
+Implemented contracts (exported from `src/syntax/index.ts`):
 
 - `TextDocumentSnapshot` — immutable text and version input to the syntax layer.
 - `SyntaxDocument` — parser-independent syntax representation with source ranges.
 - `SyntaxAdapter` — operations for incremental parse, update and node inspection.
+- `SyntaxNode`, `SyntaxRange`, `SyntaxKind` — normalized syntax tree values with no Tree-sitter types.
+
+Proposed contracts for later phases:
+
 - `SemanticDocument` — scopes, symbols, references and resolved types for a document version.
 - `LanguageDatabase` — versioned metadata lookup interface.
 - `FeatureProvider` — common request contract for language intelligence features.

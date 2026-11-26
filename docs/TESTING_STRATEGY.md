@@ -62,34 +62,36 @@ The user approved and the project installed these pinned root dependencies on 20
 
 ## Validation gates
 
-Phase 2 established these root scripts:
+Root scripts established in Phases 2 and 3:
 
 - `npm run typecheck` — TypeScript strict-mode check with no emit.
 - `npm run lint` — ESLint with TypeScript-aware rules over managed source and test files.
 - `npm run format:check` — Prettier verification with prototype and generated files excluded.
 - `npm test` — compile to ESM, then run `node --test dist/test`.
+- `npm run test:parser` — compile to ESM, then run only `dist/test/parser` grammar/parser integration tests.
 - `npm run benchmark` — benchmark command runner; workloads and p50/p95/p99 targets arrive in Phase 8.
-- `npm run check` — chains the four correctness gates above.
+- `npm run check` — chains typecheck, lint, format verification and the full test suite.
 
-The `Makefile` provides convenience targets for these commands; `make check` runs the same combined gate as `npm run check`.
+The `Makefile` provides convenience targets for these commands; `make check` runs the same combined gate as `npm run check`, and `make test-parser` runs the isolated parser suite.
 
 Prototype and generated directories are outside the lint/format/build scopes. Results must be reported honestly; failures are not suppressed to make validation pass.
 
 ## Current validation status (2026-11-26)
 
-| Command                   | Result | Notes                                                                                                                                                                                  |
-| ------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `npm ci --ignore-scripts` | Pass   | Clean install from `package-lock.json`: 137 packages added, 0 vulnerabilities.                                                                                                         |
-| `npm ls --depth=0`        | Pass   | All fifteen pinned root packages are installed at the selected versions.                                                                                                               |
-| `npm audit --omit=dev`    | Pass   | Zero runtime vulnerabilities.                                                                                                                                                          |
-| `npm audit`               | Pass   | Zero vulnerabilities.                                                                                                                                                                  |
-| `npm run typecheck`       | Pass   | Strict TypeScript check succeeds for `src/` and `test/`.                                                                                                                               |
-| `npm run lint`            | Pass   | ESLint succeeds with type-aware rules and the retained `@stylistic/eslint-plugin`.                                                                                                     |
-| `npm run format:check`    | Pass   | Prettier succeeds for managed files.                                                                                                                                                   |
-| `npm test`                | Pass   | One stdio transport smoke test passes; it performs an LSP initialize/shutdown/exit handshake and verifies that only `textDocumentSync: None` is advertised before providers exist.     |
-| `npm run benchmark`       | Pass   | The runner starts and reports that no workloads are registered; no latency figures are claimed.                                                                                        |
-| `npm run check`           | Pass   | The combined typecheck, lint, format and test gate passes.                                                                                                                             |
-| `git diff --check`        | Pass   | Working-tree diff has no whitespace errors.                                                                                                                                            |
-| `npm ls --all --json`     | Note   | Still reports `tree-sitter@0.25.1` as invalid against the parser's stale `^0.22.4` peer range. This is the documented ADR-013 override; direct-version checks and clean installs pass. |
+| Command                   | Result | Notes                                                                                                                                                 |
+| ------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm ci --ignore-scripts` | Pass   | Clean install from `package-lock.json`: 137 packages added, 0 vulnerabilities.                                                                        |
+| `npm ls --depth=0`        | Pass   | All fifteen pinned root packages are installed at the selected versions.                                                                              |
+| `npm audit --omit=dev`    | Pass   | Zero runtime vulnerabilities.                                                                                                                         |
+| `npm audit`               | Pass   | Zero vulnerabilities.                                                                                                                                 |
+| `npm run typecheck`       | Pass   | Strict TypeScript check succeeds for `src/` and `test/`.                                                                                              |
+| `npm run lint`            | Pass   | ESLint succeeds with type-aware rules and the retained `@stylistic/eslint-plugin`.                                                                    |
+| `npm run format:check`    | Pass   | Prettier succeeds for managed files.                                                                                                                  |
+| `npm test`                | Pass   | Six tests pass: one stdio handshake test and five parser integration tests using `tree-sitter-strudel@2.0.2`.                                         |
+| `npm run test:parser`     | Pass   | Five parser integration tests pass independently of semantic tests.                                                                                   |
+| `npm run benchmark`       | Pass   | The runner starts and reports that no workloads are registered; no latency figures are claimed.                                                       |
+| `npm run check`           | Pass   | The combined typecheck, lint, format and test gate passes.                                                                                            |
+| `git diff --check`        | Pass   | Working-tree diff has no whitespace errors.                                                                                                           |
+| `npm ls --all`            | Pass   | `tree-sitter-strudel@2.0.2` declares `tree-sitter ^0.25.0`; no invalid peer-range warning remains. Only unrelated optional peer notices are reported. |
 
-Phase 1 parser smoke and metadata-source validation evidence remains recorded in `docs/PARSER_INTEGRATION.md` and `docs/DECISIONS.md`. No language-feature, semantic-engine, metadata-generation or performance suites exist yet.
+Phase 1 parser smoke evidence and the Phase 3 upgrade validation are recorded in `docs/PARSER_INTEGRATION.md` and `docs/DECISIONS.md`. The parser suite runs against `tree-sitter-strudel@2.0.2` and covers stable node kinds and ranges, chained method calls, variable declarations, UTF-16 positions with non-ASCII input, incremental edit/reparse, and malformed-input recovery. No language-feature, semantic-engine, metadata-generation or performance suites exist yet.

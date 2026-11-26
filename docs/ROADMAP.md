@@ -1,8 +1,8 @@
 # Roadmap
 
-Status: re-implementation roadmap updated with resolved blocker decisions and Phase 2 completion, 2026-11-26. Priorities are proposals and remain subject to approval.
+Status: re-implementation roadmap updated with resolved blocker decisions and Phase 3 completion, 2026-11-26. Priorities are proposals and remain subject to approval.
 
-Authority: `AGENTS.md` sections 2–9 and the other documents in `docs/`.
+Authority: `AGENTS.md` sections 2–18 and the other documents in `docs/`.
 
 ## Phase 0 — Preparation
 
@@ -72,20 +72,24 @@ Exit criteria:
 
 ## Phase 3 — Syntax layer
 
+**Status: complete; changes are not committed.**
+
 Dependencies: Phase 1 parser version/compatibility validation, Phase 2 scaffold.
 
 Tasks:
 
-- [ ] Integrate the pinned parser dependency as an adapter.
-- [ ] Implement incremental parse/update and stable source ranges.
-- [ ] Build separate parser/grammar integration tests.
-- [ ] Validate recovery on incomplete and malformed input.
+- [x] Integrate the pinned parser dependency as an adapter.
+- [x] Implement incremental parse/update and stable source ranges.
+- [x] Build separate parser/grammar integration tests.
+- [x] Validate recovery on incomplete and malformed input.
+
+Parser integration tests live under `test/parser/` and can be run independently with `npm run test:parser` or `make test-parser`. The native tree is retained only inside the adapter; other layers receive the parser-independent `SyntaxDocument` contract. The adapter targets `tree-sitter-strudel@2.0.2`; its major grammar rewrite was absorbed entirely in `src/syntax/kinds.ts` and `src/syntax/types.ts`.
 
 Exit criteria:
 
-- [ ] Parser-independent syntax representation available.
-- [ ] Parser tests pass independently of semantic tests.
-- [ ] No grammar, generated parser or bindings copied into this repository.
+- [x] Parser-independent syntax representation available.
+- [x] Parser tests pass independently of semantic tests.
+- [x] No grammar, generated parser or bindings copied into this repository.
 
 ## Phase 4 — Semantic engine
 

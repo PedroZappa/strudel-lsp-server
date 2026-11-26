@@ -106,29 +106,29 @@ TypeScript is pinned to `6.0.3` rather than the latest `7.0.2` because `typescri
 
 This is a deliberate compatibility choice, not a rejection of future upgrades. Revisit when `typescript-eslint` supports TypeScript 7.
 
-## ADR-013 — Parser version and runtime override
+## ADR-013 — Parser version and runtime
 
-Status: accepted on 2026-11-25.
+Status: accepted on 2026-11-25; upgraded to 2.0.2 on 2026-11-26 by user direction.
 
-Decision: pin `tree-sitter-strudel@1.1.8` from `PedroZappa/tree-sitter-strdl` and `tree-sitter@0.25.1`.
+Decision: pin `tree-sitter-strudel@2.0.2` from `PedroZappa/tree-sitter-strdl` and `tree-sitter@0.25.1`.
 
 Rationale:
 
-- `tree-sitter-strudel@1.1.8` is the npm package whose repository field points to the parser project named in `AGENTS.md`.
-- It is the only candidate tarball inspected that contains prebuilt native bindings for `darwin-arm64` and a WASM artifact.
-- `tree-sitter-strdl@1.3.4` points to the fork, has richer queries, but its tarball contains no prebuilds or WASM. The user chose not to act on the fork.
+- `tree-sitter-strudel` is the npm package whose repository field points to the parser project named in `AGENTS.md`. Version 2.0.2 is now the adopted version.
+- The 1.1.8 candidate was originally selected because it had prebuilt native bindings and a WASM artifact, while `tree-sitter-strdl@1.3.4` pointed to a fork without prebuilds. The user directed the 2.0.2 upgrade, which retains the same repository and adds prebuilds and WASM.
+- The 2.0.2 grammar is a major rewrite with JavaScript-like node names; the adapter's stable contracts absorbed the change without affecting other layers.
 
 Compatibility finding:
 
-- Both parser packages declare `peerOptional tree-sitter: ^0.22.4`, but their generated parser uses `LANGUAGE_VERSION 15` and CLI 0.25-era node metadata.
-- `tree-sitter@0.22.4` fails at `Parser.setLanguage` with a node-type marshalling error.
-- `tree-sitter@0.25.1` parses successfully, including incremental reparsing and malformed-input recovery.
+- 1.1.8 declared `peerOptional tree-sitter: ^0.22.4` but used `LANGUAGE_VERSION 15` metadata and failed with `tree-sitter@0.22.4`. Runtime 0.25.1 was required.
+- 2.0.2 declares `tree-sitter ^0.25.0`, which matches the pinned `tree-sitter@0.25.1`. The stale-peer workaround is no longer specific to the parser.
+- Both versions parse successfully with `tree-sitter@0.25.1`, including incremental reparsing and malformed-input recovery.
 
 Consequences:
 
-- `.npmrc` sets `legacy-peer-deps=true` so a clean `npm install --ignore-scripts` accepts the parser's stale peer range. This is scoped to the stale parser metadata and must be revisited when the parser publishes accurate peers.
-- A smoke validation loaded the parser, parsed `note("bd sd")`, applied an incremental edit, reparsed `note("bd sd cp")`, and parsed malformed input without throwing. Results are recorded in `docs/PARSER_INTEGRATION.md`.
-- The published npm tarball still contains an AGPL `LICENSE`; correcting the repository alone does not change that tarball. A corrected published version is required before redistribution of the parser package.
+- `.npmrc` still sets `legacy-peer-deps=true` as a general setting. The parser-specific rationale no longer applies; narrowing or removing it is deferred until all dependencies are confirmed compatible without it.
+- Phase 3 parser integration tests validate loading, parse structure, non-ASCII ranges, incremental edits and malformed-input recovery with 2.0.2. Results are recorded in `docs/PARSER_INTEGRATION.md`.
+- 2.0.2 declares `AGPL-3.0-only` consistently in both `package.json` and its bundled `LICENSE`. The earlier MIT-authoritative decision applied to 1.1.8 metadata and needs re-confirmation before redistributing the 2.0.2 parser package.
 
 ## ADR-014 — Strudel metadata source versions
 
@@ -198,3 +198,21 @@ Consequences:
 - A `Makefile` provides the canonical developer and agent entry point, with targets that delegate to the authoritative root npm scripts.
 - Pre-existing root `README.md` still describes the prototype and is not authoritative for the npm package; packaging documentation is revisited in Phase 9.
 - `npm ci --ignore-scripts`, audits, typecheck, lint, format verification, tests and the combined `npm run check` gate pass. The documented ADR-013 parser peer-range warning remains expected.
+
+## ADR-017 — Parser-independent syntax adapter
+
+Status: accepted on 2026-11-26.
+
+Decision: `src/syntax/` wraps the pinned Tree-sitter adapter behind a parser-independent contract. The native tree is retained in a `WeakMap` keyed by the returned `SyntaxDocument`; other layers receive only `SyntaxNode`, `SyntaxRange` and `SyntaxKind` values.
+
+Rationale:
+
+- ADR-007 requires semantic interfaces to remain independent of Tree-sitter APIs. Parser-specific node names are confined to `kinds.ts`, so grammar changes require adapter updates only. This was exercised by the 1.1.8 → 2.0.2 major grammar rewrite: only `kinds.ts`, `types.ts` and parser tests changed.
+- The pinned Node binding reports node indices and edit positions in UTF-16 code units, which match LSP character offsets. `textCoordinates.ts` derives positions directly from document text rather than parser-specific point values; this was verified against source containing non-ASCII characters.
+- WeakMap keying avoids retaining stale native trees when a document is superseded while still enabling incremental `update` calls.
+
+Consequences:
+
+- Parser integration tests under `test/parser/` import only the stable `SyntaxAdapter` contract, never Tree-sitter APIs. They run independently via `npm run test:parser`.
+- `update` falls back to a full parse when no native tree is associated with the previous document or when edits are empty but text changed. This is a correctness fallback, not a performance claim.
+- Grammar/parser/bindings are consumed as npm dependencies only; none are copied into this repository.

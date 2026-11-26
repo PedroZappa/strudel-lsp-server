@@ -64,10 +64,10 @@ Repository identity, Git history, ownership information and licensing obligation
 
 The user approved installation of the pinned root dependencies on 2026-11-25:
 
-- Runtime: `tree-sitter@0.25.1`, `tree-sitter-strudel@1.1.8`, `vscode-languageserver@11.0.1`, `vscode-languageserver-textdocument@1.0.16`
+- Runtime: `tree-sitter@0.25.1`, `tree-sitter-strudel@2.0.2` (upgraded from 1.1.8 on 2026-11-26), `vscode-languageserver@11.0.1`, `vscode-languageserver-textdocument@1.0.16`
 - Development: `@eslint/js@9.33.0`, `@strudel/core@1.2.6`, `@strudel/mini@1.2.6`, `@strudel/reference@1.2.2`, `@strudel/transpiler@1.2.6`, `@stylistic/eslint-plugin@2.13.0`, `@types/node@26.6.10`, `eslint@9.33.0`, `prettier@3.10.1`, `typescript@6.0.3`, `typescript-eslint@8.74.0`
 
-`.npmrc` sets `legacy-peer-deps=true` because `tree-sitter-strudel@1.1.8` declares a stale `tree-sitter ^0.22.4` peer range while requiring runtime 0.25.x. See `docs/DECISIONS.md`, `docs/PARSER_INTEGRATION.md` and `docs/TESTING_STRATEGY.md`.
+`.npmrc` sets `legacy-peer-deps=true`. The original rationale was `tree-sitter-strudel@1.1.8`'s stale `tree-sitter ^0.22.4` peer range; 2.0.2 now declares an accurate `^0.25.0` peer. The setting remains until all dependencies are confirmed compatible without it. See `docs/DECISIONS.md`, `docs/PARSER_INTEGRATION.md` and `docs/TESTING_STRATEGY.md`.
 
 ## Authoritative metadata source set
 
@@ -88,10 +88,10 @@ All four packages come from `git+https://codeberg.org/uzu/strudel.git` and decla
 
 | Topic                                                  | Status                                                                  | Owner document                                    |
 | ------------------------------------------------------ | ----------------------------------------------------------------------- | ------------------------------------------------- |
-| Parser licence policy                                  | Resolved: MIT by user decision                                          | `docs/PARSER_INTEGRATION.md`, `docs/DECISIONS.md` |
-| Upstream parser licence file correction                | Solved as owner-owned follow-up; user will fix original repository      | `docs/PARSER_INTEGRATION.md`, `docs/DECISIONS.md` |
-| Corrected npm parser tarball before redistribution     | Release gate; published tarball still contains AGPL `LICENSE`           | `docs/PARSER_INTEGRATION.md`                      |
-| Exact parser npm version, provenance and compatibility | Resolved: `tree-sitter-strudel@1.1.8` with `tree-sitter@0.25.1`         | `docs/PARSER_INTEGRATION.md`, `docs/DECISIONS.md` |
+| Parser licence policy                                  | Needs re-confirmation: 2.0.2 declares AGPL-3.0-only consistently        | `docs/PARSER_INTEGRATION.md`, `docs/DECISIONS.md` |
+| Upstream parser licence file correction                | Solved for 2.0.2: metadata and LICENSE both declare AGPL-3.0            | `docs/PARSER_INTEGRATION.md`, `docs/DECISIONS.md` |
+| Parser redistribution licence gate                     | Open: confirm AGPL-3.0 implications before redistribution               | `docs/PARSER_INTEGRATION.md`                      |
+| Exact parser npm version, provenance and compatibility | Resolved: `tree-sitter-strudel@2.0.2` with `tree-sitter@0.25.1`         | `docs/PARSER_INTEGRATION.md`, `docs/DECISIONS.md` |
 | Missing `AGENTS.md` section 9                          | Resolved: complete section approved                                     | `docs/DECISIONS.md`, `docs/TESTING_STRATEGY.md`   |
 | Test tooling                                           | Accepted and installed: `node:test` over compiled TypeScript output     | `docs/TESTING_STRATEGY.md`                        |
 | Metadata source packages and pinned versions           | Resolved: reference 1.2.2 and core/mini/transpiler 1.2.6                | `docs/DECISIONS.md`, `docs/PROJECT_SPEC.md`       |
