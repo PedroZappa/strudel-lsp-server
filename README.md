@@ -1,10 +1,10 @@
 # Strudel LSP Server
 
-An editor-agnostic Language Server Protocol implementation for [Strudel](https://strudel.cc/). The npm package is named `strudel-lsp-server`; `0.1.0` is published and `0.2.0` is prepared as a release candidate. The server core speaks LSP over stdio and does not depend on any editor client.
+An editor-agnostic Language Server Protocol implementation for [Strudel](https://strudel.cc/). The npm package is named `strudel-lsp-server`; `0.2.0` is published and `0.1.0` remains available. The server core speaks LSP over stdio and does not depend on any editor client.
 
 ## Features
 
-- Diagnostics that stay quiet on incomplete live-coding input, with focused LSP configuration in the prepared `0.2.0` release.
+- Diagnostics that stay quiet on incomplete live-coding input, with focused LSP configuration in `0.2.0`.
 - Completion, hover documentation and signature help backed by pinned Strudel metadata.
 - Definition, references, document symbols and bounded workspace symbols.
 - Rename, quick fixes and a conservative inline-constant refactoring.
@@ -15,7 +15,7 @@ An editor-agnostic Language Server Protocol implementation for [Strudel](https:/
 
 The package supports Node.js 24 and 26 with npm 11.x. The validated matrix is Linux x64 with glibc, macOS arm64 and Windows x64; the parser also ships prebuilds for Linux arm64, macOS x64 and Windows arm64, which remain best-effort until validated. See [ADR-035](https://github.com/PedroZappa/strudel-lsp-server/blob/main/docs/DECISIONS.md).
 
-The bundled language database targets `@strudel/core`, `@strudel/mini` and `@strudel/transpiler` `1.2.6`, plus `@strudel/reference` `1.2.2`. Strudel version selection is not exposed in `0.1.0` or the prepared `0.2.0` release.
+The bundled language database targets `@strudel/core`, `@strudel/mini` and `@strudel/transpiler` `1.2.6`, plus `@strudel/reference` `1.2.2`. Strudel version selection is not exposed in `0.1.0` or `0.2.0`.
 
 ## Installation and launch
 
@@ -25,7 +25,7 @@ Install the package and configure an LSP client to launch `strudel-lsp-server` o
 npm install --global strudel-lsp-server
 ```
 
-The latest published version is `0.1.0`; pin `@0.2.0` after its controlled release. Installation uses default npm peer resolution; `legacy-peer-deps=true` is not required.
+The latest published version is `0.2.0`; pin `@0.2.0` for a reproducible install. Installation uses default npm peer resolution; `legacy-peer-deps=true` is not required.
 
 ```json
 {
@@ -51,9 +51,9 @@ See [LSP_FEATURES.md](https://github.com/PedroZappa/strudel-lsp-server/blob/main
 
 ## Known limitations
 
-The published `0.1.0` and prepared `0.2.0` releases deliberately limit scope:
+The published `0.1.0` and `0.2.0` releases deliberately limit scope:
 
-- Published `0.1.0` has no custom configuration channel. The prepared `0.2.0` release adds the focused diagnostics configuration described below and in ADR-052; Strudel version selection and internal engine settings remain deferred.
+- Published `0.1.0` has no custom configuration channel. `0.2.0` adds the focused diagnostics configuration described below and in ADR-052; Strudel version selection and internal engine settings remain deferred.
 - Diagnostics stay conservative on incomplete live-coding input rather than reporting unreliable cascading errors.
 - Formatting is indentation-only. Range formatting is deferred.
 - Workspace symbols use a bounded on-demand scan of `.strudel` files rather than a persistent workspace index or cross-file module graph; symlink entries and paths outside the workspace root are skipped.
@@ -64,7 +64,7 @@ The published `0.1.0` and prepared `0.2.0` releases deliberately limit scope:
 
 The published `0.1.0` package has no custom settings: diagnostics are enabled by default with conservative provider-defined severities, formatting follows the client's standard LSP `tabSize` and `insertSpaces` options, and language metadata uses the pinned Strudel snapshot.
 
-The prepared `0.2.0` release adds focused diagnostics settings under the standard LSP `strudelLsp` section: `diagnostics.enabled` plus optional per-code severities (`error`, `warning`, `information`, `hint` or `off`). Clients that advertise `workspace.configuration` are queried for this section, including on a configuration notification; clients without that capability can send `workspace/didChangeConfiguration` with settings under `settings.strudelLsp`. Either path republishes diagnostics for all open documents, and defaults remain unchanged when no configuration is supplied. Formatting preferences and Strudel metadata selection remain outside this narrow surface, and client-specific configuration stays outside the package. See [LSP_FEATURES.md](https://github.com/PedroZappa/strudel-lsp-server/blob/main/docs/LSP_FEATURES.md#configuration) for the exact settings shape and ADR-052 for the decision.
+The published `0.2.0` release adds focused diagnostics settings under the standard LSP `strudelLsp` section: `diagnostics.enabled` plus optional per-code severities (`error`, `warning`, `information`, `hint` or `off`). Clients that advertise `workspace.configuration` are queried for this section, including on a configuration notification; clients without that capability can send `workspace/didChangeConfiguration` with settings under `settings.strudelLsp`. Either path republishes diagnostics for all open documents, and defaults remain unchanged when no configuration is supplied. Formatting preferences and Strudel metadata selection remain outside this narrow surface, and client-specific configuration stays outside the package. See [LSP_FEATURES.md](https://github.com/PedroZappa/strudel-lsp-server/blob/main/docs/LSP_FEATURES.md#configuration) for the exact settings shape and ADR-052 for the decision.
 
 ## Development
 

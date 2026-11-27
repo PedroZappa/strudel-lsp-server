@@ -2,7 +2,7 @@
 
 All notable changes to the `strudel-lsp-server` npm package are documented in this file. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-Version `0.2.0` is prepared as a release candidate but is not published; `0.1.0` remains the latest published release. Full user-facing notes for the candidate are in `.github/RELEASE_TEMPLATE.md`.
+Version `0.2.0` was published on 2026-11-27 through the controlled OIDC workflow and is the latest published release; `0.1.0` remains documented for compatibility. Full user-facing notes are in `.github/RELEASE_TEMPLATE.md`.
 
 ## [Unreleased]
 
@@ -14,7 +14,7 @@ Version `0.2.0` is prepared as a release candidate but is not published; `0.1.0`
 - A bounded soak/lifecycle suite covering rapid edits, stale-version suppression, repeated initialize/shutdown cycles and advisory RSS observation, with no production telemetry.
 - A separate advisory installed-binary benchmark that packs and installs the server offline, measures one JSON-RPC document-symbol workload through the installed bin and records p50/p95/p99 in `benchmarks/end-to-end.json` without changing the layer-level baseline.
 - Local VS Code and Neovim LSP smoke clients with all client configuration outside the server core; passing behaviours are recorded in `validation/client-smoke.json` and no editor dependency was added to the published package.
-- The release-candidate gate passes 85 tests, including configuration, LSP filesystem, protocol, soak and two-client evidence contract checks.
+- The release gate passes 86 tests, including configuration, LSP filesystem, protocol, soak, two-client evidence and Phase 15 publication-evidence contract checks.
 
 ### Changed
 

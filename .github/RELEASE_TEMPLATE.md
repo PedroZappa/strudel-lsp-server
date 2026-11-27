@@ -1,4 +1,4 @@
-Release candidate for `strudel-lsp-server@0.2.0`: a consolidation update to the editor-agnostic Strudel language server. Prepared for the authorized tag `v0.2.0`; confirm the exact commit, workflow run and release date before publishing. This file is not publication authorization. `strudel-lsp-server@0.1.0` remains the published release until the controlled workflow completes.
+Release notes for `strudel-lsp-server@0.2.0`: a consolidation update to the editor-agnostic Strudel language server, published on 2026-11-27 from tag `v0.2.0` at commit `7d611a8d61dae2ab2eea21a12ce2ebdec59e4488` through the controlled OIDC workflow. It supersedes `strudel-lsp-server@0.1.0`.
 
 ## Requirements and pinned versions
 
@@ -29,13 +29,13 @@ The server advertises only implemented capabilities. Exact behaviour and provide
 
 ## Install and launch
 
-After publication, install the pinned release:
+Install the pinned release:
 
 ```bash
 npm install --global strudel-lsp-server@0.2.0
 ```
 
-Until publication, the latest published version remains `0.1.0`. Configure the LSP client to launch `strudel-lsp-server` over stdio. For a source checkout, use `npm ci --ignore-scripts`, `npm run build` and `node dist/src/server.js`. Editor-specific configuration stays outside the package.
+Configure the LSP client to launch `strudel-lsp-server` over stdio. For a source checkout, use `npm ci --ignore-scripts`, `npm run build` and `node dist/src/server.js`. Editor-specific configuration stays outside the package.
 
 ## Explicit limitations and known issues
 
@@ -56,10 +56,10 @@ Details and evidence are in `docs/SEMANTIC_ENGINE.md`, `docs/PARSER_INTEGRATION.
 - `npm run verify:contents` previews the 138-file tarball allowlist containing `dist/src`, `package.json`, `README.md` and `LICENSE`, with no test, script, client or grammar source.
 - `npm run verify:package` verifies the tarball and licence notice, then completes clean offline installs with and without scripts, native parser prebuild loading and installed stdio initialize/shutdown handshakes on darwin-arm64.
 - `npm run verify:consumer` passes both clean consumer install modes without inherited npm configuration.
-- `npm run check` passes strict typecheck, lint, formatting and 85/85 tests; the focused parser, semantic, metadata, configuration, LSP, feature, mini-notation, protocol and soak suites also pass.
+- `npm run check` passes strict typecheck, lint, formatting and 86/86 tests, including the Phase 15 release-evidence contract; the focused parser, semantic, metadata, configuration, LSP, feature, mini-notation, protocol and soak suites also pass.
 - `npm run benchmark:check` keeps all 18 layer workloads within their committed thresholds. `npm run benchmark:e2e` reports advisory installed-bin p50/p95/p99 of 0.337/0.575/0.735 ms from the committed report and has no blocking threshold.
 - `npm run validate:corpus` checks 484 pinned documentation examples with 477 clean parses, seven upstream parser gaps and zero invariant failures. Runtime, full and prototype-client dependency audits report zero vulnerabilities.
-- `npm run verify:release` and exact-tag CI remain release-time gates. The controlled workflow must run with `npm-release` approval and produce an OIDC provenance attestation; missing or mismatched provenance is a blocker. The GitHub release is published only after the post-publication smoke plan passes.
+- `npm run verify:release` and exact-tag CI were release-time gates; the validation job passed on the exact tag before publication. The controlled publish job ran with `npm-release` approval and produced an OIDC provenance attestation. The original workflow run's final verification step failed because npm had not yet made the new version visible; registry visibility, signatures, provenance and installed-package checks were repeated successfully from a clean install. A validation-only dispatch after publication fails at dry-run parity because the immutable version now exists on the registry. Evidence is in `docs/TESTING_STRATEGY.md` and ADR-061.
 
 ## Corrections and rollback
 
@@ -67,12 +67,12 @@ npm versions are immutable. If a defect is found, the fix is published as a new 
 
 ## Publication record
 
-Confirm at release time: operator `pedrozappa`, tag `v0.2.0`, exact validated commit, CI run, published npm version, registry metadata and licence, signature and provenance attestation, installed stdio handshake, tag and GitHub release notes. The ADR-049 bootstrap exception applies only to `0.1.0`; `0.2.0` uses the controlled OIDC workflow unchanged. No token, password, OTP or recovery code belongs in the repository or this record.
+Published by operator `pedrozappa` from tag `v0.2.0` at commit `7d611a8d61dae2ab2eea21a12ce2ebdec59e4488` via [workflow run 46038153400](https://github.com/PedroZappa/strudel-lsp-server/actions/runs/46038153400). Verified: npm version `0.2.0`, `dist-tags.latest` `0.2.0`, no deprecation, registry metadata and AGPL-3.0-only licence, two registry signatures and a matching SLSA v1 provenance attestation for the exact repository, workflow ref and commit, published tarball shasum/integrity, clean local and global installs, documented PATH launch and installed stdio handshake. The ADR-049 bootstrap exception applies only to `0.1.0`; `0.2.0` used the controlled OIDC workflow unchanged. No token, password, OTP or recovery code was read or recorded.
 
 ## Links
 
 - Package: <https://www.npmjs.com/package/strudel-lsp-server>
 - README: <https://github.com/PedroZappa/strudel-lsp-server#readme>
-- Changelog: <https://github.com/PedroZappa/strudel-lsp-server/blob/main/CHANGELOG.md>
+- Changelog: <https://github.com/PedroZappa/strudel-lsp-server/blob/main/CHANGELOG.md#020---2026-11-27>
 - Documentation and decisions: <https://github.com/PedroZappa/strudel-lsp-server/tree/main/docs>
 - Issues: <https://github.com/PedroZappa/strudel-lsp-server/issues>

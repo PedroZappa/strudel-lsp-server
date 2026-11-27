@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: re-implementation roadmap complete through Phase 14; Phase 15 defines the controlled `0.2.0` release path. `strudel-lsp-server@0.1.0` remains the published release. All Phase 14 tasks are implemented and verified, including the final documentation reconciliation and full validation gate. ADR-059 authorizes release preparation for `strudel-lsp-server@0.2.0` with `pedrozappa` as operator; the version bump, versioned changelog, release notes and exact release-candidate commit are prepared and validated. Tag, publication, provenance verification and GitHub release remain blocked until separate explicit authorization. ADR-051 records the scope and deferred work, ADR-052 records the configuration contract, ADR-053 records the filesystem boundary, ADR-054 records the `.npmrc` removal, ADR-055 records hermetic pack caching, ADR-056 records the advisory soak/lifecycle design, ADR-057 records the separate advisory benchmark report, ADR-058 records the independent editor-client smoke evidence, and ADR-059 records the release-preparation authorization. Missing provenance for the operator-managed first publish is recorded in ADR-050. Priorities are proposals and remain subject to approval.
+Status: re-implementation roadmap complete through Phase 15. `strudel-lsp-server@0.2.0` was published on 2026-11-27 from tag `v0.2.0` at commit `7d611a8d61dae2ab2eea21a12ce2ebdec59e4488` through the controlled OIDC workflow with `pedrozappa` as operator; `0.1.0` remains available. ADR-060 records the exact publication authorization and ADR-061 records the registry, signature, provenance and smoke evidence. ADR-051 records the scope and deferred work, ADR-052 records the configuration contract, ADR-053 records the filesystem boundary, ADR-054 records the `.npmrc` removal, ADR-055 records hermetic pack caching, ADR-056 records the advisory soak/lifecycle design, ADR-057 records the separate advisory benchmark report, ADR-058 records the independent editor-client smoke evidence, and ADR-059 records the release-preparation authorization. Missing provenance for the operator-managed first publish is recorded in ADR-050. Priorities are proposals and remain subject to approval.
 
 Authority: `AGENTS.md` sections 2–18 and the other documents in `docs/`.
 
@@ -389,24 +389,24 @@ Exit criteria:
 
 ## Phase 15 — v0.2.0 controlled release
 
-Dependencies: Phase 14, the release-preparation authorization in ADR-059 naming `0.2.0` and operator `pedrozappa`, and separate publication authorization for the controlled OIDC workflow.
+Dependencies: Phase 14, the release-preparation authorization in ADR-059 naming `0.2.0` and operator `pedrozappa`, and the exact publication authorization in ADR-060 for the controlled OIDC workflow.
 
-**Status: the release candidate is prepared and validated. No tag, publish, deprecation, dist-tag change or GitHub release is authorized by this roadmap entry or ADR-059.**
+**Status: completed. `0.2.0` was published on 2026-11-27 from `v0.2.0` at `7d611a8d61dae2ab2eea21a12ce2ebdec59e4488`. The exact-tag validation job passed and the controlled publish job ran with `npm-release` approval; the original run's final verification step failed only because npm had not yet made the version visible, and the checks were repeated successfully from a clean install. A validation-only dispatch after publication fails at dry-run parity because the immutable version now exists on the registry. Evidence and the workflow-verification limitation are recorded in ADR-061.**
 
 Tasks:
 
 - [x] Repeat type checking, linting, formatting, focused suites, full tests, package verification, dependency audit and benchmark check on the exact release commit. The candidate gate passed 85/85 tests, all focused suites, package and consumer-install verification, 18/18 benchmarks, corpus validation, audits and both client smoke runs; evidence is in `docs/TESTING_STRATEGY.md`.
-- [x] Prepare a versioned `CHANGELOG.md` section and GitHub release notes from `.github/RELEASE_TEMPLATE.md`; state what changed and what remains deferred. The `0.2.0` changelog section and release notes distinguish the prepared candidate from the published `0.1.0` release.
-- [ ] Tag the validated commit as `v0.2.0` only after explicit authorization and run the controlled workflow with `npm-release` approval; the ADR-049 bootstrap exception does not apply.
-- [ ] Verify the OIDC provenance attestation exists and matches the package, repository, workflow and commit. Record absence or mismatch as a release blocker rather than assuming provenance.
-- [ ] Run the ADR-046 post-publication smoke plan against the public registry and publish the GitHub release only after it passes.
+- [x] Prepare a versioned `CHANGELOG.md` section and GitHub release notes from `.github/RELEASE_TEMPLATE.md`; state what changed and what remains deferred. The published notes supersede the candidate wording and link to the versioned changelog section.
+- [x] Tag the validated commit as `v0.2.0` after explicit authorization and run the controlled workflow with `npm-release` approval; the ADR-049 bootstrap exception did not apply. Workflow run `46038153400` published the exact version; no local publish occurred.
+- [x] Verify the OIDC provenance attestation exists and matches the package, repository, workflow and commit. The SLSA v1 attestation subject digest, `refs/tags/v0.2.0`, repository, workflow path and resolved commit all matched; absence or mismatch would have blocked completion.
+- [x] Run the ADR-046 post-publication smoke plan against the public registry and publish the GitHub release only after it passes. Registry metadata, tarball identity, signatures, provenance, clean installs and installed stdio handshake passed.
 
 Exit criteria:
 
-- [ ] Exact-tag CI is green and the publish job runs through the controlled workflow, not an operator-managed local publish.
-- [ ] Published `0.2.0` metadata, tarball identity, signatures and provenance attestation are verified and recorded.
-- [ ] Clean installs, installed stdio handshake, documented launch command, tag and release notes pass smoke checks.
-- [ ] The published release notes state the remaining deferred work, and no unapproved registry mutation occurs.
+- [x] Exact-tag validation CI was green before publication and the publish job ran through the controlled workflow with `npm-release` approval, not an operator-managed local publish. The original run's final verification step failed transiently after publication; see ADR-061.
+- [x] Published `0.2.0` metadata, tarball identity, signatures and provenance attestation are verified and recorded in ADR-061 and `docs/TESTING_STRATEGY.md`.
+- [x] Clean installs, installed stdio handshake, documented launch command, tag and release notes pass smoke checks. The GitHub release is `v0.2.0` with no binary assets.
+- [x] The published release notes state the remaining deferred work, and no unapproved registry mutation occurs. No deprecation, dist-tag change, unpublish or retag was performed.
 
 ## Phase 13 release-quality backlog (post-publication status)
 

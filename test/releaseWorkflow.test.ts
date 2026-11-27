@@ -100,6 +100,27 @@ void test('Phase 13 authorization records the exact version and operator', () =>
   assert.match(section, /`pedrozappa` as the named release operator/);
 });
 
+void test('Phase 15 authorization and evidence record the exact published release', () => {
+  const authorizationMarker = '## ADR-060 — Phase 15 controlled publication authorization';
+  const authorizationStart = decisions.indexOf(authorizationMarker);
+  assert.notEqual(authorizationStart, -1);
+  const authorization = decisions.slice(authorizationStart);
+  assert.match(authorization, /exactly `strudel-lsp-server@0\.2\.0`/);
+  assert.match(authorization, /tagging exactly `v0\.2\.0`/);
+  assert.match(authorization, /`pedrozappa` as the named release operator/);
+  assert.match(authorization, /controlled OIDC workflow/);
+  assert.match(authorization, /ADR-049 applies only to `0\.1\.0`/);
+
+  const evidenceMarker = '## ADR-061 — Phase 15 publication and smoke evidence';
+  const evidenceStart = decisions.indexOf(evidenceMarker);
+  assert.notEqual(evidenceStart, -1);
+  const evidence = decisions.slice(evidenceStart);
+  assert.match(evidence, /46038153400/);
+  assert.match(evidence, /SLSA v1/);
+  assert.match(evidence, /7d611a8d61dae2ab2eea21a12ce2ebdec59e4488/);
+  assert.match(evidence, /[Nn]o deprecation, dist-tag change, unpublish or retag/);
+});
+
 void test('first-publish bootstrap exception is version-limited and blocks workflow publishing', () => {
   const marker = '## ADR-049 — First-publish bootstrap exception';
   const start = decisions.indexOf(marker);

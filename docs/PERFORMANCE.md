@@ -1,6 +1,6 @@
 # Performance
 
-Status: Phase 8 benchmark harness, workloads, baseline and advisory regression check implemented on 2026-11-27; the separate advisory installed-binary harness was added for Phase 14 work and is prepared for `0.2.0` on 2026-11-27.
+Status: Phase 8 benchmark harness, workloads, baseline and advisory regression check implemented on 2026-11-27; the separate advisory installed-binary harness was added for Phase 14 work and is published in `0.2.0` on 2026-11-27.
 
 Authority: `AGENTS.md` section 6.
 
@@ -116,15 +116,15 @@ The large incremental edit is currently slower than a full parse and analysis of
 - Layer-boundary timing lives in `scripts/benchmark.mjs` and installed-binary timing in `scripts/benchmark-e2e.mjs`; neither adds production timing hooks or user-facing configuration.
 - The runners keep fixtures, baseline data and results separate from `src/` and the published package.
 - Cancellation and superseded-version behaviour are covered by the stdio integration tests rather than by latency samples.
-- The Phase 14 soak suite prepared for `0.2.0` samples child-process RSS externally from `ps` and reports growth as advisory test diagnostics. Those samples are not latency measurements, do not enter the baseline and do not add production telemetry.
+- The Phase 14 soak suite published in `0.2.0` samples child-process RSS externally from `ps` and reports growth as advisory test diagnostics. Those samples are not latency measurements, do not enter the baseline and do not add production telemetry.
 - Future instrumentation should capture request cancellation counts only when a concrete latency investigation requires them.
 
 ## Current status
 
 Phase 8 is implemented. The harness records 18 workloads, the committed baseline contains measured p50/p95/p99 values and numeric warning thresholds, and CI reports advisory regressions. No performance target is a blocking correctness gate. Phase 6 and Phase 7 providers still lack production-side timing instrumentation; their latencies are measured through the harness rather than from live editor sessions.
 
-The Phase 14 diagnostics settings prepared for `0.2.0` apply a pure default configuration to each diagnostics and quick-fix derivation. The subsequent workspace-file hardening added symlink, containment, unreadable-path and deterministic-order guards. In the final `npm run benchmark:check` on darwin-arm64 with Node 26.8.2, all 18 workloads remained within the committed thresholds; `diagnostics-small` p50/p95/p99 were 0.003/0.003/0.003 ms, `quick-fixes-small` were 0.002/0.002/0.002 ms and `workspace-symbols-scan` was 0.605/0.648/0.684 ms. The committed baseline was not rewritten because these remain layer-level advisory measurements rather than editor latency.
+The Phase 14 diagnostics settings published in `0.2.0` apply a pure default configuration to each diagnostics and quick-fix derivation. The subsequent workspace-file hardening added symlink, containment, unreadable-path and deterministic-order guards. In the final `npm run benchmark:check` on darwin-arm64 with Node 26.8.2, all 18 workloads remained within the committed thresholds; `diagnostics-small` p50/p95/p99 were 0.003/0.003/0.003 ms, `quick-fixes-small` were 0.002/0.002/0.002 ms and `workspace-symbols-scan` was 0.605/0.648/0.684 ms. The committed baseline was not rewritten because these remain layer-level advisory measurements rather than editor latency.
 
-`npm run test:soak` now adds three bounded lifecycle cycles with 64 rapid edits and advisory RSS observation, but it does not measure p50/p95/p99 or change the 18-workload baseline. The full `npm run check` passed 85/85 tests on darwin-arm64 with Node 26.8.2 after the two-client smoke evidence contract was added; observed RSS growth of roughly 3.3–3.4 MiB per cycle was treated as warm-up evidence, not a regression threshold.
+`npm run test:soak` now adds three bounded lifecycle cycles with 64 rapid edits and advisory RSS observation, but it does not measure p50/p95/p99 or change the 18-workload baseline. The full `npm run check` passed 85/85 tests on darwin-arm64 with Node 26.8.2 after the two-client smoke evidence contract was added; the Phase 15 release-evidence contract subsequently raised the current gate to 86/86. Observed RSS growth of roughly 3.3–3.4 MiB per cycle was treated as warm-up evidence, not a regression threshold.
 
 The separate installed-binary workload is implemented under ADR-057. Its advisory report records 0.337/0.575/0.735 ms p50/p95/p99 over 100 samples, while `npm run benchmark:check` still passed all 18 layer workloads after the shared statistics extraction. Neither result is an editor-latency claim or a blocking gate.

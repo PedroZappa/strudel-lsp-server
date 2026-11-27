@@ -1,6 +1,6 @@
 # LSP Features
 
-Status: Phase 6 capabilities, signature help, conservative token-level mini-notation analysis, Phase 7 quick fixes, rename, document and workspace symbols, semantic tokens, formatting and inline-constant refactoring implemented and verified. The prepared `0.2.0` release adds focused diagnostics configuration (ADR-052), hardened workspace-symbol filesystem discovery (ADR-053), clean consumer-install verification with `.npmrc` removal and hermetic package verification (ADR-054/055), a bounded soak/lifecycle suite (ADR-056), a separate advisory installed-binary benchmark (ADR-057), and two independent editor-client smoke runs (ADR-058). It is validated but not published; `0.1.0` remains the published release. The release-candidate gate has 85 tests; remaining candidates are tracked below.
+Status: Phase 6 capabilities, signature help, conservative token-level mini-notation analysis, Phase 7 quick fixes, rename, document and workspace symbols, semantic tokens, formatting and inline-constant refactoring implemented and verified. The published `0.2.0` release adds focused diagnostics configuration (ADR-052), hardened workspace-symbol filesystem discovery (ADR-053), clean consumer-install verification with `.npmrc` removal and hermetic package verification (ADR-054/055), a bounded soak/lifecycle suite (ADR-056), a separate advisory installed-binary benchmark (ADR-057), and two independent editor-client smoke runs (ADR-058). `0.1.0` remains available. The release gate has 86 tests; remaining candidates are tracked below.
 
 Authority: `AGENTS.md` sections 4 and 5.
 
@@ -23,7 +23,7 @@ None of this behaviour is treated as a specification.
 
 | Capability                         | Status          | Proposed phase  | Notes                                                                                                        |
 | ---------------------------------- | --------------- | --------------- | ------------------------------------------------------------------------------------------------------------ |
-| Diagnostics                        | Implemented     | Early           | Conservative syntax warnings and unknown-call/method information; focused settings are prepared for `0.2.0`. |
+| Diagnostics                        | Implemented     | Early           | Conservative syntax warnings and unknown-call/method information; focused settings are published in `0.2.0`. |
 | Quick fixes                        | Implemented     | Extended        | Safe mini-notation edits only; no fixes for speculative or unknown-name issues.                              |
 | Completion                         | Implemented     | Early           | Position-aware globals, locals and Pattern methods; `.` trigger.                                             |
 | Completion resolution              | Not implemented | With completion | Only if additional lazy metadata adds real value.                                                            |
@@ -56,7 +56,7 @@ Priorities are proposed by phase in `docs/ROADMAP.md` and remain subject to appr
 - Provide accurate source ranges and actionable messages.
 - Reanalyse documents as they change without unnecessary recomputation.
 
-Current implementation: outermost non-empty syntax error nodes produce warnings; missing nodes and speculative semantic conclusions are suppressed. Unknown calls and pattern methods produce informational diagnostics only when the syntax tree is clean. Unresolved value references are intentionally not reported because runtime globals may be injected outside the document. Mini-notation reports empty groups, unmatched or mismatched closers and missing steps at the start of or between `,` or `|` separators; unclosed groups, trailing separators, other trailing operators and unsupported characters are not reported during live editing. The configuration implemented for the prepared `0.2.0` release in ADR-052 can globally disable these diagnostics or remap/suppress individual codes through `workspace/configuration` or a settings notification, but never changes which findings the providers consider reliable.
+Current implementation: outermost non-empty syntax error nodes produce warnings; missing nodes and speculative semantic conclusions are suppressed. Unknown calls and pattern methods produce informational diagnostics only when the syntax tree is clean. Unresolved value references are intentionally not reported because runtime globals may be injected outside the document. Mini-notation reports empty groups, unmatched or mismatched closers and missing steps at the start of or between `,` or `|` separators; unclosed groups, trailing separators, other trailing operators and unsupported characters are not reported during live editing. The configuration implemented for the published `0.2.0` release in ADR-052 can globally disable these diagnostics or remap/suppress individual codes through `workspace/configuration` or a settings notification, but never changes which findings the providers consider reliable.
 
 ## Quick fix policy
 
@@ -119,7 +119,7 @@ Current implementation: outermost non-empty syntax error nodes produce warnings;
 
 ## Configuration
 
-The published `0.1.0` package has no custom settings. The prepared `0.2.0` release adds a narrow diagnostics configuration; defaults remain identical to `0.1.0`.
+The published `0.1.0` package has no custom settings. The published `0.2.0` release adds a narrow diagnostics configuration; defaults remain identical to `0.1.0`.
 
 When a client advertises `workspace.configuration`, the server requests the `strudelLsp` section through `workspace/configuration`. The supported value is:
 
@@ -170,7 +170,7 @@ Verification evidence:
 - `npm run test:protocol`: nine raw stdio tests cover framed stdout purity, malformed JSON-RPC bodies and envelopes, unknown methods, invalid parameters, `$/cancelRequest` during a workspace scan, stale-edit suppression and document closure, no-workspace and multi-root initialization, unchanged defaults without a configuration capability, settings-notification changes, and shutdown/exit codes.
 - `npm run test:soak`: one bounded lifecycle test runs three cycles of 64 rapid edits, checks transport purity, final document state and clean shutdown, and reports RSS growth as advisory evidence with no production telemetry.
 - `npm run smoke:clients`: local VS Code and Neovim clients exercise initialize/capabilities, diagnostics, completion, document symbols, `didChange` synchronization and shutdown over stdio; `validation/client-smoke.json` records both passing runs, with all client configuration outside the server core (ADR-058).
-- `npm test`: 85 tests include the three stdio integration tests that verify capability advertisement, all twelve implemented request types, diagnostic publication, workspace configuration and dynamic republishing, quick-fix and inline-refactor code-action mapping, document-symbol and workspace-symbol, formatting, semantic-token and rename mapping, workspace file scanning with open-document overrides, document closure and rapid-edit version suppression, the nine protocol robustness tests, the one bounded soak/lifecycle test, the three LSP filesystem regression tests, plus five package/manifest, advisory-benchmark and client-smoke evidence contract checks.
+- `npm test`: 86 tests include the three stdio integration tests that verify capability advertisement, all twelve implemented request types, diagnostic publication, workspace configuration and dynamic republishing, quick-fix and inline-refactor code-action mapping, document-symbol and workspace-symbol, formatting, semantic-token and rename mapping, workspace file scanning with open-document overrides, document closure and rapid-edit version suppression, the nine protocol robustness tests, the one bounded soak/lifecycle test, the three LSP filesystem regression tests, plus six package/manifest, advisory-benchmark, client-smoke and Phase 15 release-evidence contract checks.
 
 ## Protocol lifecycle behaviour
 
@@ -179,6 +179,6 @@ Verification evidence:
 - Optional `initialize` fields are validated. `workspace/workspaceFolders` is queried only when the client advertised that capability; otherwise workspace symbol discovery uses the initialized roots or returns no results.
 - A lower document version that arrives after a newer version is not scheduled for analysis. Closing a document cancels pending analysis and clears published diagnostics.
 - `shutdown` followed by `exit` exits with code 0; `exit` without `shutdown` exits with code 1, matching the LSP lifecycle.
-- The bounded soak suite prepared for `0.2.0` repeats the clean lifecycle after rapid edits and stale versions, reporting RSS growth as advisory evidence without adding production telemetry (ADR-056).
+- The bounded soak suite published in `0.2.0` repeats the clean lifecycle after rapid edits and stale versions, reporting RSS growth as advisory evidence without adding production telemetry (ADR-056).
 
 Deferred: completion resolution, range formatting, broader refactoring, Strudel compatibility/version selection and remaining extended capabilities. The published `0.1.0` has no custom configuration; the `0.2.0` diagnostics settings are documented in ADR-052, while internal engine settings remain unexposed under ADR-034.
