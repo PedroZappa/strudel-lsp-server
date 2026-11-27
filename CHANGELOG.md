@@ -6,6 +6,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+- Fixed Windows package verification to invoke `npm.cmd` through the platform shell.
 - Added a cross-platform clean-install compatibility workflow and expanded package verification to cover both install modes, native parser prebuild loading and installed stdio handshakes.
 - Finalized first-release README scope and npm repository/homepage/bugs metadata, with a package metadata contract test.
 - Declared Node 24/26 and npm 11 support in package `engines` and documented the first-release OS validation matrix.

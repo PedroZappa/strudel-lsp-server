@@ -22,7 +22,11 @@ console.log('Native parser loaded on ' + process.platform + '-' + process.arch +
 `;
 
 function runNpm(args, cwd) {
-  const result = spawnSync(NPM, args, { cwd, encoding: 'utf8' });
+  const result = spawnSync(NPM, args, {
+    cwd,
+    encoding: 'utf8',
+    shell: process.platform === 'win32',
+  });
   if (result.error) throw result.error;
   if (result.status !== 0) {
     const details = [result.stdout, result.stderr].filter(Boolean).join('\n').trim();
