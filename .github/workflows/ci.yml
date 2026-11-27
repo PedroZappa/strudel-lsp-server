@@ -117,3 +117,6 @@ jobs:
       - name: Audit all dependencies
         continue-on-error: true
         run: npm audit
+
+      - name: Audit prototype client dependencies
+        run: npm audit --prefix client

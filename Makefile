@@ -51,7 +51,7 @@ _INFO    = [$(BLU)INFO$(D)]
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install install-dev build typecheck lint format format-check test test-parser test-semantic test-metadata test-features test-mini generate-metadata benchmark pack-check check verify verify-all ci check-static audit clean docs docs-open
+.PHONY: help install install-dev build typecheck lint format format-check test test-parser test-semantic test-metadata test-features test-mini generate-metadata benchmark pack-check check verify verify-all ci check-static audit audit-client clean docs docs-open
 
 #==============================================================================#
 #                                  RULES                                       #
@@ -156,7 +156,7 @@ verify-all: verify pack-check benchmark	## Core gate plus package contents and b
 
 # `.github/workflows/ci.yml` calls the underlying npm scripts directly and
 # additionally runs a runtime dependency audit; this is the local gate.
-ci: verify-all build	## Run the complete local CI gate
+ci: verify-all build audit-client	## Run the complete local CI gate
 	@echo "$(YEL)* $(_SUCCESS) Local CI gate completed$(D)"
 
 check-static:	## Run ESLint and verify shell script syntax
@@ -169,6 +169,11 @@ audit:	## Audit runtime dependencies (network access; AUDIT_ARGS overrides scope
 	@echo "$(YEL)Auditing dependencies ($(AUDIT_ARGS))...$(D)"
 	@$(NPM) audit $(AUDIT_ARGS)
 	@echo "$(YEL)* $(_SUCCESS) Dependency audit completed$(D)"
+
+audit-client:	## Audit prototype client dependencies (network access)
+	@echo "$(YEL)Auditing prototype client dependencies...$(D)"
+	@$(NPM) audit --prefix client
+	@echo "$(YEL)* $(_SUCCESS) Prototype client dependency audit completed$(D)"
 
 ##@ Utility Rules 🛠
 

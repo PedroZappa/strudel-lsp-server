@@ -1,6 +1,6 @@
 # Decisions
 
-Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened; ADR-021 records the Phase 6 deferred-item completion, ADR-022 records Phase 7 quick fixes, ADR-023 records document-scoped rename, ADR-024 records document symbols with workspace symbols deferred, ADR-025 records semantic tokens and ADR-026 records conservative formatting.
+Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened; ADR-021 records the Phase 6 deferred-item completion, ADR-022 records Phase 7 quick fixes, ADR-023 records document-scoped rename, ADR-024 records document symbols with workspace symbols deferred, ADR-025 records semantic tokens, ADR-026 records conservative formatting and ADR-027 records prototype client dependency remediation.
 
 ## ADR-001 — Clean-slate re-implementation
 
@@ -407,3 +407,22 @@ Consequences:
 - Feature tests cover nested blocks, tab and space preferences, protected strings/templates/comments, blank lines, clean documents and syntax errors; the stdio test verifies capability advertisement and edit mapping.
 - Formatting uses the cached syntax snapshot and has no measured latency figure; Phase 8 must include it in representative request workloads.
 - Broader refactoring and range formatting require separate usefulness and safety cases before implementation.
+
+## ADR-027 — Prototype client dependency advisories
+
+Status: accepted on 2026-11-27.
+
+Decision: clear all GitHub Dependabot advisories in the preserved prototype VS Code client by upgrading its direct `glob` dependency from `^11.0.0` to `^14.0.6` and regenerating `client/package-lock.json`. No server dependency, server source or client source file is changed.
+
+Root `npm audit` and `npm audit --omit=dev` already reported zero vulnerabilities. All 17 open Dependabot alerts were confined to `client/package-lock.json`: high advisories in `brace-expansion`, `@isaacs/brace-expansion`, `minimatch` and `glob`, and moderate advisories in `glob` and `minimatch`. A non-breaking lockfile refresh cleared the high alerts but left the moderate alerts because both vulnerable ranges extend through the versions allowed by `glob@11`. `glob@14.0.6` uses `minimatch@11`, which is outside those ranges. `npm audit fix --package-lock-only` then patched the remaining nested `minimatch@5` and `brace-expansion` advisories without further direct dependency changes.
+
+Licence: `glob@14.0.6` is `BlueOak-1.0.0`, an OSI-approved permissive licence with an express patent grant and a notice-retention requirement. It is compatible with the project's MIT licence; no `glob` source is copied into this repository, and npm lockfile metadata retains the licence identifier. Sources: [OSI approval](https://opensource.org/license/blueoak-1-0-0) and [licence steward](https://blueoakcouncil.org/license/1.0.0).
+
+Compatibility: the `glob.glob(...)` call in `client/src/test/index.ts` remains exported by `glob@14`, and the package supports Node `18 || 20 || >=22`. The prototype client is not part of the published server package.
+
+Consequences:
+
+- `npm audit --prefix client` reports zero vulnerabilities; `npm run check` passes.
+- CI audits the client lockfile in addition to the root package, and `make audit-client` exposes the same check locally.
+- The client manifest has one intentional breaking major version change; retiring the prototype client would remove it entirely.
+- GitHub Dependabot alerts are expected to close after the lockfile change is pushed.
