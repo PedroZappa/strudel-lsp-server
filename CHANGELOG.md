@@ -12,6 +12,7 @@ Version `0.1.0` was published on 2026-11-27 from tag `v0.1.0`; full user-facing 
 - A bounded soak/lifecycle suite covering rapid edits, stale-version suppression, repeated initialize/shutdown cycles and advisory RSS observation, with no production telemetry.
 - A separate advisory installed-binary benchmark that packs and installs the server offline, measures one JSON-RPC document-symbol workload through the installed bin and records p50/p95/p99 in `benchmarks/end-to-end.json` without changing the layer-level baseline.
 - Local VS Code and Neovim LSP smoke clients with all client configuration outside the server core; passing behaviours are recorded in `validation/client-smoke.json` and no editor dependency was added to the published package.
+- The final Phase 14 gate passes 85 tests, including configuration, LSP filesystem, protocol, soak and two-client evidence contract checks.
 
 ### Changed
 
@@ -52,5 +53,5 @@ Version `0.1.0` was published on 2026-11-27 from tag `v0.1.0`; full user-facing 
 ### Known issues
 
 - Seven pinned documentation examples expose two upstream `tree-sitter-strudel@2.0.2` grammar gaps: `%` modulo in JavaScript expressions and `//` inside string literals. The grammar is not vendored or patched here.
-- There is no custom configuration channel; diagnostic overrides and Strudel version selection remain deferred.
+- In `0.1.0`, there is no custom configuration channel; diagnostic overrides and Strudel version selection remain deferred.
 - Incremental semantic reuse is statement-level, and mini-notation tokenization is lexical rather than a full recovery parser. Platforms outside the validated matrix are best-effort.

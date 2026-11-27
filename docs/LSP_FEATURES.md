@@ -1,6 +1,6 @@
 # LSP Features
 
-Status: Phase 6 capabilities, signature help, conservative token-level mini-notation analysis, Phase 7 quick fixes, rename, document and workspace symbols, semantic tokens, formatting and inline-constant refactoring implemented and verified. The unreleased `0.2.0` work adds focused diagnostics configuration and hardened workspace-symbol filesystem discovery; remaining candidates are tracked below.
+Status: Phase 6 capabilities, signature help, conservative token-level mini-notation analysis, Phase 7 quick fixes, rename, document and workspace symbols, semantic tokens, formatting and inline-constant refactoring implemented and verified. The unreleased `0.2.0` work adds focused diagnostics configuration (ADR-052), hardened workspace-symbol filesystem discovery (ADR-053), clean consumer-install verification with `.npmrc` removal and hermetic package verification (ADR-054/055), a bounded soak/lifecycle suite (ADR-056), a separate advisory installed-binary benchmark (ADR-057), and two independent editor-client smoke runs (ADR-058). The final gate has 85 tests; remaining candidates are tracked below.
 
 Authority: `AGENTS.md` sections 4 and 5.
 
@@ -8,7 +8,7 @@ Authority: `AGENTS.md` sections 4 and 5.
 
 Capabilities are evaluated for usefulness, correctness, dependencies and maintenance cost. A capability is advertised in `initialize` only when implemented and verified. Prototype handlers are not carried forward merely because they exist.
 
-Current prototype facts, for transition context only:
+Historical prototype facts, for transition context only:
 
 - `initialize` advertises only incremental text sync and completion.
 - Diagnostics are naive whole-text bracket counting.
@@ -43,7 +43,7 @@ None of this behaviour is treated as a specification.
 | Call hierarchy                     | Deferred        | Deferred        | Depends on robust cross-reference semantics.                                                                       |
 | Mini-notation-aware analysis       | Implemented     | Early           | Parser-independent tokens; conservative structural warnings and operator hover.                                    |
 
-Priorities are proposed by phase in `docs/ROADMAP.md` and remain subject to approval once licensing and metadata sources are resolved.
+Priorities are proposed by phase in `docs/ROADMAP.md` and remain subject to approval. The parser redistribution licence decision is recorded in ADR-032, and the pinned metadata snapshot is documented in `docs/PARSER_INTEGRATION.md`.
 
 ## Diagnostics policy
 
@@ -56,7 +56,7 @@ Priorities are proposed by phase in `docs/ROADMAP.md` and remain subject to appr
 - Provide accurate source ranges and actionable messages.
 - Reanalyse documents as they change without unnecessary recomputation.
 
-Current implementation: outermost non-empty syntax error nodes produce warnings; missing nodes and speculative semantic conclusions are suppressed. Unknown calls and pattern methods produce informational diagnostics only when the syntax tree is clean. Unresolved value references are intentionally not reported because runtime globals may be injected outside the document. Mini-notation reports empty groups, unmatched or mismatched closers and missing steps at the start of or between `,` or `|` separators; unclosed groups, trailing separators, other trailing operators and unsupported characters are not reported during live editing. The unreleased configuration in ADR-052 may globally disable these diagnostics or remap/suppress individual codes, but never changes which findings the providers consider reliable.
+Current implementation: outermost non-empty syntax error nodes produce warnings; missing nodes and speculative semantic conclusions are suppressed. Unknown calls and pattern methods produce informational diagnostics only when the syntax tree is clean. Unresolved value references are intentionally not reported because runtime globals may be injected outside the document. Mini-notation reports empty groups, unmatched or mismatched closers and missing steps at the start of or between `,` or `|` separators; unclosed groups, trailing separators, other trailing operators and unsupported characters are not reported during live editing. The implemented but unreleased configuration in ADR-052 can globally disable these diagnostics or remap/suppress individual codes through `workspace/configuration` or a settings notification, but never changes which findings the providers consider reliable.
 
 ## Quick fix policy
 
@@ -135,7 +135,7 @@ When a client advertises `workspace.configuration`, the server requests the `str
 }
 ```
 
-`workspace/didChangeConfiguration` may instead deliver the same object under `settings.strudelLsp`. Settings semantics:
+When the client advertises `workspace.configuration`, the server also re-queries the `strudelLsp` section on a configuration notification. When the client does not advertise that capability, `workspace/didChangeConfiguration` may instead deliver the same object under `settings.strudelLsp`. Settings semantics:
 
 - `diagnostics.enabled` is a boolean and defaults to `true`.
 - `diagnostics.severity` optionally maps `syntax-error`, `unknown-global`, `unknown-pattern-method`, `empty-group`, `unmatched-close`, `mismatched-close` and `empty-step` to `error`, `warning`, `information`, `hint` or `off`.
@@ -170,7 +170,7 @@ Verification evidence:
 - `npm run test:protocol`: nine raw stdio tests cover framed stdout purity, malformed JSON-RPC bodies and envelopes, unknown methods, invalid parameters, `$/cancelRequest` during a workspace scan, stale-edit suppression and document closure, no-workspace and multi-root initialization, unchanged defaults without a configuration capability, settings-notification changes, and shutdown/exit codes.
 - `npm run test:soak`: one bounded lifecycle test runs three cycles of 64 rapid edits, checks transport purity, final document state and clean shutdown, and reports RSS growth as advisory evidence with no production telemetry.
 - `npm run smoke:clients`: local VS Code and Neovim clients exercise initialize/capabilities, diagnostics, completion, document symbols, `didChange` synchronization and shutdown over stdio; `validation/client-smoke.json` records both passing runs, with all client configuration outside the server core (ADR-058).
-- `npm test`: 85 tests include the three stdio integration tests that verify capability advertisement, all twelve implemented request types, diagnostic publication, workspace configuration and dynamic republishing, quick-fix and inline-refactor code-action mapping, document-symbol and workspace-symbol, formatting, semantic-token and rename mapping, workspace file scanning with open-document overrides, document closure and rapid-edit version suppression, the nine protocol robustness tests, the one bounded soak/lifecycle test, the three LSP filesystem regression tests, plus package/manifest contract checks.
+- `npm test`: 85 tests include the three stdio integration tests that verify capability advertisement, all twelve implemented request types, diagnostic publication, workspace configuration and dynamic republishing, quick-fix and inline-refactor code-action mapping, document-symbol and workspace-symbol, formatting, semantic-token and rename mapping, workspace file scanning with open-document overrides, document closure and rapid-edit version suppression, the nine protocol robustness tests, the one bounded soak/lifecycle test, the three LSP filesystem regression tests, plus five package/manifest, advisory-benchmark and client-smoke evidence contract checks.
 
 ## Protocol lifecycle behaviour
 

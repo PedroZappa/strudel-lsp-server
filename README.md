@@ -64,12 +64,15 @@ Published version `0.1.0` deliberately limits scope:
 
 The published `0.1.0` package has no custom settings: diagnostics are enabled by default with conservative provider-defined severities, formatting follows the client's standard LSP `tabSize` and `insertSpaces` options, and language metadata uses the pinned Strudel snapshot.
 
-The unreleased development tree adds focused diagnostics settings under the standard LSP `strudelLsp` section: `diagnostics.enabled` plus optional per-code severities (`error`, `warning`, `information`, `hint` or `off`). Clients that advertise `workspace.configuration` are queried for this section; `workspace/didChangeConfiguration` also applies settings and republishes diagnostics. Defaults remain unchanged when no configuration is supplied. Formatting preferences and Strudel metadata selection remain outside this narrow surface, and client-specific configuration stays outside the package. See [LSP_FEATURES.md](https://github.com/PedroZappa/strudel-lsp-server/blob/main/docs/LSP_FEATURES.md#configuration) for the exact settings shape and ADR-052 for the decision.
+The unreleased development tree adds focused diagnostics settings under the standard LSP `strudelLsp` section: `diagnostics.enabled` plus optional per-code severities (`error`, `warning`, `information`, `hint` or `off`). Clients that advertise `workspace.configuration` are queried for this section, including on a configuration notification; clients without that capability can send `workspace/didChangeConfiguration` with settings under `settings.strudelLsp`. Either path republishes diagnostics for all open documents, and defaults remain unchanged when no configuration is supplied. Formatting preferences and Strudel metadata selection remain outside this narrow surface, and client-specific configuration stays outside the package. See [LSP_FEATURES.md](https://github.com/PedroZappa/strudel-lsp-server/blob/main/docs/LSP_FEATURES.md#configuration) for the exact settings shape and ADR-052 for the decision.
 
 ## Development
 
 ```bash
 npm run check
+npm run test:configuration
+npm run test:lsp
+npm run test:protocol
 npm run test:soak
 npm run benchmark:check
 npm run benchmark:e2e
@@ -79,16 +82,16 @@ npm run verify:package
 npm run verify:consumer
 ```
 
-The Makefile provides the same workflows through `make check`, `make test-soak`, `make benchmark-check`, `make benchmark-e2e`, `make smoke-clients`, `make pack-check`, `make verify-package`, `make verify-consumer` and `make verify-all`. `npm run verify:contents` previews and checks the tarball allowlist with an isolated npm cache. `npm run verify:package` uses the same isolated cache for packing, performs a clean offline installation from that tarball using the surrounding cache, and verifies the installed stdio executable with an initialize/shutdown handshake. `npm run verify:consumer` checks installation without inherited npm configuration or legacy peer dependencies. `npm run test:soak` exercises rapid edits and repeated initialize/shutdown cycles; RSS growth is reported as advisory test diagnostics rather than production telemetry. `npm run benchmark:e2e` measures one document-symbol request path through stdio JSON-RPC and the installed bin; its p50/p95/p99 are stored in the separate advisory `benchmarks/end-to-end.json` report, not in the layer-level baseline. `npm run smoke:clients` runs local VS Code and Neovim LSP clients against the built server; their configuration stays in `smoke/` and results are recorded in `validation/client-smoke.json`. These editor clients are local evidence only and are not dependencies of the published server.
+The Makefile provides the same workflows through `make check`, `make test-configuration`, `make test-lsp`, `make test-protocol`, `make test-soak`, `make benchmark-check`, `make benchmark-e2e`, `make smoke-clients`, `make pack-check`, `make verify-package`, `make verify-consumer` and `make verify-all`. `npm run verify:contents` previews and checks the tarball allowlist with an isolated npm cache. `npm run verify:package` uses the same isolated cache for packing, performs a clean offline installation from that tarball using the surrounding cache, and verifies the installed stdio executable with an initialize/shutdown handshake. `npm run verify:consumer` checks installation without inherited npm configuration or legacy peer dependencies. `npm run test:soak` exercises rapid edits and repeated initialize/shutdown cycles; RSS growth is reported as advisory test diagnostics rather than production telemetry. `npm run benchmark:e2e` measures one document-symbol request path through stdio JSON-RPC and the installed bin; its p50/p95/p99 are stored in the separate advisory `benchmarks/end-to-end.json` report, not in the layer-level baseline. `npm run smoke:clients` runs local VS Code and Neovim LSP clients against the built server; their configuration stays in `smoke/` and results are recorded in `validation/client-smoke.json`. These editor clients are local evidence only and are not dependencies of the published server.
 
 ## Repository layout
 
 ```text
 src/          Server source and feature providers
-test/         Parser, semantic, metadata, feature and stdio suites
+test/         Parser, semantic, metadata, configuration, LSP filesystem, feature, mini-notation, protocol, soak and stdio suites
 docs/         Authoritative specifications and decisions
 scripts/      Metadata generation, benchmarks and package verification
-benchmarks/   Synthetic fixtures and committed performance baseline
+benchmarks/   Synthetic fixtures, committed layer baseline and advisory installed-binary report
 validation/   Corpus and client-smoke evidence reports
 smoke/        Local VS Code and Neovim client configurations, excluded from the package
 client/       Legacy VS Code prototype, excluded from the package build
