@@ -168,7 +168,8 @@ Verification evidence:
 - `npm run test:lsp`: three isolated filesystem tests cover deterministic ordering, symlink and traversal rejection, depth and file-size limits, unreadable paths and cancellation.
 - `npm run test:mini`: five isolated token-model tests cover documented operators, token descriptions, structural faults, expected-closer metadata, live-coding suppression and unsupported-character progress.
 - `npm run test:protocol`: nine raw stdio tests cover framed stdout purity, malformed JSON-RPC bodies and envelopes, unknown methods, invalid parameters, `$/cancelRequest` during a workspace scan, stale-edit suppression and document closure, no-workspace and multi-root initialization, unchanged defaults without a configuration capability, settings-notification changes, and shutdown/exit codes.
-- `npm test`: 81 tests include the three stdio integration tests that verify capability advertisement, all twelve implemented request types, diagnostic publication, workspace configuration and dynamic republishing, quick-fix and inline-refactor code-action mapping, document-symbol and workspace-symbol, formatting, semantic-token and rename mapping, workspace file scanning with open-document overrides, document closure and rapid-edit version suppression, the nine protocol robustness tests, the three LSP filesystem regression tests, plus package/manifest contract checks.
+- `npm run test:soak`: one bounded lifecycle test runs three cycles of 64 rapid edits, checks transport purity, final document state and clean shutdown, and reports RSS growth as advisory evidence with no production telemetry.
+- `npm test`: 83 tests include the three stdio integration tests that verify capability advertisement, all twelve implemented request types, diagnostic publication, workspace configuration and dynamic republishing, quick-fix and inline-refactor code-action mapping, document-symbol and workspace-symbol, formatting, semantic-token and rename mapping, workspace file scanning with open-document overrides, document closure and rapid-edit version suppression, the nine protocol robustness tests, the one bounded soak/lifecycle test, the three LSP filesystem regression tests, plus package/manifest contract checks.
 
 ## Protocol lifecycle behaviour
 
@@ -177,5 +178,6 @@ Verification evidence:
 - Optional `initialize` fields are validated. `workspace/workspaceFolders` is queried only when the client advertised that capability; otherwise workspace symbol discovery uses the initialized roots or returns no results.
 - A lower document version that arrives after a newer version is not scheduled for analysis. Closing a document cancels pending analysis and clears published diagnostics.
 - `shutdown` followed by `exit` exits with code 0; `exit` without `shutdown` exits with code 1, matching the LSP lifecycle.
+- The unreleased bounded soak suite repeats the clean lifecycle after rapid edits and stale versions, reporting RSS growth as advisory evidence without adding production telemetry (ADR-056).
 
 Deferred: completion resolution, range formatting, broader refactoring, Strudel compatibility/version selection and remaining extended capabilities. The published `0.1.0` has no custom configuration; the unreleased diagnostics settings are documented in ADR-052, while internal engine settings remain unexposed under ADR-034.

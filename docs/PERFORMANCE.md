@@ -106,6 +106,7 @@ The large incremental edit is currently slower than a full parse and analysis of
 - Layer-boundary timing lives only in `scripts/benchmark.mjs`; the harness adds no production timing hooks or user-facing configuration.
 - The runner keeps fixtures, baseline data and results separate from `src/` and the published package.
 - Cancellation and superseded-version behaviour are covered by the stdio integration tests rather than by latency samples.
+- The unreleased Phase 14 soak suite samples child-process RSS externally from `ps` and reports growth as advisory test diagnostics. Those samples are not latency measurements, do not enter the baseline and do not add production telemetry.
 - Future instrumentation should capture request cancellation counts only when a concrete latency investigation requires them.
 
 ## Current status
@@ -113,3 +114,5 @@ The large incremental edit is currently slower than a full parse and analysis of
 Phase 8 is implemented. The harness records 18 workloads, the committed baseline contains measured p50/p95/p99 values and numeric warning thresholds, and CI reports advisory regressions. No performance target is a blocking correctness gate. Phase 6 and Phase 7 providers still lack production-side timing instrumentation; their latencies are measured through the harness rather than from live editor sessions.
 
 The unreleased Phase 14 diagnostics settings apply a pure default configuration to each diagnostics and quick-fix derivation. The subsequent workspace-file hardening added symlink, containment, unreadable-path and deterministic-order guards. In the final `npm run benchmark:check` on darwin-arm64 with Node 26.8.2, all 18 workloads remained within the committed thresholds; `diagnostics-small` p50/p95/p99 were 0.002/0.003/0.003 ms, `quick-fixes-small` were 0.002/0.003/0.003 ms and `workspace-symbols-scan` was 0.595/0.644/0.666 ms. The committed baseline was not rewritten because these remain layer-level advisory measurements rather than editor latency.
+
+`npm run test:soak` now adds three bounded lifecycle cycles with 64 rapid edits and advisory RSS observation, but it does not measure p50/p95/p99 or change the 18-workload baseline. The full `npm run check` passed 83/83 tests on darwin-arm64 with Node 26.8.2; observed RSS growth of roughly 3.3–3.4 MiB per cycle was treated as warm-up evidence, not a regression threshold. The separate end-to-end JSON-RPC/installed-binary latency workload remains an open Phase 14 item under ADR-051.

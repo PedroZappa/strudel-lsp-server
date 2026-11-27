@@ -70,13 +70,14 @@ The unreleased development tree adds focused diagnostics settings under the stan
 
 ```bash
 npm run check
+npm run test:soak
 npm run benchmark:check
 npm run verify:contents
 npm run verify:package
 npm run verify:consumer
 ```
 
-The Makefile provides the same workflows through `make check`, `make benchmark-check`, `make pack-check`, `make verify-package`, `make verify-consumer` and `make verify-all`. `npm run verify:contents` previews and checks the tarball allowlist with an isolated npm cache. `npm run verify:package` uses the same isolated cache for packing, performs a clean offline installation from that tarball using the surrounding cache, and verifies the installed stdio executable with an initialize/shutdown handshake. `npm run verify:consumer` checks installation without inherited npm configuration or legacy peer dependencies.
+The Makefile provides the same workflows through `make check`, `make test-soak`, `make benchmark-check`, `make pack-check`, `make verify-package`, `make verify-consumer` and `make verify-all`. `npm run verify:contents` previews and checks the tarball allowlist with an isolated npm cache. `npm run verify:package` uses the same isolated cache for packing, performs a clean offline installation from that tarball using the surrounding cache, and verifies the installed stdio executable with an initialize/shutdown handshake. `npm run verify:consumer` checks installation without inherited npm configuration or legacy peer dependencies. `npm run test:soak` exercises rapid edits and repeated initialize/shutdown cycles; RSS growth is reported as advisory test diagnostics rather than production telemetry.
 
 ## Repository layout
 

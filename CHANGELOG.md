@@ -9,6 +9,7 @@ Version `0.1.0` was published on 2026-11-27 from tag `v0.1.0`; full user-facing 
 ### Added
 
 - Focused, unreleased diagnostics configuration through standard `workspace/configuration` and `workspace/didChangeConfiguration`: a global enable flag, per-code severity overrides including `off`, and unchanged defaults when no settings are supplied. Quick fixes follow the resulting diagnostics.
+- A bounded soak/lifecycle suite covering rapid edits, stale-version suppression, repeated initialize/shutdown cycles and advisory RSS observation, with no production telemetry.
 
 ### Changed
 

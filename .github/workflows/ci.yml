@@ -72,6 +72,9 @@ jobs:
       - name: Run protocol robustness suite
         run: npm run test:protocol
 
+      - name: Run bounded soak/lifecycle suite
+        run: npm run test:soak
+
       - name: Validate real Strudel documentation corpus
         run: npm run validate:corpus
 

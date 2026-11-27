@@ -41,6 +41,7 @@ void test('test scripts use glob patterns supported by Node 24 and 26', () => {
     'test:features',
     'test:mini',
     'test:protocol',
+    'test:soak',
   ];
   const suiteFiles = suiteNames
     .flatMap((name) => globSync(testPattern(name), { cwd: repositoryRoot }))

@@ -51,7 +51,7 @@ _INFO    = [$(BLU)INFO$(D)]
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install install-dev build typecheck lint format format-check test test-parser test-semantic test-metadata test-configuration test-lsp test-features test-mini test-protocol validate-corpus validate-corpus-write generate-metadata benchmark benchmark-check benchmark-baseline pack-check verify-package verify-consumer verify-release check verify verify-all ci check-static audit audit-client clean docs docs-open
+.PHONY: help install install-dev build typecheck lint format format-check test test-parser test-semantic test-metadata test-configuration test-lsp test-features test-mini test-protocol test-soak validate-corpus validate-corpus-write generate-metadata benchmark benchmark-check benchmark-baseline pack-check verify-package verify-consumer verify-release check verify verify-all ci check-static audit audit-client clean docs docs-open
 
 #==============================================================================#
 #                                  RULES                                       #
@@ -140,6 +140,11 @@ test-protocol:	## Build and run raw stdio protocol robustness tests only
 	@echo "$(YEL)Running protocol robustness tests...$(D)"
 	@$(NPM) run test:protocol
 	@echo "$(YEL)* $(_SUCCESS) Protocol robustness tests completed$(D)"
+
+test-soak:	## Build and run the bounded soak/lifecycle suite only
+	@echo "$(YEL)Running soak/lifecycle tests...$(D)"
+	@$(NPM) run test:soak
+	@echo "$(YEL)* $(_SUCCESS) Soak/lifecycle tests completed$(D)"
 
 validate-corpus:	## Validate syntax and semantics against pinned Strudel documentation examples
 	@echo "$(YEL)Validating real Strudel documentation corpus...$(D)"
