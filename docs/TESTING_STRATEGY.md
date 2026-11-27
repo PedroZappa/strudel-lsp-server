@@ -68,15 +68,17 @@ Root scripts established in Phases 2–6:
 - `npm run typecheck` — TypeScript strict-mode check with no emit.
 - `npm run lint` — ESLint with TypeScript-aware rules over managed source and test files.
 - `npm run format:check` — Prettier verification with prototype and generated files excluded.
-- `npm test` — compile to ESM, then run `node --test dist/test`.
-- `npm run test:parser` — compile to ESM, then run only `dist/test/parser` grammar/parser integration tests.
-- `npm run test:semantic` — compile to ESM, then run only `dist/test/semantic` semantic engine tests.
-- `npm run test:metadata` — compile to ESM, then run only `dist/test/metadata` language database tests.
-- `npm run test:features` — compile to ESM, then run only `dist/test/features` language feature tests.
-- `npm run test:mini` — compile to ESM, then run only `dist/test/miniNotation` token-model tests.
+- `npm test` — compile to ESM, then run `node --test "dist/test/**/*.test.js"`.
+- `npm run test:parser` — compile to ESM, then run only `dist/test/parser/**/*.test.js` grammar/parser integration tests.
+- `npm run test:semantic` — compile to ESM, then run only `dist/test/semantic/**/*.test.js` semantic engine tests.
+- `npm run test:metadata` — compile to ESM, then run only `dist/test/metadata/**/*.test.js` language database tests.
+- `npm run test:features` — compile to ESM, then run only `dist/test/features/**/*.test.js` language feature tests.
+- `npm run test:mini` — compile to ESM, then run only `dist/test/miniNotation/**/*.test.js` token-model tests.
 - `npm run generate:metadata` — regenerate the committed snapshot from pinned local inputs.
 - `npm run benchmark` — benchmark command runner; workloads and p50/p95/p99 targets arrive in Phase 8.
 - `npm run check` — chains typecheck, lint, format verification and the full test suite.
+
+Test discovery uses quoted glob patterns instead of bare directories. Node 24 interprets positional `node --test` arguments as glob patterns and attempts to load a directory as a module; Node 26 additionally accepts directories. `test/packageScripts.test.ts` verifies that the suite patterns use globs and together cover every compiled suite file.
 
 The `Makefile` provides convenience targets for these commands; `make check` runs the same combined gate as `npm run check`, `make test-parser`, `make test-semantic`, `make test-metadata`, `make test-features` and `make test-mini` run isolated suites, and `make generate-metadata` regenerates the snapshot.
 
@@ -98,26 +100,26 @@ Prototype directories remain outside the lint/format/build scopes. The committed
 
 ## Current validation status (2026-11-27)
 
-| Command                   | Result | Notes                                                                                                                                                 |
-| ------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `npm ci --ignore-scripts` | Pass   | Clean install from `package-lock.json`: 137 packages added, 0 vulnerabilities.                                                                        |
-| `npm ls --depth=0`        | Pass   | All fifteen pinned root packages are installed at the selected versions.                                                                              |
-| `npm audit --omit=dev`    | Pass   | Zero runtime vulnerabilities.                                                                                                                         |
-| `npm audit`               | Pass   | Zero vulnerabilities.                                                                                                                                 |
-| `npm run typecheck`       | Pass   | Strict TypeScript check succeeds for `src/` and `test/`.                                                                                              |
-| `npm run lint`            | Pass   | ESLint succeeds with type-aware rules and the retained `@stylistic/eslint-plugin`.                                                                    |
-| `npm run format:check`    | Pass   | Prettier succeeds for managed files.                                                                                                                  |
-| `npm test`                | Pass   | Forty-six tests pass: one stdio integration, five parser, seven semantic, five metadata, twenty-three feature and five mini-notation tests.           |
-| `npm run test:parser`     | Pass   | Five parser integration tests pass independently of semantic tests.                                                                                   |
-| `npm run test:semantic`   | Pass   | Seven semantic engine tests pass independently of parser tests.                                                                                       |
-| `npm run test:metadata`   | Pass   | Five metadata generation and language database tests pass independently of parser and semantic suites.                                                |
-| `npm run test:features`   | Pass   | Twenty-three provider tests pass independently of parser and metadata suites.                                                                         |
-| `npm run test:mini`       | Pass   | Five mini-notation token tests pass independently of the Tree-sitter adapter.                                                                         |
-| `npm run benchmark`       | Pass   | The runner starts and reports that no workloads are registered; no latency figures are claimed.                                                       |
-| `npm run check`           | Pass   | The combined typecheck, lint, format and test gate passes.                                                                                            |
-| `git diff --check`        | Pass   | Working-tree diff has no whitespace errors.                                                                                                           |
-| `npm ls --all`            | Pass   | `tree-sitter-strudel@2.0.2` declares `tree-sitter ^0.25.0`; no invalid peer-range warning remains. Only unrelated optional peer notices are reported. |
+| Command                   | Result | Notes                                                                                                                                                                                     |
+| ------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm ci --ignore-scripts` | Pass   | Clean install from `package-lock.json`: 137 packages added, 0 vulnerabilities.                                                                                                            |
+| `npm ls --depth=0`        | Pass   | All fifteen pinned root packages are installed at the selected versions.                                                                                                                  |
+| `npm audit --omit=dev`    | Pass   | Zero runtime vulnerabilities.                                                                                                                                                             |
+| `npm audit`               | Pass   | Zero vulnerabilities.                                                                                                                                                                     |
+| `npm run typecheck`       | Pass   | Strict TypeScript check succeeds for `src/` and `test/`.                                                                                                                                  |
+| `npm run lint`            | Pass   | ESLint succeeds with type-aware rules and the retained `@stylistic/eslint-plugin`.                                                                                                        |
+| `npm run format:check`    | Pass   | Prettier succeeds for managed files.                                                                                                                                                      |
+| `npm test`                | Pass   | Forty-seven tests pass: one stdio integration, one test-script discovery regression check, five parser, seven semantic, five metadata, twenty-three feature and five mini-notation tests. |
+| `npm run test:parser`     | Pass   | Five parser integration tests pass independently of semantic tests.                                                                                                                       |
+| `npm run test:semantic`   | Pass   | Seven semantic engine tests pass independently of parser tests.                                                                                                                           |
+| `npm run test:metadata`   | Pass   | Five metadata generation and language database tests pass independently of parser and semantic suites.                                                                                    |
+| `npm run test:features`   | Pass   | Twenty-three provider tests pass independently of parser and metadata suites.                                                                                                             |
+| `npm run test:mini`       | Pass   | Five mini-notation token tests pass independently of the Tree-sitter adapter.                                                                                                             |
+| `npm run benchmark`       | Pass   | The runner starts and reports that no workloads are registered; no latency figures are claimed.                                                                                           |
+| `npm run check`           | Pass   | The combined typecheck, lint, format and test gate passes.                                                                                                                                |
+| `git diff --check`        | Pass   | Working-tree diff has no whitespace errors.                                                                                                                                               |
+| `npm ls --all`            | Pass   | `tree-sitter-strudel@2.0.2` declares `tree-sitter ^0.25.0`; no invalid peer-range warning remains. Only unrelated optional peer notices are reported.                                     |
 
-The CI workflow was added on 2026-11-27. Its YAML structure, pinned action refs and delegated npm commands were checked locally, but no GitHub-hosted run has executed yet.
+The CI workflow was added on 2026-11-27. A GitHub-hosted Node 24 run exposed the bare-directory test discovery failure; test scripts now pass compiled test globs. Node 24 is not installed locally, so glob execution was verified on Node 26 while `test/packageScripts.test.ts` guards the script form for both supported versions.
 
 Phase 1 parser smoke evidence and the Phase 3 upgrade validation are recorded in `docs/PARSER_INTEGRATION.md` and `docs/DECISIONS.md`. The parser suite runs against `tree-sitter-strudel@2.0.2` and covers stable node kinds and ranges, chained method calls, variable declarations, UTF-16 positions with non-ASCII input, incremental edit/reparse, and malformed-input recovery. The Phase 4 semantic suite covers symbol and scope resolution, pattern inference, mini-notation argument contexts, imports, incomplete input, incremental reuse, invalidation and cancellation. The Phase 5 metadata suite covers deterministic regeneration, pinned provenance, offline catalog lookup, version selection, runtime-derived entries and semantic-engine integration. The Phase 6 feature suite covers conservative diagnostics, malformed input, position-aware completion, hover content, resolved-symbol navigation, signature help, mini-notation diagnostics and hover, and incremental mini-notation range shifting. Phase 7 adds quick-fix edit contents, range filtering and non-actionable diagnostics, plus rename edits, prepare ranges, invalid names, incomplete input, document-symbol ranges and hierarchy, semantic-token classification, and formatting indentation, preferences and protected content, to the feature suite. The mini-notation suite covers documented 1.2.6 operators, token descriptions, structural faults, expected-closer metadata, incomplete input and unsupported-character progress. The stdio integration test covers advertised capabilities, all implemented request types, diagnostic publication, code-action, document-symbol, formatting, semantic-token and rename mapping, document closure and rapid-edit version suppression. No performance suite exists yet.

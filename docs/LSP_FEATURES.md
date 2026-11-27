@@ -128,6 +128,6 @@ Verification evidence:
 
 - `npm run test:features`: twenty-three provider tests cover conservative diagnostics, malformed input, quick-fix edits and range filtering, position-aware completion, hover content, resolved-symbol navigation, document-symbol ranges and hierarchy, formatting indentation and preferences, rename preparation and edits, semantic-token classification, signature help, mini-notation diagnostics and hover, and incremental range shifting.
 - `npm run test:mini`: five isolated token-model tests cover documented operators, token descriptions, structural faults, expected-closer metadata, live-coding suppression and unsupported-character progress.
-- `npm test`: 46 tests include a stdio integration test that verifies capability advertisement, all eleven implemented request types, diagnostic publication, code-action, document-symbol, formatting, semantic-token and rename mapping, document closure and rapid-edit version suppression.
+- `npm test`: 47 tests include a stdio integration test that verifies capability advertisement, all eleven implemented request types, diagnostic publication, code-action, document-symbol, formatting, semantic-token and rename mapping, document closure and rapid-edit version suppression, plus one test-script discovery regression check.
 
 Deferred: completion resolution, workspace symbols, range formatting, broader refactoring and remaining extended capabilities. Custom user-facing configuration for diagnostics and Strudel version selection is not exposed yet.
