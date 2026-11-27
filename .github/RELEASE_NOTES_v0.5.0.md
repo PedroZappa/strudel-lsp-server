@@ -57,7 +57,7 @@ npm versions are immutable. If a defect is found after publication, the fix will
 
 ## Publication status
 
-No publication is authorized. The package manifest declares `0.5.0` as a candidate, but `0.4.0` remains the latest published release. An accepted ADR must name exactly `strudel-lsp-server@0.5.0`, tag `v0.5.0` and the release operator from an explicit user authorization. ADR-075 in `docs/DECISIONS.md` is a draft contract for that authorization, not the authorization itself. No tag, publish, deprecation, dist-tag change, unpublish, retag or other registry mutation has been performed for `0.5.0`.
+Controlled publication is authorized for exactly `strudel-lsp-server@0.5.0` and tag `v0.5.0` with `pedrozappa` as the named operator under accepted ADR-075 in `docs/DECISIONS.md`. Publication evidence remains pending: this draft does not claim that the tag, workflow run, registry entry or GitHub release exists. No local publish, deprecation, dist-tag change, unpublish, retag or other registry mutation is authorized.
 
 ## Links
 

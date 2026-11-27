@@ -258,7 +258,7 @@ void test('first-publish bootstrap exception is version-limited and blocks workf
   assert.equal(workflow.match(/npm publish --access public/g)?.length, 1);
 });
 
-void test('Phase 25 candidate artifacts do not claim an unpublished release', () => {
+void test('Phase 25 authorization records the exact version tag and operator', () => {
   const candidateNotes = readFileSync(
     join(repositoryRoot, '.github', 'RELEASE_NOTES_v0.5.0.md'),
     'utf8',
@@ -266,21 +266,24 @@ void test('Phase 25 candidate artifacts do not claim an unpublished release', ()
   assert.match(candidateNotes, /^Draft release notes for `strudel-lsp-server@0\.5\.0`/m);
   assert.match(candidateNotes, /candidate only; not published/m);
   assert.match(candidateNotes, /^## Publication status$/m);
-  assert.match(candidateNotes, /No publication is authorized/);
+  assert.match(candidateNotes, /Controlled publication is authorized/);
+  assert.match(candidateNotes, /Publication evidence remains pending/);
 
-  const marker = '## ADR-075 — Phase 25 controlled publication authorization (draft)';
+  const marker = '## ADR-075 — Phase 25 controlled publication authorization';
   const start = decisions.indexOf(marker);
   assert.notEqual(start, -1);
   const section = decisions.slice(start);
-  assert.match(section, /Status: draft/);
-  assert.match(section, /No publication is authorized/);
-  assert.match(section, /named operator stated in that authorization/);
-  assert.match(section, /explicit user authorization/);
-  assert.match(section, /The manifest declares `0\.5\.0` as a candidate/);
+  assert.match(section, /Status: accepted/);
+  assert.match(section, /publish(?:ing)? exactly `strudel-lsp-server@0\.5\.0`/);
+  assert.match(section, /tag(?:ging)? exactly `v0\.5\.0`/);
+  assert.match(section, /`pedrozappa` as the named release operator/);
+  assert.match(section, /controlled OIDC workflow/);
+  assert.match(section, /RELEASE_NOTES_v0\.5\.0\.md/);
+  assert.match(section, /does not permit a local publish/);
 
   assert.match(
     roadmap,
-    /^### Phase 25 — `v0\.5\.0` controlled release \(candidate prepared, awaiting publication authorization\)$/m,
+    /^### Phase 25 — `v0\.5\.0` controlled release \(authorized for controlled publication\)$/m,
   );
 });
 
