@@ -1,6 +1,6 @@
 # Decisions
 
-Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened or superseded; ADR-021 records the Phase 6 deferred-item completion, ADR-022 records Phase 7 quick fixes, ADR-023 records document-scoped rename, ADR-024 records document symbols, ADR-025 records semantic tokens, ADR-026 records conservative formatting, ADR-027 records prototype client dependency remediation, ADR-028 records inline-constant refactoring, ADR-029 records bounded on-demand workspace symbols, ADR-030 records the Phase 8 performance baseline and advisory check, ADR-031 records Phase 9 local packaging verification, ADR-032 records the AGPL-3.0-only project licence decision, ADR-033 records the `0.1.0` release identity and SemVer policy, and ADR-034 records the deferred user configuration boundary.
+Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened or superseded; ADR-021 records the Phase 6 deferred-item completion, ADR-022 records Phase 7 quick fixes, ADR-023 records document-scoped rename, ADR-024 records document symbols, ADR-025 records semantic tokens, ADR-026 records conservative formatting, ADR-027 records prototype client dependency remediation, ADR-028 records inline-constant refactoring, ADR-029 records bounded on-demand workspace symbols, ADR-030 records the Phase 8 performance baseline and advisory check, ADR-031 records Phase 9 local packaging verification, ADR-032 records the AGPL-3.0-only project licence decision, ADR-033 records the `0.1.0` release identity and SemVer policy, ADR-034 records the deferred user configuration boundary, and ADR-035 records the `0.1.0` supported runtime and OS matrix.
 
 ## ADR-001 — Clean-slate re-implementation
 
@@ -553,3 +553,25 @@ Consequences:
 - This is an explicit first-release exception to the broader configuration guidance in `AGENTS.md` section 5; it must be revisited before a stability commitment or when multiple Strudel metadata snapshots exist.
 - No capability advertisement, provider behaviour or test suite changes are made by this decision.
 - Future settings require configuration contract tests and documentation before implementation; this ADR is not publication authorization.
+
+## ADR-035 — Supported runtime and OS matrix for `0.1.0`
+
+Status: accepted on 2026-11-27.
+
+Decision: support Node.js `^24.0.0 || ^26.0.0` with npm `>=11 <12`, declared through `engines` in `package.json` and the committed lockfile. Both majors are release targets rather than supporting Node 24 alone. The required Phase 11 validation matrix is Linux x64 with glibc, macOS arm64 and Windows x64, tested with the npm version bundled by each supported Node major. Linux arm64, macOS x64 and Windows arm64 have parser prebuilds and are best-effort targets; they are not claimed as supported until validated.
+
+Evidence:
+
+- The Node.js release archive identifies v24.22.3 and v26.13.1 as LTS as of 2026-11-10, with bundled npm v11.19.1 and v11.20.0 respectively: <https://nodejs.org/en/about/previous-releases>, <https://nodejs.org/en/download/archive/v24.22.3> and <https://nodejs.org/en/download/archive/v26.13.1>.
+- CI uses a Node 24/26 matrix on Ubuntu; the test globs were corrected after a Node 24 test-discovery failure, so both majors are part of the verified correctness target.
+- The pinned `tree-sitter-strudel@2.0.2` package ships prebuilds for `darwin-x64`, `darwin-arm64`, `linux-x64`, `linux-arm64`, `win32-x64` and `win32-arm64`.
+- Local development and package verification ran on Node v26.13.1 with npm v11.20.0 on Linux x64.
+
+Rationale: Node 24 and 26 are both maintained LTS lines and CI already covers both, so excluding either would understate the tested runtime. npm 11 is bundled across these Node releases, while earlier npm majors are not part of the supported first-release environment. The required OS subset covers the common platforms where clean-room validation is practical for the first release; the remaining prebuild targets are acknowledged without making an unverified support claim.
+
+Consequences:
+
+- README, `docs/PROJECT_SPEC.md` and the roadmap now state the declared runtime range and required validation matrix.
+- Phase 11 must test both Node majors with npm 11 on each required platform, including install paths with and without scripts.
+- Supporting additional OS/architecture combinations or Node majors requires validation and an update to this ADR before advertisement.
+- This ADR records compatibility policy only; it is not publication authorization.

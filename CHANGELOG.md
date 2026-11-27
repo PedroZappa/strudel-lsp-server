@@ -6,6 +6,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+- Declared Node 24/26 and npm 11 support in package `engines` and documented the first-release OS validation matrix.
 - Documented the `0.1.0` configuration boundary: no custom settings, with diagnostic overrides and Strudel version selection deferred.
 - Set the initial public release identity to `0.1.0`, with `vX.Y.Z` tags and a pre-1.0 SemVer policy.
 - Changed the project licence to AGPL-3.0-only to align with the pinned AGPL-only parser and the Strudel AGPL family, and extended package verification to check the installed licence.

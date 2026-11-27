@@ -11,6 +11,10 @@ An editor-agnostic Language Server Protocol implementation for [Strudel](https:/
 - Semantic tokens and indentation-only formatting.
 - Mini-notation-aware diagnostics, hover and tokens.
 
+## Requirements
+
+The `0.1.0` package supports Node.js 24 and 26 with npm 11.x. The required first-release validation matrix is Linux x64 with glibc, macOS arm64 and Windows x64; the parser also ships prebuilds for Linux arm64, macOS x64 and Windows arm64, which remain best-effort until validated. See `docs/DECISIONS.md` ADR-035.
+
 ## Installation and launch
 
 Configure an LSP client to launch `strudel-lsp-server` over stdio:

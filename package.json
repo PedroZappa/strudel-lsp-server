@@ -5,6 +5,10 @@
   "license": "AGPL-3.0-only",
   "version": "0.1.0",
   "type": "module",
+  "engines": {
+    "node": "^24.0.0 || ^26.0.0",
+    "npm": ">=11 <12"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/PedroZappa/strudel-lsp-server"

@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: re-implementation roadmap updated with completed Phases 0–9, the approved `0.1.0` release identity and reconciled configuration boundary in Phase 10, and the remaining proposed Phase 10–13 work for compatibility metadata, validation, release governance and controlled first publication, 2026-11-27. Priorities are proposals and remain subject to approval.
+Status: re-implementation roadmap updated with completed Phases 0–9, the approved `0.1.0` release identity, reconciled configuration boundary and supported runtime matrix in Phase 10, and the remaining proposed Phase 10–13 work for validation, release governance and controlled first publication, 2026-11-27. Priorities are proposals and remain subject to approval.
 
 Authority: `AGENTS.md` sections 2–18 and the other documents in `docs/`.
 
@@ -269,7 +269,7 @@ The pinned `tree-sitter-strudel@2.0.2` declares `AGPL-3.0-only` and bundles a ma
 The following findings define the starting state for Phases 10–13. Each open gap is assigned to a phase below rather than left in a flat checklist.
 
 - The package name `strudel-lsp-server` returned 404 from the npm registry on 2026-11-27; availability must be rechecked at release time.
-- The manifest has no `engines.node` field. CI tests Node 24 and 26 on Ubuntu only; no Windows or macOS job exists.
+- Runtime support is now declared as Node 24/26 with npm 11 in ADR-035; CI still tests only those Node majors on Ubuntu, so cross-platform validation remains for Phase 11.
 - The manifest version is now `0.1.0` under ADR-033, but the repository has no Git tags.
 - Diagnostic enablement/severity and Strudel version selection were documented ambiguously; they are now explicitly deferred for `0.1.0` in ADR-034 and the feature documentation.
 - Parser validation still has an unchecked real-Strudel-corpus item; committed benchmark fixtures are synthetic and measure layer boundaries rather than an editor process.
@@ -285,34 +285,34 @@ Tasks:
 
 - [x] Decide the release identity: the first public version is `0.1.0`, tags use `vX.Y.Z`, and pre-1.0 SemVer is recorded in ADR-033. `1.0.0` remains reserved for a documented stability commitment.
 - [x] Reconcile configuration documentation with behaviour: no custom configuration channel exists in `0.1.0`; diagnostic overrides and Strudel version selection are explicitly deferred in ADR-034, while standard LSP formatting options remain the only user preference.
-- [ ] Define and declare supported runtimes: add `engines.node`, document the supported Node/npm range, and decide whether Node 24 and 26 are both release-supported or whether Node 24 alone is the initial target. Record the intended OS matrix for Phase 11.
+- [x] Define and declare supported runtimes: both Node 24 and 26 are release-supported with npm 11; `engines` is declared and the required Linux x64, macOS arm64 and Windows x64 matrix is recorded in ADR-035.
 - [ ] Final README and manifest review: installation command, supported versions, known limitations, legacy prototype separation, and accurate `repository`, `homepage` and `bugs` metadata.
 
 Exit criteria:
 
 - [x] Version, tag format and SemVer policy are recorded and approved in ADR-033.
 - [x] Configuration documentation matches implemented behaviour and explicitly deferred items in ADR-034.
-- [ ] `engines.node` and the supported runtime/OS matrix are documented.
+- [x] `engines.node`, `engines.npm` and the supported runtime/OS matrix are documented in ADR-035.
 - [ ] README and manifest metadata accurately describe the first-release scope.
 
 ## Phase 11 — Compatibility and robustness validation
 
 Dependencies: Phase 10 runtime and OS matrix.
 
-**Status: not started.**
+**Status: not started. The required validation matrix is defined in ADR-035.**
 
 Tasks:
 
-- [ ] Perform clean-room installs on every supported OS, Node version and npm version. Test both `npm install` with scripts enabled and the existing `--ignore-scripts` path; confirm native parser prebuilds load without requiring a compiler.
+- [ ] Perform clean-room installs on every required OS/Node/npm combination from ADR-035. Test both `npm install` with scripts enabled and the existing `--ignore-scripts` path; confirm native parser prebuilds load without requiring a compiler.
 - [ ] Exercise the installed `strudel-lsp-server` executable's stdio handshake on Linux, macOS and Windows, using the platform-specific bin shim where applicable.
 - [ ] Validate the parser and semantic engine against a small corpus of real Strudel compositions from authoritative documentation or examples, without copying those compositions into the package.
 - [ ] Complete a protocol robustness review for stdout purity, malformed JSON-RPC, unknown methods, invalid parameters, `$/cancelRequest`, rapid edits, no-workspace and multi-root initialization, document closure, shutdown and exit codes.
 
 Exit criteria:
 
-- [ ] Every supported OS/Node/npm combination passes clean-room installation with and without install scripts where applicable.
+- [ ] Every required OS/Node/npm combination in ADR-035 passes clean-room installation with and without install scripts where applicable.
 - [ ] Native parser prebuilds work without requiring a local compiler.
-- [ ] Installed executable handshakes pass on every supported platform.
+- [ ] Installed executable handshakes pass on every required platform in ADR-035.
 - [ ] Real-corpus validation and protocol robustness evidence are recorded, with no copied compositions in the package.
 
 ## Phase 12 — Release governance and automation

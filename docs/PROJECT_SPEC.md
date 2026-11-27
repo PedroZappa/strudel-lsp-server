@@ -1,6 +1,6 @@
 # Project Specification
 
-Status: preparation document updated with resolved blocker decisions, 2026-11-25  
+Status: specification updated with resolved blocker decisions and the `0.1.0` supported runtime matrix, 2026-11-27
 Authority: `AGENTS.md` sections 1–9.
 
 ## Purpose
@@ -15,6 +15,10 @@ Build an editor-agnostic Language Server Protocol implementation for **Strudel**
 - Standard LSP over stdio is the primary transport.
 - Usable offline once dependencies and required language metadata are installed.
 - Independent of individual editors; editor-specific clients, configuration and examples stay outside the server core.
+
+## Supported runtime
+
+Version `0.1.0` supports Node.js 24 and 26 with npm 11.x, recorded in `package.json` `engines` and ADR-035. The required first-release validation matrix is Linux x64 with glibc, macOS arm64 and Windows x64 across both Node majors. Linux arm64, macOS x64 and Windows arm64 have parser prebuilds but remain best-effort until Phase 11 validates them.
 
 ## Target language version
 
