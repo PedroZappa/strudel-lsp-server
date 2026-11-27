@@ -1,0 +1,16 @@
+const kick = s("bd*4").gain(0.9)
+const snare = s("sd [sd sd]").degradeBy(0.2)
+const hats = s("[hh]*8").gain(0.4)
+const bass = s("c2 [c2 e2]").slow(2)
+
+function layer(left, right) {
+  return left.add(right)
+}
+
+function decorate(pattern, amount) {
+  return pattern.fast(amount).degradeBy(0.1)
+}
+
+const groove = layer(kick, snare).stack(hats)
+const line = decorate(groove, 2).add(bass)
+line.gain(0.75).slow(1.5)

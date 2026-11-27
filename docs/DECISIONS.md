@@ -1,6 +1,6 @@
 # Decisions
 
-Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened; ADR-021 records the Phase 6 deferred-item completion, ADR-022 records Phase 7 quick fixes, ADR-023 records document-scoped rename, ADR-024 records document symbols, ADR-025 records semantic tokens, ADR-026 records conservative formatting, ADR-027 records prototype client dependency remediation, ADR-028 records inline-constant refactoring and ADR-029 records bounded on-demand workspace symbols.
+Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened; ADR-021 records the Phase 6 deferred-item completion, ADR-022 records Phase 7 quick fixes, ADR-023 records document-scoped rename, ADR-024 records document symbols, ADR-025 records semantic tokens, ADR-026 records conservative formatting, ADR-027 records prototype client dependency remediation, ADR-028 records inline-constant refactoring, ADR-029 records bounded on-demand workspace symbols and ADR-030 records the Phase 8 performance baseline and advisory check.
 
 ## ADR-001 — Clean-slate re-implementation
 
@@ -442,7 +442,7 @@ Consequences:
 - Clients see one additional deterministic code action kind; no action is applied automatically.
 - Inlining preserves expression text and does not reflow or rewrite unrelated code.
 - Feature tests cover literal inlining, range filtering, numbers, multi-use, assignment, exported, multi-declarator, call, template-substitution and malformed cases; the stdio test verifies advertisement and response mapping.
-- Refactoring computation uses the cached semantic snapshot and has no measured latency figure; Phase 8 must include it in representative code-action workloads.
+- Refactoring computation uses the cached semantic snapshot; its latency is measured by the `refactor-inline-small` workload in the Phase 8 baseline.
 
 ## ADR-029 — Bounded on-demand workspace symbols
 
@@ -458,4 +458,20 @@ Consequences:
 - Results reflect unsaved open-document state and on-disk `.strudel` files; files outside workspace folders, other extensions and oversized files are not indexed.
 - The scan respects request cancellation and applies explicit limits, so worst-case work is bounded rather than proportional to an unbounded repository.
 - Feature tests cover relaxed matching, container names and result limits; stdio tests cover advertisement, scanning of unopened files, open-document overrides and exclusion of non-Strudel files.
-- Workspace-symbol scanning has no measured latency figure; Phase 8 must include representative workspace sizes and request workloads.
+- Workspace-symbol scanning is measured by the `workspace-symbols-scan` workload over the committed nested workspace fixture.
+
+## ADR-030 — Performance baseline and advisory regression check
+
+Status: accepted on 2026-11-27.
+
+Decision: use a deterministic in-repository harness with synthetic fixtures as the performance baseline. `scripts/benchmark.mjs` measures 18 transport-independent workloads, reports p50, p95 and p99 using nearest-rank percentiles within five batches and the median across those batches, and stores environment metadata and numeric warning thresholds in `benchmarks/baseline.json`. Thresholds are `max(baseline × 2, 0.05 ms)` for p50, `max(baseline × 2.5, 0.05 ms)` for p95 and `max(baseline × 3, 0.05 ms)` for p99. `npm run benchmark:check` fails locally on a threshold breach or missing workload, while CI runs it with `continue-on-error: true`.
+
+Rationale: a dedicated harness gives repeatable layer-level evidence without adding dependencies, spawning an editor, or exposing internal timing controls in production. Median-of-batches prevents one GC or scheduling pause from setting the committed tail target, while the wider p95/p99 factors absorb remaining observed variance. Multiplying measured percentiles rather than inventing absolute limits accounts for the hardware difference between the development machine and hosted runners. The absolute floor prevents timer noise on sub-millisecond operations from producing false failures. Advisory CI reporting keeps hardware variance from blocking unrelated correctness work while preserving a local regression signal.
+
+Consequences:
+
+- The baseline is environment-specific and must be regenerated deliberately after validated parser, dependency, semantic or hardware changes.
+- CI performance output is informational; `npm run check` remains the blocking gate.
+- Fixtures and results are kept outside `src/` and the published package.
+- Cancellation and superseded-version behaviour remain covered by stdio integration tests rather than latency samples.
+- Incremental semantic updates are measured but not yet optimised; the large fixture currently shows the full snapshot rebuild cost.

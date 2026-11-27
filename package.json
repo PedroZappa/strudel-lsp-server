@@ -34,7 +34,9 @@
     "test:features": "npm run build && node --test \"dist/test/features/**/*.test.js\"",
     "test:mini": "npm run build && node --test \"dist/test/miniNotation/**/*.test.js\"",
     "generate:metadata": "node scripts/generate-metadata.mjs",
-    "benchmark": "node scripts/benchmark.mjs",
+    "benchmark": "npm run build && node scripts/benchmark.mjs",
+    "benchmark:check": "npm run build && node scripts/benchmark.mjs --check",
+    "benchmark:baseline": "npm run build && node scripts/benchmark.mjs --write-baseline",
     "check": "npm run typecheck && npm run lint && npm run format:check && npm test"
   },
   "dependencies": {

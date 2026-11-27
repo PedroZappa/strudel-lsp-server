@@ -1,6 +1,6 @@
 # Architecture
 
-Status: transport, syntax adapter, semantic engine, language database, document store, feature providers, signature help, mini-notation token analysis, quick fixes, inline-constant refactoring, document-scoped rename, document and workspace symbols, semantic tokens and conservative formatting implemented on 2026-11-27; remaining extended capabilities are under evaluation.
+Status: transport, syntax adapter, semantic engine, language database, document store, feature providers, signature help, mini-notation token analysis, quick fixes, inline-constant refactoring, document-scoped rename, document and workspace symbols, semantic tokens, conservative formatting and the performance harness implemented on 2026-11-27; remaining extended capabilities are under evaluation.
 
 Authority: `AGENTS.md` sections 3–6.
 
@@ -72,6 +72,12 @@ The current `src/server.ts` implements LSP lifecycle, incremental text sync, com
 - Use accurate document ranges and return actionable diagnostics.
 - Avoid cascading diagnostics when context is incomplete.
 - Treat language database lookups as explicit dependencies rather than hidden globals.
+
+### Performance harness
+
+- Keep fixtures, timing code and baseline data outside `src/` and the published package.
+- Measure layer boundaries and representative provider operations without adding production instrumentation or user-facing settings.
+- Treat hosted CI latency results as advisory because the baseline is hardware-specific.
 
 ### Semantic engine and type inference
 

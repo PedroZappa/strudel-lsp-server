@@ -1,0 +1,6 @@
+const pat = s("bd sd")
+pat.fast(2)
+s("[hh hh]*4")
+s("[]")
+const buried = "sd"
+s(buried)

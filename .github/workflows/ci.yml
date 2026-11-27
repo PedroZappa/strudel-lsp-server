@@ -70,7 +70,7 @@ jobs:
         run: npm pack --dry-run --ignore-scripts
 
   performance:
-    name: Benchmark runner
+    name: Advisory benchmark check
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -90,8 +90,9 @@ jobs:
       - name: Build package
         run: npm run build
 
-      - name: Run benchmark runner
-        run: npm run benchmark
+      - name: Run advisory benchmark regression check
+        continue-on-error: true
+        run: npm run benchmark:check
 
   audit:
     name: Dependency audit

@@ -1,0 +1,373 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-11-27T10:11:23.241Z",
+  "environment": {
+    "node": "v26.13.1",
+    "platform": "linux",
+    "architecture": "x64",
+    "cpuModel": "12th Gen Intel(R) Core(TM) i9-12900KF",
+    "logicalCpus": 24,
+    "totalMemoryGiB": 31.141,
+    "parserVersion": "2.0.2",
+    "strudelCoreVersion": "1.2.6",
+    "typescriptVersion": "6.0.3"
+  },
+  "methodology": {
+    "timer": "node:perf_hooks.performance.now",
+    "warmupIterations": 5,
+    "batchCount": 5,
+    "samplesPerBatch": 20,
+    "sampleCount": 100,
+    "percentileMethod": "nearest-rank within each batch, then median across batches",
+    "regressionFactors": {
+      "p50": 2,
+      "p95": 2.5,
+      "p99": 3
+    },
+    "minimumThresholdMs": 0.05
+  },
+  "workloads": [
+    {
+      "id": "parse-small",
+      "description": "Full syntax parse of a small live-coding buffer",
+      "fixture": "small-live-edit.strudel",
+      "unit": "ms",
+      "samples": 100,
+      "batches": 5,
+      "batchSize": 20,
+      "min": 0.204,
+      "max": 1.135,
+      "p50": 0.225,
+      "p95": 0.248,
+      "p99": 0.31,
+      "thresholds": {
+        "p50": 0.45,
+        "p95": 0.62,
+        "p99": 0.93
+      }
+    },
+    {
+      "id": "parse-analyze-medium",
+      "description": "Full syntax parse and semantic analysis of a medium composition",
+      "fixture": "medium-composition.strudel",
+      "unit": "ms",
+      "samples": 100,
+      "batches": 5,
+      "batchSize": 20,
+      "min": 0.873,
+      "max": 2.152,
+      "p50": 0.922,
+      "p95": 1.456,
+      "p99": 1.628,
+      "thresholds": {
+        "p50": 1.844,
+        "p95": 3.64,
+        "p99": 4.884
+      }
+    },
+    {
+      "id": "parse-analyze-large",
+      "description": "Full syntax parse and semantic analysis of a large pattern set",
+      "fixture": "large-pattern-set.strudel",
+      "unit": "ms",
+      "samples": 100,
+      "batches": 5,
+      "batchSize": 20,
+      "min": 5.745,
+      "max": 9.898,
+      "p50": 5.953,
+      "p95": 7.158,
+      "p99": 8.281,
+      "thresholds": {
+        "p50": 11.906,
+        "p95": 17.895,
+        "p99": 24.843
+      }
+    },
+    {
+      "id": "incremental-edit-small",
+      "description": "Incremental syntax and semantic update after a small buffer edit",
+      "fixture": "small-live-edit.strudel",
+      "unit": "ms",
+      "samples": 100,
+      "batches": 5,
+      "batchSize": 20,
+      "min": 0.233,
+      "max": 2.678,
+      "p50": 0.25,
+      "p95": 0.283,
+      "p99": 0.302,
+      "thresholds": {
+        "p50": 0.5,
+        "p95": 0.707,
+        "p99": 0.906
+      }
+    },
+    {
+      "id": "incremental-edit-large",
+      "description": "Incremental syntax and semantic update after a large buffer edit",
+      "fixture": "large-pattern-set.strudel",
+      "unit": "ms",
+      "samples": 100,
+      "batches": 5,
+      "batchSize": 20,
+      "min": 6.644,
+      "max": 11.682,
+      "p50": 7.018,
+      "p95": 7.237,
+      "p99": 7.59,
+      "thresholds": {
+        "p50": 14.036,
+        "p95": 18.093,
+        "p99": 22.77
+      }
+    },
+    {
+      "id": "diagnostics-small",
+      "description": "Diagnostics for a valid small buffer",
+      "fixture": "small-live-edit.strudel",
+      "unit": "ms",
+      "samples": 100,
+      "batches": 5,
+      "batchSize": 20,
+      "min": 0.001,
+      "max": 0.132,
+      "p50": 0.002,
+      "p95": 0.002,
+      "p99": 0.002,
+      "thresholds": {
+        "p50": 0.05,
+        "p95": 0.05,
+        "p99": 0.05
+      }
+    },
+    {
+      "id": "diagnostics-incomplete",
+      "description": "Resilient diagnostics for partially typed live-coding input",
+      "fixture": "incomplete-live.strudel",
+      "unit": "ms",
+      "samples": 100,
+      "batches": 5,
+      "batchSize": 20,
+      "min": 0,
+      "max": 0.002,
+      "p50": 0,
+      "p95": 0,
+      "p99": 0,
+      "thresholds": {
+        "p50": 0.05,
+        "p95": 0.05,
+        "p99": 0.05
+      }
+    },
+    {
+      "id": "completion-medium",
+      "description": "Pattern-method completion after a dot in a medium composition",
+      "fixture": "medium-composition.strudel",
+      "unit": "ms",
+      "samples": 100,
+      "batches": 5,
+      "batchSize": 20,
+      "min": 0.116,
+      "max": 2.831,
+      "p50": 0.121,
+      "p95": 0.145,
+      "p99": 0.152,
+      "thresholds": {
+        "p50": 0.242,
+        "p95": 0.363,
+        "p99": 0.456
+      }
+    },
+    {
+      "id": "hover-large",
+      "description": "Hover for a resolved declaration in a large pattern set",
+      "fixture": "large-pattern-set.strudel",
+      "unit": "ms",
+      "samples": 100,
+      "batches": 5,
+      "batchSize": 20,
+      "min": 0.002,
+      "max": 0.012,
+      "p50": 0.002,
+      "p95": 0.002,
+      "p99": 0.003,
+      "thresholds": {
+        "p50": 0.05,
+        "p95": 0.05,
+        "p99": 0.05
+      }
+    },
+    {
+      "id": "definition-large",
+      "description": "Definition lookup for a resolved reference in a large pattern set",
+      "fixture": "large-pattern-set.strudel",
+      "unit": "ms",
+      "samples": 100,
+      "batches": 5,
+      "batchSize": 20,
+      "min": 0.001,
+      "max": 0.006,
+      "p50": 0.002,
+      "p95": 0.002,
+      "p99": 0.002,
+      "thresholds": {
+        "p50": 0.05,
+        "p95": 0.05,
+        "p99": 0.05
+      }
+    },
+    {
+      "id": "signature-help-medium",
+      "description": "Signature help inside a pattern-method call",
+      "fixture": "medium-composition.strudel",
+      "unit": "ms",
+      "samples": 100,
+      "batches": 5,
+      "batchSize": 20,
+      "min": 0.004,
+      "max": 0.04,
+      "p50": 0.004,
+      "p95": 0.006,
+      "p99": 0.012,
+      "thresholds": {
+        "p50": 0.05,
+        "p95": 0.05,
+        "p99": 0.05
+      }
+    },
+    {
+      "id": "document-symbols-large",
+      "description": "Document-symbol outline traversal of a large pattern set",
+      "fixture": "large-pattern-set.strudel",
+      "unit": "ms",
+      "samples": 100,
+      "batches": 5,
+      "batchSize": 20,
+      "min": 0.003,
+      "max": 0.033,
+      "p50": 0.009,
+      "p95": 0.01,
+      "p99": 0.018,
+      "thresholds": {
+        "p50": 0.05,
+        "p95": 0.05,
+        "p99": 0.054
+      }
+    },
+    {
+      "id": "workspace-symbols-scan",
+      "description": "Bounded workspace scan and workspace-symbol query over Strudel fixtures",
+      "fixture": "workspace/",
+      "unit": "ms",
+      "samples": 100,
+      "batches": 5,
+      "batchSize": 20,
+      "min": 0.71,
+      "max": 5.27,
+      "p50": 0.887,
+      "p95": 1.088,
+      "p99": 1.156,
+      "thresholds": {
+        "p50": 1.774,
+        "p95": 2.72,
+        "p99": 3.468
+      }
+    },
+    {
+      "id": "formatting-medium",
+      "description": "Indentation-only formatting of an unformatted medium composition",
+      "fixture": "medium-composition.strudel",
+      "unit": "ms",
+      "samples": 100,
+      "batches": 5,
+      "batchSize": 20,
+      "min": 0.021,
+      "max": 0.116,
+      "p50": 0.027,
+      "p95": 0.032,
+      "p99": 0.033,
+      "thresholds": {
+        "p50": 0.054,
+        "p95": 0.08,
+        "p99": 0.099
+      }
+    },
+    {
+      "id": "semantic-tokens-large",
+      "description": "Full-document semantic-token classification of a large pattern set",
+      "fixture": "large-pattern-set.strudel",
+      "unit": "ms",
+      "samples": 100,
+      "batches": 5,
+      "batchSize": 20,
+      "min": 0.015,
+      "max": 0.079,
+      "p50": 0.021,
+      "p95": 0.025,
+      "p99": 0.03,
+      "thresholds": {
+        "p50": 0.05,
+        "p95": 0.063,
+        "p99": 0.09
+      }
+    },
+    {
+      "id": "quick-fixes-small",
+      "description": "Quick-fix derivation from diagnostics in a small buffer",
+      "fixture": "small-live-edit.strudel",
+      "unit": "ms",
+      "samples": 100,
+      "batches": 5,
+      "batchSize": 20,
+      "min": 0.001,
+      "max": 0.014,
+      "p50": 0.004,
+      "p95": 0.004,
+      "p99": 0.004,
+      "thresholds": {
+        "p50": 0.05,
+        "p95": 0.05,
+        "p99": 0.05
+      }
+    },
+    {
+      "id": "refactor-inline-small",
+      "description": "Inline-constant refactoring eligibility scan in a small buffer",
+      "fixture": "small-live-edit.strudel",
+      "unit": "ms",
+      "samples": 100,
+      "batches": 5,
+      "batchSize": 20,
+      "min": 0.002,
+      "max": 0.033,
+      "p50": 0.004,
+      "p95": 0.007,
+      "p99": 0.011,
+      "thresholds": {
+        "p50": 0.05,
+        "p95": 0.05,
+        "p99": 0.05
+      }
+    },
+    {
+      "id": "rename-large",
+      "description": "Rename preparation and edit computation in a large pattern set",
+      "fixture": "large-pattern-set.strudel",
+      "unit": "ms",
+      "samples": 100,
+      "batches": 5,
+      "batchSize": 20,
+      "min": 0.003,
+      "max": 0.035,
+      "p50": 0.009,
+      "p95": 0.01,
+      "p99": 0.012,
+      "thresholds": {
+        "p50": 0.05,
+        "p95": 0.05,
+        "p99": 0.05
+      }
+    }
+  ]
+}

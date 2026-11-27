@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: re-implementation roadmap updated with resolved blocker decisions, Phase 6 completion, Phase 7 quick fixes, rename, document and workspace symbols, semantic tokens, formatting and inline-constant refactoring, 2026-11-27. Priorities are proposals and remain subject to approval.
+Status: re-implementation roadmap updated with resolved blocker decisions, Phase 6 completion, Phase 7 quick fixes, rename, document and workspace symbols, semantic tokens, formatting and inline-constant refactoring, and Phase 8 benchmark harness, 2026-11-27. Priorities are proposals and remain subject to approval.
 
 Authority: `AGENTS.md` sections 2–18 and the other documents in `docs/`.
 
@@ -232,16 +232,19 @@ Code action and refactoring exit criteria:
 
 ## Phase 8 — Performance harness and targets
 
-Dependencies: working syntax/semantic pipeline.
+Dependencies: working syntax/semantic pipeline and completed Phase 7 providers.
 
-CI already runs the benchmark runner in a dedicated job, but no workloads, measured percentiles or numeric thresholds exist yet, so performance is not a blocking regression gate.
+**Status: implemented and verified with an advisory CI check; performance is not a blocking correctness gate.**
 
-Tasks:
+The harness imports compiled layer modules and measures 18 deterministic workloads over synthetic Strudel fixtures. It reports p50, p95 and p99 using nearest-rank percentiles within batches and the median across batches, stores a machine-readable baseline with environment metadata, and compares current runs with measured warning thresholds. Filesystem-backed workspace-symbol discovery is timed as part of that request; fixture preparation and result consumption are excluded from other samples. No production code path or published package contents were changed for instrumentation.
 
-- [ ] Create representative workloads.
-- [ ] Measure p50/p95/p99.
-- [ ] Establish numeric targets and document them in `docs/PERFORMANCE.md`.
-- [ ] Add regression monitoring.
+Phase 8 exit criteria:
+
+- [x] Representative small, medium, large, incomplete and workspace fixtures are committed with provenance.
+- [x] p50, p95 and p99 are measured for parsing, incremental updates, diagnostics, completion, hover, definition, signature help, document and workspace symbols, formatting, semantic tokens, quick fixes, inline refactoring and rename.
+- [x] Numeric warning thresholds are derived from the baseline and documented in `docs/PERFORMANCE.md`.
+- [x] `npm run benchmark`, `npm run benchmark:check` and Makefile wrappers are available without new dependencies.
+- [x] CI reports benchmark regressions as advisory, preserving correctness checks as the blocking gate.
 
 ## Phase 9 — Packaging and release
 

@@ -51,7 +51,7 @@ _INFO    = [$(BLU)INFO$(D)]
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install install-dev build typecheck lint format format-check test test-parser test-semantic test-metadata test-features test-mini generate-metadata benchmark pack-check check verify verify-all ci check-static audit audit-client clean docs docs-open
+.PHONY: help install install-dev build typecheck lint format format-check test test-parser test-semantic test-metadata test-features test-mini generate-metadata benchmark benchmark-check benchmark-baseline pack-check check verify verify-all ci check-static audit audit-client clean docs docs-open
 
 #==============================================================================#
 #                                  RULES                                       #
@@ -131,10 +131,20 @@ generate-metadata:	## Regenerate the pinned Strudel language database snapshot
 	@$(NPM) run generate:metadata
 	@echo "$(YEL)* $(_SUCCESS) Language database generated$(D)"
 
-benchmark:	## Run the benchmark command runner (workloads arrive in Phase 8)
+benchmark:	## Build and run representative benchmark workloads
 	@echo "$(YEL)Running benchmarks...$(D)"
 	@$(NPM) run benchmark
-	@echo "$(YEL)* $(_SUCCESS) Benchmark runner completed$(D)"
+	@echo "$(YEL)* $(_SUCCESS) Benchmarks completed$(D)"
+
+benchmark-check:	## Compare current benchmark percentiles with the committed baseline
+	@echo "$(YEL)Checking benchmark regressions...$(D)"
+	@$(NPM) run benchmark:check
+	@echo "$(YEL)* $(_SUCCESS) Benchmark regression check passed$(D)"
+
+benchmark-baseline:	## Regenerate the committed benchmark baseline deliberately
+	@echo "$(YEL)Regenerating benchmark baseline...$(D)"
+	@$(NPM) run benchmark:baseline
+	@echo "$(YEL)* $(_SUCCESS) Benchmark baseline updated$(D)"
 
 pack-check:	## Preview npm package contents
 	@echo "$(YEL)Checking npm package contents...$(D)"
@@ -151,7 +161,7 @@ check:	## Run typecheck, lint, format-check and test
 verify: check	## Alias for check; the core correctness gate
 	@echo "$(YEL)* $(_INFO) Core verification gate completed$(D)"
 
-verify-all: verify pack-check benchmark	## Core gate plus package contents and benchmark runner
+verify-all: verify pack-check benchmark-check	## Core gate plus package contents and benchmark regression check
 	@echo "$(YEL)* $(_INFO) Extended verification gate completed$(D)"
 
 # `.github/workflows/ci.yml` calls the underlying npm scripts directly and

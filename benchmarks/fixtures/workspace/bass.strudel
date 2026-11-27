@@ -1,0 +1,6 @@
+function bassNote(name) {
+  return s(name).slow(2)
+}
+
+const line = bassNote("c2 [c2 e2]")
+line.gain(0.6)

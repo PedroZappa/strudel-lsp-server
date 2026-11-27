@@ -1,0 +1,3 @@
+const kick = s("bd*4").gain(0.9)
+const snare = s("sd [sd sd]").degradeBy(0.2)
+kick.stack(snare)
