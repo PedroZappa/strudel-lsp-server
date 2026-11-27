@@ -80,6 +80,20 @@ Root scripts established in Phases 2–6:
 
 The `Makefile` provides convenience targets for these commands; `make check` runs the same combined gate as `npm run check`, `make test-parser`, `make test-semantic`, `make test-metadata`, `make test-features` and `make test-mini` run isolated suites, and `make generate-metadata` regenerates the snapshot.
 
+## Continuous integration
+
+`.github/workflows/ci.yml` is the GitHub Actions workflow for pushes to `main`, pull requests and manual `workflow_dispatch` runs. It uses the pinned npm scripts as the authoritative validation logic; `make ci` is the local convenience equivalent for the correctness, packaging and benchmark checks, while CI additionally runs a runtime dependency audit.
+
+| Job           | Node versions | Blocking checks                                                                                                                            | Notes                                                                                                |
+| ------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| `verify`      | 24, 26        | Clean install, typecheck, lint, format verification, full test suite, each isolated suite, build and `npm pack --dry-run --ignore-scripts` | Matrix covers the active LTS and current stable runtimes without changing local lint/type pinning.   |
+| `performance` | 26            | Clean install, build and `npm run benchmark`                                                                                               | Runner is executed but not a regression gate until workloads and numeric p50/p95/p99 targets exist.  |
+| `audit`       | 26            | Clean install and `npm audit --omit=dev`                                                                                                   | Full `npm audit` is informational (`continue-on-error`) because advisory data is outside PR changes. |
+
+Dependencies are installed with `npm ci --ignore-scripts` from the committed `package-lock.json`, matching the documented local install. npm download caching is keyed to that lockfile. Actions are pinned to commit SHAs with version comments, the workflow has `contents: read` permissions, and newer runs for the same ref cancel superseded runs.
+
+CI does not publish packages or change Git state. Release publication remains a separately authorised workflow. Performance regression gating is deferred to Phase 8 as documented in `docs/PERFORMANCE.md`.
+
 Prototype directories remain outside the lint/format/build scopes. The committed `src/languageDatabase/generated.ts` snapshot is inside those scopes and must be generator-formatted. Results must be reported honestly; failures are not suppressed to make validation pass.
 
 ## Current validation status (2026-11-27)
@@ -103,5 +117,7 @@ Prototype directories remain outside the lint/format/build scopes. The committed
 | `npm run check`           | Pass   | The combined typecheck, lint, format and test gate passes.                                                                                            |
 | `git diff --check`        | Pass   | Working-tree diff has no whitespace errors.                                                                                                           |
 | `npm ls --all`            | Pass   | `tree-sitter-strudel@2.0.2` declares `tree-sitter ^0.25.0`; no invalid peer-range warning remains. Only unrelated optional peer notices are reported. |
+
+The CI workflow was added on 2026-11-27. Its YAML structure, pinned action refs and delegated npm commands were checked locally, but no GitHub-hosted run has executed yet.
 
 Phase 1 parser smoke evidence and the Phase 3 upgrade validation are recorded in `docs/PARSER_INTEGRATION.md` and `docs/DECISIONS.md`. The parser suite runs against `tree-sitter-strudel@2.0.2` and covers stable node kinds and ranges, chained method calls, variable declarations, UTF-16 positions with non-ASCII input, incremental edit/reparse, and malformed-input recovery. The Phase 4 semantic suite covers symbol and scope resolution, pattern inference, mini-notation argument contexts, imports, incomplete input, incremental reuse, invalidation and cancellation. The Phase 5 metadata suite covers deterministic regeneration, pinned provenance, offline catalog lookup, version selection, runtime-derived entries and semantic-engine integration. The Phase 6 feature suite covers conservative diagnostics, malformed input, position-aware completion, hover content, resolved-symbol navigation, signature help, mini-notation diagnostics and hover, and incremental mini-notation range shifting. Phase 7 adds quick-fix edit contents, range filtering and non-actionable diagnostics, plus rename edits, prepare ranges, invalid names, incomplete input, document-symbol ranges and hierarchy, and semantic-token classification, to the feature suite. The mini-notation suite covers documented 1.2.6 operators, token descriptions, structural faults, expected-closer metadata, incomplete input and unsupported-character progress. The stdio integration test covers advertised capabilities, all implemented request types, diagnostic publication, code-action, document-symbol, semantic-token and rename mapping, document closure and rapid-edit version suppression. No performance suite exists yet.

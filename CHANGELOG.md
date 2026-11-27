@@ -6,4 +6,5 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+- Added GitHub Actions CI for verification, packaging, benchmark execution and dependency auditing.
 - Initial release

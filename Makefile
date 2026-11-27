@@ -154,6 +154,8 @@ verify: check	## Alias for check; the core correctness gate
 verify-all: verify pack-check benchmark	## Core gate plus package contents and benchmark runner
 	@echo "$(YEL)* $(_INFO) Extended verification gate completed$(D)"
 
+# `.github/workflows/ci.yml` calls the underlying npm scripts directly and
+# additionally runs a runtime dependency audit; this is the local gate.
 ci: verify-all build	## Run the complete local CI gate
 	@echo "$(YEL)* $(_SUCCESS) Local CI gate completed$(D)"
 

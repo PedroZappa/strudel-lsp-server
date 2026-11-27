@@ -209,6 +209,8 @@ Semantic token exit criteria:
 
 Dependencies: working syntax/semantic pipeline.
 
+CI already runs the benchmark runner in a dedicated job, but no workloads, measured percentiles or numeric thresholds exist yet, so performance is not a blocking regression gate.
+
 Tasks:
 
 - [ ] Create representative workloads.
