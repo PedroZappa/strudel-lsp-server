@@ -2,6 +2,7 @@ import { miniNotationAstNodes } from '../miniNotation/index.js';
 import { findReferenceAt, findSymbolAt, resolveReference } from '../semantic/index.js';
 
 import { formatStrudelType, metadataRecordForSymbol, recordDocumentation } from './metadata.js';
+import { provideMiniNotationStepHover, stepContextAt } from './miniNotationCandidates.js';
 import type { FeatureContext, HoverResult } from './types.js';
 
 function symbolLabel(kind: string): string {
@@ -70,6 +71,17 @@ function provideMiniNotationHover(
       token !== undefined && tokenLength < nodeLength
         ? token.kind
         : (node?.operator ?? node?.kind ?? token?.kind);
+
+    const step = stepContextAt(context, analysis, offset, false);
+    if (
+      step?.token.range.startOffset === target.range.startOffset &&
+      step.token.range.endOffset === target.range.endOffset
+    ) {
+      const enriched = provideMiniNotationStepHover(context, argument, step);
+      if (enriched !== undefined) {
+        return enriched;
+      }
+    }
 
     return {
       range: target.range,

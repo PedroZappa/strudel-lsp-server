@@ -8,6 +8,7 @@ import {
   listPatternMethodRecords,
   recordDocumentation,
 } from './metadata.js';
+import { provideMiniNotationStepCompletion, stepContextAt } from './miniNotationCandidates.js';
 import type {
   CompletionCandidate,
   CompletionCandidateKind,
@@ -19,6 +20,11 @@ interface Prefix {
   readonly text: string;
   readonly startOffset: number;
   readonly member: boolean;
+}
+
+interface MiniCompletionResult {
+  readonly handled: boolean;
+  readonly candidates: readonly CompletionCandidate[];
 }
 
 const MINI_OPERATOR_COMPLETIONS: readonly {
@@ -47,7 +53,7 @@ const MINI_OPERATOR_COMPLETIONS: readonly {
 function provideMiniNotationCompletion(
   context: FeatureContext,
   offset: number,
-): readonly CompletionCandidate[] {
+): MiniCompletionResult {
   for (const argument of context.semantic.miniNotationArguments) {
     const analysis = argument.analysis;
     if (
@@ -72,11 +78,16 @@ function provideMiniNotationCompletion(
           (right.range.endOffset - right.range.startOffset),
       )[0];
     if (operator === undefined) {
-      return [];
+      const step = stepContextAt(context, analysis, offset, true);
+      return {
+        handled: step !== undefined,
+        candidates:
+          step === undefined ? [] : provideMiniNotationStepCompletion(context, argument, step),
+      };
     }
 
-    return MINI_OPERATOR_COMPLETIONS.filter((candidate) =>
-      candidate.label.startsWith(operator.text),
+    const candidates: readonly CompletionCandidate[] = MINI_OPERATOR_COMPLETIONS.filter(
+      (candidate) => candidate.label.startsWith(operator.text),
     ).map((candidate) => ({
       label: candidate.label,
       kind: 'value',
@@ -84,9 +95,13 @@ function provideMiniNotationCompletion(
       documentation: TOKEN_DESCRIPTIONS[candidate.kind],
       replacementRange: operator.range,
     }));
+    return {
+      handled: candidates.length > 0,
+      candidates,
+    };
   }
 
-  return [];
+  return { handled: false, candidates: [] };
 }
 
 function isIdentifierCharacter(character: string | undefined): boolean {
@@ -145,8 +160,8 @@ export function provideCompletion(
   offset: number,
 ): readonly CompletionCandidate[] {
   const miniNotation = provideMiniNotationCompletion(context, offset);
-  if (miniNotation.length > 0) {
-    return miniNotation;
+  if (miniNotation.handled) {
+    return miniNotation.candidates;
   }
 
   if (

@@ -56,6 +56,11 @@ function isStepCharacter(character: string): boolean {
   return !/[\s[\]{}<>()|,:*/@_!?~.%^+-]/.test(character);
 }
 
+/** True when text can be represented by one pinned mini-notation step token. */
+export function isMiniNotationStepText(text: string): boolean {
+  return text.length > 0 && [...text].every(isStepCharacter);
+}
+
 function isWhitespace(character: string | undefined): boolean {
   return character !== undefined && /\s/.test(character);
 }

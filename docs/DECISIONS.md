@@ -1564,3 +1564,5 @@ Consequences:
 - Post-v1 implementations are MINOR candidates under ADR-063. Removing or changing a v1 contract element after freeze remains breaking.
 - No new provider is advertised by this ADR. Current `initialize` capabilities and negative capability assertions remain unchanged until implementation is separately authorized and verified.
 - No source behaviour, package version, tag, publication or registry state is changed by this decision.
+
+Phase 26 implementation note: the user then explicitly authorized the next roadmap item. Context-aware step completion and hover were implemented in the working tree with source-local literal `samples({...})` keys first, pinned runtime catalog samples second and note names only from the pinned `note` metadata. Feature, live-coding, stdio protocol and negative-metadata evidence passed at 150/150 tests. This note records implementation evidence only; no final `v1.0.0` capability matrix is re-frozen, no provider is advertised beyond the existing completion and hover capabilities, and the other three ADR-077 additions remain pending.

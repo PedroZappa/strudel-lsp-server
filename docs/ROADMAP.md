@@ -633,7 +633,7 @@ Dependencies: Phases 19, 22 and 25.
 Tasks:
 
 - [x] Update the Phase 16 stability ADR to include every capability added in Phases 20–24 and freeze the published `0.5.0` baseline. ADR-077 additions remain pending and require an explicit re-freeze before the final `v1.0.0` matrix.
-- [ ] Implement context-aware mini-notation step completion and hover sourced first from literal `samples({...})` keys, with note-name candidates only where pinned metadata supports them and no new unknown-sample diagnostic.
+- [x] Implement context-aware mini-notation step completion and hover sourced first from literal `samples({...})` keys, with note-name candidates only where pinned metadata supports them and no new unknown-sample diagnostic.
 - [ ] Implement relative `.strudel` import-path completion using the bounded workspace scan and its existing symlink, traversal, size, depth and unreadable-file guards.
 - [ ] Surface pinned deprecation metadata in completion and hover without adding a diagnostic code.
 - [ ] Implement `documentHighlight` only if it passes the same gate as the other additions; otherwise record an explicit deferral to Phase 28 under ADR-077.
@@ -646,6 +646,8 @@ Tasks:
 - [ ] Prepare versioned changelog and GitHub release notes from the exact candidate, without reusing point-in-time `0.2.0` evidence as if it were v1 evidence.
 
 Baseline freeze evidence: ADR-063's Phase 26 amendment records the complete Phases 20–24 mapping and freezes the published `0.5.0` surface. It does not pre-approve or advertise the ADR-077 additions.
+
+Step-context evidence: `test/features/miniNotationContext.test.ts` and the stdio completion/hover assertions cover source-local literal sample keys, pinned catalog provenance and precedence, metadata-gated note names, non-context owners, stripped metadata, dynamic and unresolved keys, an incomplete live-coding chain and unchanged structural diagnostics. The full working-tree gate is 150/150. This completes only the step-context task; the final matrix remains pending the remaining ADR-077 gates and an explicit re-freeze.
 
 Exit criteria:
 
@@ -754,7 +756,7 @@ These items were deferred after the first release and are not selected for `0.2.
 - Persistent workspace index or file watcher as a prerequisite for navigation.
 - Vendored grammar or generated parser source, and TCP transport.
 
-The earlier deferral of folding, selection ranges, inlay hints and call hierarchy was superseded and implemented in Phase 23; those capabilities are included in `0.5.0` and in the Phase 26 frozen baseline. ADR-077 adds four further v1 goals; all remain unimplemented and unadvertised until their phase is separately authorized, passes the full gate and is recorded in an explicit re-freeze.
+The earlier deferral of folding, selection ranges, inlay hints and call hierarchy was superseded and implemented in Phase 23; those capabilities are included in `0.5.0` and in the Phase 26 frozen baseline. ADR-077 adds four further v1 goals; step completion and hover now have implementation evidence, while the other three remain unimplemented. None is part of the final matrix or advertised until its gate passes and an explicit re-freeze records it.
 
 ## Transition constraint
 

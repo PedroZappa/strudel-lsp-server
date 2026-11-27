@@ -70,6 +70,19 @@ export function listPatternMethodRecords(
   return sortedRecords(names, (name) => database.getMethodRecord(name, snapshot.version));
 }
 
+export function listSampleRecords(database: LanguageDatabase): readonly LanguageMetadataRecord[] {
+  const snapshot = database.getSnapshot();
+  const names = new Set<string>();
+
+  for (const entry of snapshot.runtime) {
+    if (entry.kind === 'sample') {
+      names.add(entry.name);
+    }
+  }
+
+  return sortedRecords(names, (name) => database.getSampleRecord(name, snapshot.version));
+}
+
 export function metadataRecordForSymbol(
   context: FeatureContext,
   symbol: SemanticSymbol,

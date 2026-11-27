@@ -382,6 +382,45 @@ void test('stdio server advertises and serves implemented language capabilities'
   assert.ok(hover !== null);
   assert.match(hover.contents.value, /Select a sound/);
 
+  const stepUri = 'file:///test/steps.strudel';
+  const stepText = 'samples({ bd: "bd.wav" })\ns("b")\nnote("c")\ns("bd")';
+  const stepDiagnostics = client.waitForNotification('textDocument/publishDiagnostics');
+  client.notify('textDocument/didOpen', {
+    textDocument: { uri: stepUri, languageId: 'strudel', version: 1, text: stepText },
+  });
+  await stepDiagnostics;
+
+  const stepCompletion = (await client.request('textDocument/completion', {
+    textDocument: { uri: stepUri },
+    position: { line: 1, character: 4 },
+  })) as { label: string; textEdit?: { range: { start: { character: number } } } }[];
+  assert.equal(
+    stepCompletion.some(
+      (item) => item.label === 'bd' && item.textEdit?.range.start.character === 3,
+    ),
+    true,
+  );
+
+  const stepHover = (await client.request('textDocument/hover', {
+    textDocument: { uri: stepUri },
+    position: { line: 3, character: 3 },
+  })) as { contents: { value: string } } | null;
+  assert.ok(stepHover !== null);
+  assert.match(stepHover.contents.value, /sample key/);
+
+  const noteCompletion = (await client.request('textDocument/completion', {
+    textDocument: { uri: stepUri },
+    position: { line: 2, character: 7 },
+  })) as { label: string }[];
+  assert.equal(
+    noteCompletion.some((item) => item.label === 'c4'),
+    true,
+  );
+  assert.equal(
+    noteCompletion.some((item) => item.label === 'c'),
+    true,
+  );
+
   const signatureHelp = (await client.request('textDocument/signatureHelp', {
     textDocument: { uri },
     position: { line: 0, character: text.indexOf('2') },
