@@ -25,7 +25,7 @@ Install the package and configure an LSP client to launch `strudel-lsp-server` o
 npm install --global strudel-lsp-server
 ```
 
-The latest published version is `0.2.0`; pin `@0.2.0` for a reproducible install. Installation uses default npm peer resolution; `legacy-peer-deps=true` is not required.
+The latest published version is `0.3.0`; pin `@0.3.0` for a reproducible install. Installation uses default npm peer resolution; `legacy-peer-deps=true` is not required.
 
 ```json
 {
@@ -101,7 +101,7 @@ server/       Legacy TypeScript prototype, excluded from the package build
 
 ## Legacy prototype reference (not part of the published npm package)
 
-The original prototype directories and editor files are retained but are not authoritative for the npm package. They remain excluded from the package build, lint and test scopes until an explicit retirement decision is made. The commands below are historical reference only; use the installation and launch instructions above for the latest published release, `strudel-lsp-server@0.2.0`.
+The original prototype directories and editor files are retained but are not authoritative for the npm package. They remain excluded from the package build, lint and test scopes until an explicit retirement decision is made. The commands below are historical reference only; use the installation and launch instructions above for the latest published release, `strudel-lsp-server@0.3.0`.
 
 ### Historical Neovim prototype test
 

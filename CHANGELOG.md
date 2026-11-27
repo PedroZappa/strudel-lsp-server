@@ -2,7 +2,7 @@
 
 All notable changes to the `strudel-lsp-server` npm package are documented in this file. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-Version `0.2.0` was published on 2026-11-27 through the controlled OIDC workflow; `0.1.0` remains documented for compatibility. Version `0.3.0` is prepared for controlled publication from the exact candidate. Full user-facing notes for `0.3.0` are in `.github/RELEASE_NOTES_v0.3.0.md`; the published `0.2.0` body remains immutable in `.github/RELEASE_TEMPLATE.md`.
+Version `0.3.0` was published on 2026-11-27 from tag `v0.3.0` at commit `b3451e283986b576b526534136026adba0bf5217` through the controlled OIDC workflow with `pedrozappa` as operator and is the latest published release; `0.2.0` and `0.1.0` remain available. ADR-067 records the publication and smoke evidence, including the transient workflow-verification race. Full user-facing notes for `0.3.0` are in `.github/RELEASE_NOTES_v0.3.0.md`; the published `0.2.0` body remains immutable in `.github/RELEASE_TEMPLATE.md`.
 
 ## [Unreleased]
 
@@ -14,6 +14,7 @@ Version `0.2.0` was published on 2026-11-27 through the controlled OIDC workflow
 - ADR-064 records the Phase 17 package-content, support-guidance and SBOM decisions: the npm allowlist stays minimal, README documents privacy-preserving problem reports, and SBOM generation is deferred to the Phase 26 review. Documentation-contract tests cover the recorded decisions.
 - ADR-065 closes Phase 18 compatibility: Strudel `1.2.6` is named as the supported language snapshot, the two upstream `tree-sitter-strudel@2.0.2` grammar gaps and the 1,308 unresolved corpus references are accepted baselines, and explicit Strudel/parser/Node update triggers, corpus/compatibility reruns and SemVer rules are recorded. The refreshed corpus report is byte-identical and compatibility-contract tests cover the pins and matrix.
 - ADR-066 records the exact Phase 19 publication authorization for `strudel-lsp-server@0.3.0`, tag `v0.3.0` and operator `pedrozappa`, including the requirement to preserve the published `0.2.0` release body as historical evidence.
+- ADR-067 records the controlled workflow run, registry identity, signatures, SLSA provenance, tarball identity, fresh local and global installs, installed stdio handshake and GitHub release evidence for the published `0.3.0`.
 
 ### Changed
 
@@ -29,6 +30,7 @@ Version `0.2.0` was published on 2026-11-27 through the controlled OIDC workflow
 - Seven pinned documentation examples expose two upstream `tree-sitter-strudel@2.0.2` grammar gaps: `%` modulo in JavaScript expressions and `//` inside string literals. The grammar is not vendored or patched.
 - Strudel version selection remains deferred; the narrow configuration surface does not expose internal engine settings.
 - Incremental semantic reuse is statement-level, mini-notation tokenization is lexical rather than a full recovery parser, and platforms outside the validated matrix are best-effort.
+- The immutable `0.3.0` tarball contains the candidate README that names `0.2.0` as the latest published version; the repository README was corrected after publication. The workflow's final verification step failed transiently with `ETARGET` during registry propagation; independent post-publication checks passed and no republish was attempted.
 
 ## [0.2.0] - 2026-11-27
 

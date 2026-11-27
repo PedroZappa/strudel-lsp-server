@@ -173,6 +173,25 @@ void test('Phase 19 authorization records the exact version tag and operator', (
   assert.match(authorization, /does not permit a local publish/);
 });
 
+void test('Phase 19 publication evidence records the exact release and completed phase', () => {
+  const marker = '## ADR-067 — Phase 19 publication and smoke evidence';
+  const start = decisions.indexOf(marker);
+  assert.notEqual(start, -1);
+  const evidence = decisions.slice(start);
+  assert.match(evidence, /b3451e283986b576b526534136026adba0bf5217/);
+  assert.match(evidence, /787fccb333e5c03bd6615f17167c252db440d5d9/);
+  assert.match(evidence, /46049593155/);
+  assert.match(evidence, /140677309030/);
+  assert.match(evidence, /140677717483/);
+  assert.match(evidence, /ETARGET/);
+  assert.match(evidence, /8ad0ac52f1443648c38b372532d0f2d5306e72d7/);
+  assert.match(evidence, /SLSA v1/);
+  assert.match(evidence, /No local publish, republish/);
+  assert.match(roadmap, /^### Phase 19 — `v0\.3\.0` controlled release \(complete\)$/m);
+  assert.match(changelog, /Version `0\.3\.0` was published on 2026-11-27/);
+  assert.match(readme, /latest published version is `0\.3\.0`/);
+});
+
 void test('first-publish bootstrap exception is version-limited and blocks workflow publishing', () => {
   const marker = '## ADR-049 — First-publish bootstrap exception';
   const start = decisions.indexOf(marker);
