@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: re-implementation roadmap complete through Phase 15. `strudel-lsp-server@0.2.0` was published on 2026-11-27 from tag `v0.2.0` at commit `7d611a8d61dae2ab2eea21a12ce2ebdec59e4488` through the controlled OIDC workflow with `pedrozappa` as operator; `0.1.0` remains available. ADR-060 records the exact publication authorization and ADR-061 records the registry, signature, provenance and smoke evidence. ADR-051 records the scope and deferred work, ADR-052 records the configuration contract, ADR-053 records the filesystem boundary, ADR-054 records the `.npmrc` removal, ADR-055 records hermetic pack caching, ADR-056 records the advisory soak/lifecycle design, ADR-057 records the separate advisory benchmark report, ADR-058 records the independent editor-client smoke evidence, and ADR-059 records the release-preparation authorization. Missing provenance for the operator-managed first publish is recorded in ADR-050. Priorities are proposals and remain subject to approval.
+Status: re-implementation roadmap complete through Phase 15. `strudel-lsp-server@0.2.0` was published on 2026-11-27 from tag `v0.2.0` at commit `7d611a8d61dae2ab2eea21a12ce2ebdec59e4488` through the controlled OIDC workflow with `pedrozappa` as operator; `0.1.0` remains available. ADR-060 records the exact publication authorization and ADR-061 records the registry, signature, provenance and smoke evidence. ADR-051 records the scope and deferred work, ADR-052 records the configuration contract, ADR-053 records the filesystem boundary, ADR-054 records the `.npmrc` removal, ADR-055 records hermetic pack caching, ADR-056 records the advisory soak/lifecycle design, ADR-057 records the separate advisory benchmark report, ADR-058 records the independent editor-client smoke evidence, ADR-059 records the release-preparation authorization, and ADR-062 records publication-state-aware verification. Missing provenance for the operator-managed first publish is recorded in ADR-050. Proposed Phases 16–27 below describe a feature-expanded route to `v1.0.0`, split into `v0.3.0`, `v0.4.0`, `v0.5.0` and `v1.0.0` increments. Priorities are proposals and remain subject to approval.
 
 Authority: `AGENTS.md` sections 2–18 and the other documents in `docs/`.
 
@@ -410,36 +410,273 @@ Exit criteria:
 
 Post-release hardening: ADR-062 makes `npm run verify:release` publication-state aware. Future tags and workflow dispatches from the updated tree with `ref: v0.2.0` verify registry artifact identity instead of calling `npm publish --dry-run`, which npm rejects for immutable versions; a rerun of the historical tag itself still uses its old workflow. This does not change the published `0.2.0` artifact, tag or GitHub release.
 
+## Proposed feature-expanded route to `v1.0.0`
+
+**Status: proposed only. No phase in this section is authorized for implementation or release.** This route includes every optional capability identified after `0.2.0` and splits the work into four independently verifiable increments. Each controlled release requires its own ADR naming the exact version, tag and operator; no release below is approved by the roadmap alone.
+
+| Increment | Phases | Theme                                                  |
+| --------- | ------ | ------------------------------------------------------ |
+| `v0.3.0`  | 16–19  | Contract, compatibility and release-process foundation |
+| `v0.4.0`  | 20–22  | Semantic depth and mini-notation structure             |
+| `v0.5.0`  | 23–25  | Editor ergonomics, navigation and scale                |
+| `v1.0.0`  | 26–27  | Stability freeze and controlled publication            |
+
+Dependency chain:
+
+```text
+16 → 17 → 18 → 19
+  ↘ 20 → 21 → 22
+  ↘ 23 → 24 → 25
+19, 22, 25 → 26 → 27
+```
+
+### Phase 16 — v1 stability charter (proposed, `v0.3.0`)
+
+Dependencies: Phase 15 and ADR-033, which reserves `1.0.0` for a separate stability decision.
+
+Tasks:
+
+- [ ] Draft a new ADR defining the initial v1 public contract: package name and executable, Node/npm range, LSP capability surface, configuration schema, diagnostic-code naming and severity semantics, parser and language-metadata pins, supported platform matrix, supported Strudel snapshot, non-goals, and SemVer rules for `1.x`.
+- [ ] Revisit ADR-034 and decide whether `strudelLsp.diagnostics.enabled` and severity overrides are stable, additive-only or still provisional.
+- [ ] Record the amendment process: Phases 20–24 may extend the contract, and Phase 26 freezes it before `v1.0.0`.
+
+Exit criteria:
+
+- [ ] The stability ADR is accepted and referenced as authoritative for the v1 route.
+- [ ] Documentation distinguishes stable contract, known limitation, post-v1 candidate and standing non-goal.
+- [ ] A contract-test plan exists for capabilities, configuration, diagnostic codes and deliberately unsupported capabilities.
+
+### Phase 17 — Documentation, packaging and support readiness (proposed, `v0.3.0`)
+
+Dependencies: Phase 16.
+
+Tasks:
+
+- [ ] Reconcile stale `0.1.0`, “unreleased”, “no publish authorized”, historical tag and point-in-time test-count wording in authoritative docs; preserve historical ADRs as explicitly historical rather than rewriting their meaning.
+- [ ] Decide the npm `files` allowlist: compiled code and licence only, or also changelog, TypeScript sources and source maps. Update package verification to match the decision.
+- [ ] Add support guidance or issue templates describing which diagnostics, server logs and reproduction details users should supply without disclosing secrets.
+- [ ] Decide explicitly whether to generate an SBOM or additional release attestation; do not add a dependency without separate approval.
+- [ ] Add machine-checkable documentation-contract tests where the expected wording is stable.
+
+Exit criteria:
+
+- [ ] No authoritative document contradicts the current release state or describes planned Phase 16–27 behaviour as already implemented.
+- [ ] The package allowlist, support policy and SBOM decision are recorded and reflected in validation.
+- [ ] The published `v0.2.0` release body in `.github/RELEASE_TEMPLATE.md` is not rewritten to describe later work.
+
+### Phase 18 — Parser, metadata and platform compatibility closure (proposed, `v0.3.0`)
+
+Dependencies: Phase 17.
+
+Tasks:
+
+- [ ] Resolve or formally accept the two known upstream grammar gaps: `%` modulo in JavaScript expressions and `//` inside string literals. The grammar remains a versioned dependency and is not vendored or patched in this repository.
+- [ ] Name the supported Strudel snapshot explicitly: the current pinned core/mini/transpiler metadata is `1.2.6`, with the older `1.2.2` reference reconciled or removed from authoritative wording.
+- [ ] Record a dependency-update policy covering Strudel, the parser, Tree-sitter and Node: triggers for metadata regeneration, corpus reruns, compatibility reruns and SemVer impact.
+- [ ] Confirm the supported matrix as Linux x64, macOS arm64 and Windows x64 on Node 24/26, with other prebuild platforms explicitly best-effort or separately validated.
+- [ ] Refresh `validation/real-corpus.json` and document any accepted unresolved-reference baseline.
+
+Exit criteria:
+
+- [ ] Corpus validation passes on the final pins with no invariant failures.
+- [ ] Parser integration tests remain separate from semantic-engine tests, and no grammar or generated parser is copied into this repository.
+- [ ] The compatibility ADR states whether parser or metadata upgrades are patch, minor or major events under the v1 contract.
+
+### Phase 19 — `v0.3.0` controlled release (proposed)
+
+Dependencies: Phases 16–18 and an exact publication ADR naming `strudel-lsp-server@0.3.0`, tag `v0.3.0` and the operator.
+
+Tasks:
+
+- [ ] Repeat the full gate on the exact candidate: typecheck, lint, formatting, all test suites, corpus validation, package and consumer verification, benchmarks, audits and client smoke runs.
+- [ ] Ensure the release tag carries ADR-062 publication-state-aware verification so post-publication reruns validate registry identity instead of calling an immutable publish dry-run.
+- [ ] Publish only through the controlled OIDC workflow with `npm-release` approval; no local publish is permitted.
+- [ ] Verify provenance, signatures, registry metadata, tarball identity, clean installs and installed stdio handshake, then publish release notes generated from the exact candidate.
+
+Exit criteria:
+
+- [ ] Exact-tag CI is green before publication and the controlled publish job succeeds.
+- [ ] Post-publication evidence is recorded in an ADR and the changelog.
+- [ ] No deprecation, dist-tag change, unpublish, retag or other unapproved registry mutation occurs.
+
+### Phase 20 — Semantic depth and reference resolution (proposed, `v0.4.0`)
+
+Dependencies: Phase 19.
+
+Tasks:
+
+- [ ] Add deterministic sample-name resolution where metadata supports an unambiguous match, without guessing unresolved names.
+- [ ] Add usage-based inference for common pattern parameters and preserve conservative suppression when evidence is insufficient.
+- [ ] Extend signature models with richer labels, overloads, rest parameters and user-defined function signatures where the syntax tree provides reliable evidence.
+- [ ] Reduce the unresolved-reference baseline in `validation/real-corpus.json` and document every remaining category.
+- [ ] Add semantic-engine tests that do not depend on Tree-sitter APIs.
+
+Exit criteria:
+
+- [ ] New semantic behaviour is covered by focused tests and corpus evidence.
+- [ ] No new false-positive diagnostics appear in live-coding fixtures with incomplete or malformed input.
+- [ ] Documentation distinguishes resolved, conservatively suppressed and unresolved cases.
+
+### Phase 21 — Mini-notation recovery and structured AST (proposed, `v0.4.0`)
+
+Dependencies: Phase 20.
+
+Tasks:
+
+- [ ] Introduce a Strudel-owned mini-notation AST layer over the pinned lexer, keeping the semantic engine independent of direct Tree-sitter node access.
+- [ ] Add recovery for invalid, partial and rapidly edited mini-notation, with precise ranges for actionable diagnostics and semantic tokens.
+- [ ] Extend hover, completion and signature help for mini-notation constructs only where authoritative language evidence exists.
+- [ ] Keep parser/lexer integration tests separate from semantic AST tests.
+
+Exit criteria:
+
+- [ ] Invalid mini-notation fixtures recover without cascading diagnostics or server errors.
+- [ ] Corpus validation reports no new invariant failures and records the improved mini-notation coverage.
+- [ ] The mini-notation contract is documented as an additive improvement, not a claim of full language compilation.
+
+### Phase 22 — `v0.4.0` controlled release (proposed)
+
+Dependencies: Phase 21 and an exact publication ADR naming `strudel-lsp-server@0.4.0`, tag `v0.4.0` and the operator.
+
+Tasks:
+
+- [ ] Repeat the full candidate gate, including the new semantic and mini-notation regression suites.
+- [ ] Update the changelog, compatibility evidence and release notes from the exact candidate.
+- [ ] Publish only through the controlled OIDC workflow with `npm-release` approval.
+- [ ] Verify provenance, signatures, tarball identity, clean installs and installed stdio handshake after publication.
+
+Exit criteria:
+
+- [ ] Exact-tag CI is green and post-publication smoke evidence passes.
+- [ ] Semantic and mini-notation limitations remaining after this release are documented.
+- [ ] No unapproved registry mutation occurs.
+
+### Phase 23 — Editor ergonomics and navigation (proposed, `v0.5.0`)
+
+Dependencies: Phase 22.
+
+Tasks:
+
+- [ ] Add folding ranges and selection ranges with deterministic, syntax-aware boundaries.
+- [ ] Add inlay hints that are opt-in by default and derived only from resolved semantic information.
+- [ ] Add completion resolution for richer documentation and detail where metadata supports it.
+- [ ] Add range formatting while preserving the existing conservative full-document behaviour.
+- [ ] Add call hierarchy, `workspaceSymbol/resolve` and bounded cross-file navigation for files under an explicit workspace root.
+- [ ] Add conservative refactoring support, such as local extract/rename operations, without introducing a JavaScript or TypeScript compiler into the core.
+- [ ] Update the capability matrix and contract tests for both added and still-unsupported capabilities.
+
+Exit criteria:
+
+- [ ] Every added capability has feature, protocol and live-coding regression coverage.
+- [ ] Negative capability assertions prevent accidental advertisement of unimplemented features.
+- [ ] No editor-specific dependency becomes an architectural requirement.
+- [ ] Workspace filesystem access remains bounded, deterministic and privacy-preserving.
+
+### Phase 24 — Scale and responsiveness (proposed, `v0.5.0`)
+
+Dependencies: Phase 23.
+
+Tasks:
+
+- [ ] Replace or supplement synthetic benchmark fixtures with representative real-world workloads after confirming provenance and redistribution terms.
+- [ ] Implement incremental semantic reuse so large-document edits avoid full semantic snapshots where correctness permits.
+- [ ] Add local-only timing instrumentation for diagnosis behind an opt-in boundary; no production telemetry is introduced by default.
+- [ ] Decide whether performance thresholds become blocking CI checks or remain advisory with hardware-normalised evidence.
+- [ ] Record p50/p95/p99 for layer-level and end-to-end JSON-RPC benchmarks on the final candidate.
+
+Exit criteria:
+
+- [ ] Benchmark evidence shows no unexplained latency regression against the Phase 18 baseline.
+- [ ] Soak and rapid-edit tests continue to pass with incremental reuse enabled.
+- [ ] The performance promise in `docs/PERFORMANCE.md` matches the measured evidence and the declared advisory/blocking policy.
+
+### Phase 25 — `v0.5.0` controlled release (proposed)
+
+Dependencies: Phase 24 and an exact publication ADR naming `strudel-lsp-server@0.5.0`, tag `v0.5.0` and the operator.
+
+Tasks:
+
+- [ ] Repeat the full candidate gate, including folding, selection ranges, inlay hints, completion resolution, range formatting, navigation and incremental-semantics suites.
+- [ ] Update the changelog, capability matrix, performance report and release notes from the exact candidate.
+- [ ] Publish only through the controlled OIDC workflow with `npm-release` approval.
+- [ ] Verify provenance, signatures, registry metadata, tarball identity, clean installs and installed stdio handshake after publication.
+
+Exit criteria:
+
+- [ ] Exact-tag CI is green and post-publication smoke evidence passes.
+- [ ] All capability additions are reflected in documentation and negative capability tests.
+- [ ] No unapproved registry mutation occurs.
+
+### Phase 26 — v1 readiness freeze (proposed, `v1.0.0`)
+
+Dependencies: Phases 19, 22 and 25.
+
+Tasks:
+
+- [ ] Update the Phase 16 stability ADR to include every capability added in Phases 20–24 and freeze the v1 capability matrix.
+- [ ] Add contract tests for advertised providers, deliberately unsupported capabilities, configuration schema and diagnostic-code identity.
+- [ ] Align the release workflow with the full CI gate, including configuration, LSP filesystem, soak, corpus, consumer-install, package, audit and benchmark checks.
+- [ ] Decide whether the compatibility matrix must run `verify:consumer` on every supported OS/Node pair.
+- [ ] Repeat dependency, licence, provenance and secret audits on the exact v1 candidate.
+- [ ] Confirm the package allowlist, SBOM decision, support guidance and performance policy are implemented and documented.
+- [ ] Prepare versioned changelog and GitHub release notes from the exact candidate, without reusing point-in-time `0.2.0` evidence as if it were v1 evidence.
+
+Exit criteria:
+
+- [ ] The full candidate gate is green on the exact commit proposed for `v1.0.0`.
+- [ ] The v1 contract is accepted and all deviations from earlier planned scope are recorded in `docs/DECISIONS.md`.
+- [ ] The v1 tag will contain ADR-062 verification and the final capability contract tests.
+- [ ] No planned v1 capability is advertised without implementation evidence.
+
+### Phase 27 — `v1.0.0` controlled release (proposed)
+
+Dependencies: Phase 26 and an exact publication ADR naming `strudel-lsp-server@1.0.0`, tag `v1.0.0` and the operator.
+
+Tasks:
+
+- [ ] Obtain explicit authorization for exactly `1.0.0`, exactly `v1.0.0` and the named operator.
+- [ ] Run the controlled OIDC workflow with `npm-release` approval; no local publish is permitted.
+- [ ] Verify provenance, signatures, registry metadata, tarball identity, clean installs, documented launch command and installed stdio handshake.
+- [ ] Publish the GitHub release only after post-publication verification passes.
+
+Exit criteria:
+
+- [ ] `1.0.0` is published through the controlled workflow with verified SLSA provenance matching the package, repository, workflow and resolved commit.
+- [ ] The GitHub release is published with no binary assets and notes matching the versioned changelog section.
+- [ ] No deprecation, dist-tag change, unpublish, retag or other unapproved registry mutation occurs.
+- [ ] The v1 stability contract takes effect and subsequent changes follow the SemVer rules accepted in Phase 16 and frozen in Phase 26.
+
 ## Phase 13 release-quality backlog (post-publication status)
 
-These were the recommended, non-blocking items carried out of first publication. Items assigned to v0.2.0 are complete and recorded in Phase 14; all others remain unscheduled and are deferred beyond v0.2.0 unless later authorized.
+These were the recommended, non-blocking items carried out of first publication. Items assigned to v0.2.0 are complete and recorded in Phase 14. In the proposed feature-expanded route, the remaining items are mapped to Phases 17, 18 or 26 below; they remain unscheduled until the relevant phase is authorized.
 
 - [x] **Assigned to Phase 14 and completed.** VS Code and Neovim smoke clients exercise initialization, diagnostics, completion, document symbols, incremental change and shutdown through stdio; client configuration stays in `smoke/` and evidence is in `validation/client-smoke.json`; see ADR-058.
 - [x] Add deterministic stdio error-path tests for malformed input and cancellation; `test/protocolRobustness.test.ts` now covers both at the JSON-RPC transport layer in addition to the semantic-engine suite.
 - [x] **Assigned to Phase 14 and completed.** A bounded soak test exercises rapid edits and repeated initialize/shutdown cycles, reports advisory RSS observations, and adds no production telemetry; see ADR-056 and `npm run test:soak`.
 - [x] **Assigned to Phase 14 and completed.** Workspace-symbol discovery now rejects symlinks, unsafe entry names and paths outside the normalized root, ignores unreadable or oversized files, enforces depth and file-count limits, and uses deterministic ordering; see ADR-053 and `test/lsp/workspaceFiles.test.ts`.
 - [x] **Assigned to Phase 14 and completed.** `npm run benchmark:e2e` measures a rapid edit and document-symbol request through stdio JSON-RPC and the installed bin; `benchmarks/end-to-end.json` reports advisory p50/p95/p99 separately from the layer-level baseline; see ADR-057.
-- [ ] Decide whether to include `CHANGELOG.md`, TypeScript sources or source maps in the npm `files` allowlist. The current allowlist is intentionally minimal; any change must be reflected in package verification.
-- [ ] Record a dependency-update policy for Strudel, the parser and Node: what triggers compatibility retesting and when the pinned metadata snapshot may be regenerated.
-- [ ] Consider a generated SBOM or release attestation. This is optional for the first release and must not introduce a dependency without separate approval.
-- [ ] Add issue templates or a support section that tells users which diagnostics and server logs to include, while preserving privacy and avoiding secret disclosure.
+- [ ] **Proposed Phase 17.** Decide whether to include `CHANGELOG.md`, TypeScript sources or source maps in the npm `files` allowlist. The current allowlist is intentionally minimal; any change must be reflected in package verification.
+- [ ] **Proposed Phase 18.** Record a dependency-update policy for Strudel, the parser and Node: what triggers compatibility retesting and when the pinned metadata snapshot may be regenerated.
+- [ ] **Proposed Phase 17, revisited in Phase 26.** Decide explicitly whether to generate an SBOM or additional release attestation; do not introduce a dependency without separate approval.
+- [ ] **Proposed Phase 17.** Add issue templates or a support section that tells users which diagnostics and server logs to include, while preserving privacy and avoiding secret disclosure.
 - [x] **Assigned to Phase 14 and completed.** Clean consumer installs pass with isolated npm configuration and `legacy-peer-deps=false`; the repository `.npmrc` was removed; see ADR-054 and `npm run verify:consumer`.
 
-## Deferred beyond v0.2.0
+## Deferred beyond v0.2.0 (mapped into the proposed v1 route)
 
-These items were deferred after the first release and are not selected for `0.2.0` in ADR-051. The unassigned items in the Phase 13 release-quality backlog above also remain deferred unless later authorized.
+These items were deferred after the first release and are not selected for `0.2.0` in ADR-051. The earlier blanket deferral is superseded by the proposed route above for planning purposes only; implementation still requires phase authorization.
 
-- [ ] Replace synthetic benchmark fixtures with representative real-world workloads once provenance and redistribution terms are confirmed.
-- [ ] Optimise incremental semantic reuse; current large-document updates rebuild the semantic snapshot and are documented in `docs/PERFORMANCE.md`.
-- [ ] Add production-side timing hooks or live-editor telemetry only if a concrete latency question requires them; no telemetry is part of the first release.
-- [ ] Continue evaluating folding, selection ranges, inlay hints, call hierarchy, completion resolution, range formatting, broader refactoring and cross-file navigation under the existing deferred-capability policy.
+- [ ] **Proposed Phase 24.** Replace synthetic benchmark fixtures with representative real-world workloads once provenance and redistribution terms are confirmed.
+- [ ] **Proposed Phase 24.** Optimise incremental semantic reuse; current large-document updates rebuild the semantic snapshot and are documented in `docs/PERFORMANCE.md`.
+- [ ] **Proposed Phase 24.** Add local-only timing instrumentation for diagnosis behind an opt-in boundary; production telemetry remains excluded by default.
+- [ ] **Proposed Phase 23.** Add folding, selection ranges, inlay hints, call hierarchy, completion resolution, range formatting, broader refactoring and bounded cross-file navigation, with contract tests for advertised and unsupported capabilities.
 
-## Deferred / explicitly not planned
+## Standing non-goals (not proposed for v1)
 
 - Complete JavaScript or TypeScript compiler/type checker.
-- Standalone binary distribution in the initial release.
+- Standalone binary distribution instead of the npm package.
 - Editor-specific dependencies in the server core.
-- Folding, selection ranges, inlay hints and call hierarchy until their value is demonstrated.
+
+The earlier deferral of folding, selection ranges, inlay hints and call hierarchy is superseded by proposed Phase 23; those capabilities are now included in the feature-expanded route to `v1.0.0`.
 
 ## Transition constraint
 
