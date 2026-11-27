@@ -2,13 +2,13 @@
 
 All notable changes to the `strudel-lsp-server` npm package are documented in this file. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-Version `0.3.0` was published on 2026-11-27 from tag `v0.3.0` at commit `b3451e283986b576b526534136026adba0bf5217` through the controlled OIDC workflow with `pedrozappa` as operator. ADR-067 records the publication and smoke evidence, including the transient workflow-verification race. Version `0.4.0` was published on 2026-11-27 from tag `v0.4.0` at commit `1d39c14cba2152116ce1c2c5d5b827bf6af5c144` through the controlled OIDC workflow with `pedrozappa` as operator and is the latest published release; `0.3.0`, `0.2.0` and `0.1.0` remain available. ADR-072 records the exact publication and smoke evidence. The working-tree candidate manifest declares `0.5.0` but is unpublished; ADR-075 records the exact publication authorization and publication evidence remains pending. Full user-facing notes for `0.4.0` are in `.github/RELEASE_NOTES_v0.4.0.md`; the draft `0.5.0` notes are in `.github/RELEASE_NOTES_v0.5.0.md`; the published `0.2.0` body remains immutable in `.github/RELEASE_TEMPLATE.md`.
+Version `0.3.0` was published on 2026-11-27 from tag `v0.3.0` at commit `b3451e283986b576b526534136026adba0bf5217` through the controlled OIDC workflow with `pedrozappa` as operator. ADR-067 records the publication and smoke evidence, including the transient workflow-verification race. Version `0.4.0` was published on 2026-11-27 from tag `v0.4.0` at commit `1d39c14cba2152116ce1c2c5d5b827bf6af5c144` through the controlled OIDC workflow with `pedrozappa` as operator and remains available. ADR-072 records its exact publication and smoke evidence. Version `0.5.0` was published on 2026-11-27 from tag `v0.5.0` at commit `51f2aa511028a970a92c62e43efdabf141d0b0e9` through the controlled OIDC workflow with `pedrozappa` as operator and is the latest published release; `0.3.0`, `0.2.0` and `0.1.0` remain available. ADR-075 authorized the release and ADR-076 records the exact registry, provenance and smoke evidence. Full user-facing notes for `0.5.0` are in `.github/RELEASE_NOTES_v0.5.0.md`; the published `0.4.0` notes remain in `.github/RELEASE_NOTES_v0.4.0.md`; the immutable `0.2.0` body remains in `.github/RELEASE_TEMPLATE.md`.
 
 ## [Unreleased]
 
 ## [0.5.0] - 2026-11-27
 
-Candidate only; not published. The manifest declares `0.5.0`, while `0.4.0` remains the latest registry release. Publication is authorized under ADR-075 but has not yet been performed.
+Published on 2026-11-27 from tag `v0.5.0` at commit `51f2aa511028a970a92c62e43efdabf141d0b0e9` through the controlled OIDC workflow with `pedrozappa` as operator. ADR-076 records the exact registry identity, signatures, SLSA v1 provenance, clean-install and installed stdio evidence.
 
 ### Added
 
@@ -27,7 +27,7 @@ Candidate only; not published. The manifest declares `0.5.0`, while `0.4.0` rema
 
 - The accepted upstream `tree-sitter-strudel@2.0.2` grammar gaps and conservative unresolved-reference baseline from `0.4.0` remain unchanged.
 - Phase 24 timing and benchmark evidence are advisory local measurements, not editor-latency guarantees or production telemetry.
-- No `v0.5.0` publication, tag, provenance or registry identity exists yet; exact-tag and post-publication verification remain pending.
+- The initial publish job was blocked because the `npm-release` environment lacked an exact `v0.5.0` tag policy; the policy was added and the job rerun successfully. The published artifact and immutable release were not modified afterwards.
 
 ## [0.4.0] - 2026-11-27
 

@@ -1,6 +1,6 @@
 # Strudel LSP Server
 
-An editor-agnostic Language Server Protocol implementation for [Strudel](https://strudel.cc/). The npm package is named `strudel-lsp-server`; `0.2.0` is published and `0.1.0` remains available. The server core speaks LSP over stdio and does not depend on any editor client.
+An editor-agnostic Language Server Protocol implementation for [Strudel](https://strudel.cc/). The npm package is named `strudel-lsp-server`; `0.5.0` is the latest published release and earlier releases remain available. The server core speaks LSP over stdio and does not depend on any editor client.
 
 ## Features
 
@@ -25,7 +25,7 @@ Install the package and configure an LSP client to launch `strudel-lsp-server` o
 npm install --global strudel-lsp-server
 ```
 
-The latest published version is `0.4.0`; pin `@0.4.0` for a reproducible install. The candidate manifest is `0.5.0` but unpublished; ADR-075 authorizes its exact controlled publication. Installation uses default npm peer resolution; `legacy-peer-deps=true` is not required.
+The latest published version is `0.5.0`; pin `@0.5.0` for a reproducible install. The release was published from tag `v0.5.0` through the controlled OIDC workflow and verified under ADR-076. Installation uses default npm peer resolution; `legacy-peer-deps=true` is not required.
 
 ```json
 {
@@ -45,21 +45,19 @@ The core server does not provide a TCP mode. Editor-specific clients and configu
 
 ## Capabilities
 
-The published `0.4.0` artifact advertises only capabilities that were implemented and verified for that release: incremental text document sync, diagnostics, completion, hover, signature help, definition, references, document symbols, workspace symbols, rename, whole-document formatting, semantic tokens, and `quickfix` and `refactor.inline` code actions.
-
-The unreleased `v0.5.0` candidate additionally advertises completion resolution, `refactor.extract`, call hierarchy, `workspaceSymbol/resolve`, range formatting, folding ranges, selection ranges and opt-in inlay hints. Definition and references can also resolve bounded cross-file targets from explicit relative `.strudel` imports in files supplied by the on-demand workspace scan. Workspace symbols still use a bounded `.strudel` scan with symlink, path-traversal and unreadable-file guards; nothing in this tree is published and no persistent workspace index or file watcher is created. Phase 24 adds internal real-corpus benchmarks, incremental semantic reuse and opt-in local timing; it adds no new LSP capability and produces no production telemetry.
+The published `0.5.0` artifact advertises incremental text document sync, diagnostics, completion, hover, signature help, definition, references, document symbols, workspace symbols, rename, whole-document formatting, semantic tokens, and `quickfix` and `refactor.inline` code actions. It additionally advertises completion resolution, `refactor.extract`, call hierarchy, `workspaceSymbol/resolve`, range formatting, folding ranges, selection ranges and opt-in inlay hints. Definition and references can also resolve bounded cross-file targets from explicit relative `.strudel` imports in files supplied by the on-demand workspace scan. Workspace symbols still use a bounded `.strudel` scan with symlink, path-traversal and unreadable-file guards; no persistent workspace index or file watcher is created. Phase 24 added internal real-corpus benchmarks, incremental semantic reuse and opt-in local timing; it adds no new LSP capability and produces no production telemetry.
 
 See [LSP_FEATURES.md](https://github.com/PedroZappa/strudel-lsp-server/blob/main/docs/LSP_FEATURES.md) for exact capability details and [PERFORMANCE.md](https://github.com/PedroZappa/strudel-lsp-server/blob/main/docs/PERFORMANCE.md) for measured latency baselines.
 
 ## Known limitations
 
-The published `0.1.0` through `0.4.0` releases deliberately limit scope; the unreleased `v0.5.0` additions retain the following boundaries:
+The published `0.1.0` through `0.4.0` releases deliberately limit scope; the published `0.5.0` capabilities retain the following boundaries:
 
 - Published `0.1.0` has no custom configuration channel. `0.2.0` adds the focused diagnostics configuration described below and in ADR-052; Strudel version selection and internal engine settings remain deferred.
 - Diagnostics stay conservative on incomplete live-coding input rather than reporting unreliable cascading errors.
-- Formatting in published releases is indentation-only. The unreleased `v0.5.0` tree adds range formatting, but still reuses the same conservative edits and does not reformat expressions.
-- Workspace symbols use a bounded on-demand scan of `.strudel` files rather than a persistent workspace index or cross-file module graph; symlink entries and paths outside the workspace root are skipped. The unreleased cross-file definition/reference path is bounded by that same scan and requires explicit relative imports and verified exported declarations.
-- In the unreleased tree, inlay hints default to off, `workspaceSymbol/resolve` only restores a withheld exact range for clients that advertise partial-result support, and stale or malformed resolve tokens provide no enrichment.
+- Formatting through `0.4.0` was indentation-only. `0.5.0` adds range formatting, but still reuses the same conservative edits and does not reformat expressions.
+- Workspace symbols use a bounded on-demand scan of `.strudel` files rather than a persistent workspace index or cross-file module graph; symlink entries and paths outside the workspace root are skipped. The cross-file definition/reference path added in `0.5.0` is bounded by that same scan and requires explicit relative imports and verified exported declarations.
+- In `0.5.0`, inlay hints default to off, `workspaceSymbol/resolve` only restores a withheld exact range for clients that advertise partial-result support, and stale or malformed resolve tokens provide no enrichment.
 - Only stdio transport is provided; the package has no TCP mode.
 - Platforms other than the required Linux x64, macOS arm64 and Windows x64 matrix are best-effort until validated.
 - The pinned `tree-sitter-strudel@2.0.2` grammar has two accepted upstream gaps: `%` modulo in JavaScript expressions and `//` inside string literals. Semantic analysis still completes for affected examples; see ADR-065.
@@ -70,7 +68,7 @@ The published `0.1.0` package has no custom settings: diagnostics are enabled by
 
 The published `0.2.0` release adds focused diagnostics settings under the standard LSP `strudelLsp` section: `diagnostics.enabled` plus optional per-code severities (`error`, `warning`, `information`, `hint` or `off`). Clients that advertise `workspace.configuration` are queried for this section, including on a configuration notification; clients without that capability can send `workspace/didChangeConfiguration` with settings under `settings.strudelLsp`. Either path republishes diagnostics for all open documents, and defaults remain unchanged when no configuration is supplied.
 
-The unreleased `v0.5.0` tree also accepts `inlayHints.enabled` in the same section. It defaults to `false`, ignores invalid values, and requests an inlay-hint refresh when a client advertises `workspace.inlayHint.refreshSupport`. Formatting preferences and Strudel metadata selection remain outside this narrow surface, and client-specific configuration stays outside the package. See [LSP_FEATURES.md](https://github.com/PedroZappa/strudel-lsp-server/blob/main/docs/LSP_FEATURES.md#configuration) for the exact settings shape and ADR-052/ADR-073 for the decisions.
+The published `0.5.0` release also accepts `inlayHints.enabled` in the same section. It defaults to `false`, ignores invalid values, and requests an inlay-hint refresh when a client advertises `workspace.inlayHint.refreshSupport`. Formatting preferences and Strudel metadata selection remain outside this narrow surface, and client-specific configuration stays outside the package. See [LSP_FEATURES.md](https://github.com/PedroZappa/strudel-lsp-server/blob/main/docs/LSP_FEATURES.md#configuration) for the exact settings shape and ADR-052/ADR-073 for the decisions.
 
 ## Development
 
@@ -106,7 +104,7 @@ server/       Legacy TypeScript prototype, excluded from the package build
 
 ## Legacy prototype reference (not part of the published npm package)
 
-The original prototype directories and editor files are retained but are not authoritative for the npm package. They remain excluded from the package build, lint and test scopes until an explicit retirement decision is made. The commands below are historical reference only; use the installation and launch instructions above for the latest published release, `strudel-lsp-server@0.3.0`.
+The original prototype directories and editor files are retained but are not authoritative for the npm package. They remain excluded from the package build, lint and test scopes until an explicit retirement decision is made. The commands below are historical reference only; use the installation and launch instructions above for the latest published release, `strudel-lsp-server@0.5.0`.
 
 ### Historical Neovim prototype test
 

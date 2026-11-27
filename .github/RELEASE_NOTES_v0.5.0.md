@@ -1,4 +1,4 @@
-Draft release notes for `strudel-lsp-server@0.5.0`: candidate only; not published. The candidate manifest declares `0.5.0`, while the latest published release remains `0.4.0`. These notes will become authoritative only after exact publication authorization, an exact validation gate, a controlled OIDC release and post-publication smoke checks. The published `0.4.0` notes remain in `.github/RELEASE_NOTES_v0.4.0.md`; the immutable `0.2.0` release body remains in `.github/RELEASE_TEMPLATE.md`.
+Release notes for `strudel-lsp-server@0.5.0`. This release was published from tag `v0.5.0` at commit `51f2aa511028a970a92c62e43efdabf141d0b0e9` through the controlled OIDC workflow. The published `0.4.0` notes remain in `.github/RELEASE_NOTES_v0.4.0.md`; the immutable `0.2.0` release body remains in `.github/RELEASE_TEMPLATE.md`.
 
 ## Requirements and pinned versions
 
@@ -19,14 +19,14 @@ Draft release notes for `strudel-lsp-server@0.5.0`: candidate only; not publishe
 ## Implemented capabilities
 
 - The published `0.4.0` capability set: resilient diagnostics, completion, hover, signature help, definition, references, document and workspace symbols, rename, semantic tokens, whole-document formatting, and `quickfix` and `refactor.inline` code actions.
-- Unreleased Phase 23 additions: completion resolution, range formatting, folding ranges, selection ranges, opt-in inlay hints, call hierarchy, `workspaceSymbol/resolve`, `refactor.extract` and bounded cross-file navigation.
+- Phase 23 additions: completion resolution, range formatting, folding ranges, selection ranges, opt-in inlay hints, call hierarchy, `workspaceSymbol/resolve`, `refactor.extract` and bounded cross-file navigation.
 - Performance and correctness additions from Phase 24 are internal: real-corpus workloads, incremental semantic reuse and opt-in local timing. They do not add a new LSP capability or diagnostic code.
 
-The server advertises only implemented capabilities. Exact behaviour and provider policies are documented in `docs/LSP_FEATURES.md`; negative capability tests remain part of the candidate gate.
+The server advertises only implemented capabilities. Exact behaviour and provider policies are documented in `docs/LSP_FEATURES.md`; negative capability tests remain part of the release gate.
 
 ## Install and launch
 
-After authorization and publication, install the pinned release:
+Install the published release:
 
 ```bash
 npm install --global strudel-lsp-server@0.5.0
@@ -49,20 +49,20 @@ Details and evidence are in `docs/LSP_FEATURES.md`, `docs/PERFORMANCE.md`, `docs
 
 ## Installed-package verification
 
-The candidate gate passed on linux-x64 with Node `v26.13.1` and npm `11.20.0`: strict typecheck, lint, Prettier verification and 145/145 tests; focused suites of 6 parser, 13 semantic, 6 metadata, 6 configuration, 8 LSP, 51 feature, 9 mini-notation, 11 protocol and 1 soak test; `make ci` with package preview, offline install, all 20 advisory layer benchmarks, corpus validation and the client dependency audit; clean-consumer installs; runtime and client audits with zero vulnerabilities; and a local Neovim `0.12.6` smoke covering six behaviours. VS Code was unavailable on this runner, so its historical `1.148.0` evidence remains authoritative. The advisory installed-binary workload reported 0.441/0.689/1.009 ms p50/p95/p99 over 100 samples with `packageVersion: "0.5.0"`; no threshold or baseline update is associated with that report. Exact-tag CI, controlled workflow publication, registry identity, signatures, provenance, installed-package verification from the registry and GitHub release publication remain pending. No post-publication evidence is asserted in this draft.
+The exact candidate gate passed on linux-x64 with Node `v26.13.1` and npm `11.20.0`: strict typecheck, lint, Prettier verification and 145/145 tests; focused suites of 6 parser, 13 semantic, 6 metadata, 6 configuration, 8 LSP, 51 feature, 9 mini-notation, 11 protocol and 1 soak test; `make ci` with package preview, offline install, all 20 advisory layer benchmarks, corpus validation and the client dependency audit; clean-consumer installs; runtime and client audits with zero vulnerabilities; and a local Neovim `0.12.6` smoke covering six behaviours. VS Code was unavailable on this runner, so its historical `1.148.0` evidence remains authoritative. The advisory installed-binary workload reported 0.433/0.716/0.959 ms p50/p95/p99 over 100 samples with `packageVersion: "0.5.0"`; this is local evidence and has no threshold or baseline update. After publication, a clean isolated install from the public registry used a blank npm userconfig, isolated cache and `--ignore-scripts`; its `strudel-lsp-server` executable completed initialize, initialized, didOpen, documentSymbol, shutdown and exit over stdio, exposed the declared pattern and exited cleanly. `npm audit signatures --json --include-attestations` on that install reported `invalid: []` and `missing: []`, verified `strudel-lsp-server@0.5.0`, and exposed npm publish and SLSA v1 attestations. ADR-076 records the complete publication evidence.
 
 ## Corrections and rollback
 
-npm versions are immutable. If a defect is found after publication, the fix will use a new version through the same tag-gated workflow; the published version will not be replaced. A known-bad version may be deprecated with an npm warning naming the replacement version. Unpublishing is reserved for exceptional security, legal or policy cases because it is irreversible and does not free the version number; it requires explicit operator authorization. Users would be notified through the npm deprecation warning, an updated changelog, a GitHub release for the fix and a linked issue. See ADR-045 in `docs/DECISIONS.md`.
+npm versions are immutable. If a defect is found, the fix will use a new version through the same tag-gated workflow; the published version will not be replaced. A known-bad version may be deprecated with an npm warning naming the replacement version. Unpublishing is reserved for exceptional security, legal or policy cases because it is irreversible and does not free the version number; it requires explicit operator authorization. Users are notified through the npm deprecation warning, an updated changelog, a GitHub release for the fix and a linked issue. See ADR-045 in `docs/DECISIONS.md`.
 
-## Publication status
+## Publication record
 
-Controlled publication is authorized for exactly `strudel-lsp-server@0.5.0` and tag `v0.5.0` with `pedrozappa` as the named operator under accepted ADR-075 in `docs/DECISIONS.md`. Publication evidence remains pending: this draft does not claim that the tag, workflow run, registry entry or GitHub release exists. No local publish, deprecation, dist-tag change, unpublish, retag or other registry mutation is authorized.
+Published by operator `pedrozappa` from tag `v0.5.0` at commit `51f2aa511028a970a92c62e43efdabf141d0b0e9` through controlled workflow run `46074959599`. Validation job `140760948012` and publish job `140760945648` completed successfully; the publish job ran `npm publish --access public` with OIDC, waited for registry visibility on attempt 7 and passed the post-publish install and signature checks. An initial publish attempt was blocked because the `npm-release` environment had no exact `v0.5.0` tag policy; the exact tag policy was added and the failed publish job was rerun. ADR-075 authorized the release and ADR-076 records its exact evidence. No local publish, republish, deprecation, dist-tag change, unpublish or retag was performed. The GitHub release is <https://github.com/PedroZappa/strudel-lsp-server/releases/tag/v0.5.0>.
 
 ## Links
 
 - Package: <https://www.npmjs.com/package/strudel-lsp-server>
 - README: <https://github.com/PedroZappa/strudel-lsp-server#readme>
-- Changelog: <https://github.com/PedroZappa/strudel-lsp-server/blob/main/CHANGELOG.md>
+- Changelog: <https://github.com/PedroZappa/strudel-lsp-server/blob/main/CHANGELOG.md#050---2026-11-27>
 - Documentation and decisions: <https://github.com/PedroZappa/strudel-lsp-server/tree/main/docs>
 - Issues: <https://github.com/PedroZappa/strudel-lsp-server/issues>

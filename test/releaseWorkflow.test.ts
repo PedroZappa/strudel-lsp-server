@@ -115,7 +115,7 @@ void test('release verifier switches from dry-run parity to published registry p
   assert.match(testingStrategy, /^### Post-publication verification hardening/m);
 });
 
-void test('changelog and current release notes match the candidate manifest without claiming publication', () => {
+void test('changelog and current release notes match the published manifest', () => {
   const version = packageJson.version.replaceAll('.', '\\.');
   assert.equal(packageJson.version, '0.5.0');
   assert.match(changelog, new RegExp(`^## \\[${version}\\] - \\d{4}-\\d{2}-\\d{2}$`, 'm'));
@@ -127,7 +127,8 @@ void test('changelog and current release notes match the candidate manifest with
   assert.match(currentReleaseNotes, /^## Explicit limitations and known issues$/m);
   assert.match(currentReleaseNotes, /^## Installed-package verification$/m);
   assert.match(currentReleaseNotes, /^## Corrections and rollback$/m);
-  assert.match(currentReleaseNotes, /candidate only; not published/);
+  assert.match(currentReleaseNotes, /^## Publication record$/m);
+  assert.match(currentReleaseNotes, /Published by operator `pedrozappa`/);
 });
 
 void test('post-publication smoke plan covers registry, installed launch and release record', () => {
@@ -205,9 +206,9 @@ void test('Phase 19 publication evidence records the exact release and completed
   assert.match(evidence, /No local publish, republish/);
   assert.match(roadmap, /^### Phase 19 — `v0\.3\.0` controlled release \(complete\)$/m);
   assert.match(changelog, /Version `0\.3\.0` was published on 2026-11-27/);
-  // The README is live documentation and must name the registry release, not the unpublished candidate.
-  assert.match(readme, /latest published version is `0\.4\.0`/);
-  assert.match(readme, /candidate manifest is `0\.5\.0`/);
+  // The README is live documentation and must name the current registry release.
+  assert.match(readme, /latest published version is `0\.5\.0`/);
+  assert.match(readme, /release was published from tag `v0\.5\.0`/);
 });
 
 void test('Phase 22 authorization records the exact version tag and operator', () => {
@@ -258,33 +259,40 @@ void test('first-publish bootstrap exception is version-limited and blocks workf
   assert.equal(workflow.match(/npm publish --access public/g)?.length, 1);
 });
 
-void test('Phase 25 authorization records the exact version tag and operator', () => {
-  const candidateNotes = readFileSync(
+void test('Phase 25 records exact authorization and completed publication evidence', () => {
+  const releaseNotes = readFileSync(
     join(repositoryRoot, '.github', 'RELEASE_NOTES_v0.5.0.md'),
     'utf8',
   );
-  assert.match(candidateNotes, /^Draft release notes for `strudel-lsp-server@0\.5\.0`/m);
-  assert.match(candidateNotes, /candidate only; not published/m);
-  assert.match(candidateNotes, /^## Publication status$/m);
-  assert.match(candidateNotes, /Controlled publication is authorized/);
-  assert.match(candidateNotes, /Publication evidence remains pending/);
+  assert.match(releaseNotes, /^Release notes for `strudel-lsp-server@0\.5\.0`/m);
+  assert.match(releaseNotes, /^## Publication record$/m);
+  assert.match(releaseNotes, /Published by operator `pedrozappa`/);
+  assert.match(releaseNotes, /workflow run `46074959599`/);
+  assert.match(releaseNotes, /No local publish, republish, deprecation, dist-tag change/);
 
-  const marker = '## ADR-075 — Phase 25 controlled publication authorization';
-  const start = decisions.indexOf(marker);
-  assert.notEqual(start, -1);
-  const section = decisions.slice(start);
-  assert.match(section, /Status: accepted/);
-  assert.match(section, /publish(?:ing)? exactly `strudel-lsp-server@0\.5\.0`/);
-  assert.match(section, /tag(?:ging)? exactly `v0\.5\.0`/);
-  assert.match(section, /`pedrozappa` as the named release operator/);
-  assert.match(section, /controlled OIDC workflow/);
-  assert.match(section, /RELEASE_NOTES_v0\.5\.0\.md/);
-  assert.match(section, /does not permit a local publish/);
+  const authorizationMarker = '## ADR-075 — Phase 25 controlled publication authorization';
+  const authorizationStart = decisions.indexOf(authorizationMarker);
+  assert.notEqual(authorizationStart, -1);
+  const authorization = decisions.slice(authorizationStart);
+  assert.match(authorization, /Status: accepted/);
+  assert.match(authorization, /publish(?:ing)? exactly `strudel-lsp-server@0\.5\.0`/);
+  assert.match(authorization, /tag(?:ging)? exactly `v0\.5\.0`/);
+  assert.match(authorization, /`pedrozappa` as the named release operator/);
+  assert.match(authorization, /does not permit a local publish/);
 
-  assert.match(
-    roadmap,
-    /^### Phase 25 — `v0\.5\.0` controlled release \(authorized for controlled publication\)$/m,
-  );
+  const evidenceMarker = '## ADR-076 — Phase 25 `0.5.0` publication evidence';
+  const evidenceStart = decisions.indexOf(evidenceMarker);
+  assert.notEqual(evidenceStart, -1);
+  const evidence = decisions.slice(evidenceStart);
+  assert.match(evidence, /Status: accepted/);
+  assert.match(evidence, /commit `51f2aa511028a970a92c62e43efdabf141d0b0e9`/);
+  assert.match(evidence, /[Vv]alidation job `140760948012`/);
+  assert.match(evidence, /publish job `140760945648`/);
+  assert.match(evidence, /`npm audit signatures --json --include-attestations`/);
+  assert.match(evidence, /`refs\/tags\/v0\.5\.0`/);
+  assert.match(evidence, /Phase 25 is complete/);
+
+  assert.match(roadmap, /^### Phase 25 — `v0\.5\.0` controlled release \(complete\)$/m);
 });
 
 void test('Phase 17 records the package, support and SBOM readiness decisions', () => {
