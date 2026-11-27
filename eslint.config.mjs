@@ -15,6 +15,7 @@ export default tseslint.config(
       'client/**',
       'dist/**',
       'server/**',
+      'smoke/**',
       'scripts/e2e.sh',
       '*.tsbuildinfo',
     ],

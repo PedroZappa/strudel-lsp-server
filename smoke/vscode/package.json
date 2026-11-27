@@ -1,0 +1,26 @@
+{
+  "name": "strudel-lsp-vscode-smoke",
+  "displayName": "Strudel LSP VS Code smoke client",
+  "private": true,
+  "version": "0.0.0",
+  "publisher": "local",
+  "license": "AGPL-3.0-only",
+  "engines": {
+    "vscode": "^1.100.0"
+  },
+  "activationEvents": [],
+  "main": "./extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "strudel",
+        "aliases": [
+          "Strudel"
+        ],
+        "extensions": [
+          ".strudel"
+        ]
+      }
+    ]
+  }
+}

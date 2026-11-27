@@ -51,7 +51,7 @@ _INFO    = [$(BLU)INFO$(D)]
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install install-dev build typecheck lint format format-check test test-parser test-semantic test-metadata test-configuration test-lsp test-features test-mini test-protocol test-soak validate-corpus validate-corpus-write generate-metadata benchmark benchmark-check benchmark-baseline benchmark-e2e benchmark-e2e-write pack-check verify-package verify-consumer verify-release check verify verify-all ci check-static audit audit-client clean docs docs-open
+.PHONY: help install install-dev build typecheck lint format format-check test test-parser test-semantic test-metadata test-configuration test-lsp test-features test-mini test-protocol test-soak smoke-clients smoke-clients-write smoke-vscode smoke-nvim validate-corpus validate-corpus-write generate-metadata benchmark benchmark-check benchmark-baseline benchmark-e2e benchmark-e2e-write pack-check verify-package verify-consumer verify-release check verify verify-all ci check-static audit audit-client clean docs docs-open
 
 #==============================================================================#
 #                                  RULES                                       #
@@ -145,6 +145,26 @@ test-soak:	## Build and run the bounded soak/lifecycle suite only
 	@echo "$(YEL)Running soak/lifecycle tests...$(D)"
 	@$(NPM) run test:soak
 	@echo "$(YEL)* $(_SUCCESS) Soak/lifecycle tests completed$(D)"
+
+smoke-clients:	## Run local VS Code and Neovim LSP smoke clients
+	@echo "$(YEL)Running editor-client smoke tests...$(D)"
+	@$(NPM) run smoke:clients
+	@echo "$(YEL)* $(_SUCCESS) Editor-client smoke tests completed$(D)"
+
+smoke-clients-write:	## Refresh the committed editor-client smoke evidence
+	@echo "$(YEL)Refreshing editor-client smoke evidence...$(D)"
+	@$(NPM) run smoke:clients:write
+	@echo "$(YEL)* $(_SUCCESS) Editor-client smoke evidence updated$(D)"
+
+smoke-vscode:	## Run the VS Code LSP smoke client only
+	@echo "$(YEL)Running VS Code smoke client...$(D)"
+	@$(NPM) run smoke:vscode
+	@echo "$(YEL)* $(_SUCCESS) VS Code smoke client completed$(D)"
+
+smoke-nvim:	## Run the Neovim LSP smoke client only
+	@echo "$(YEL)Running Neovim smoke client...$(D)"
+	@$(NPM) run smoke:nvim
+	@echo "$(YEL)* $(_SUCCESS) Neovim smoke client completed$(D)"
 
 validate-corpus:	## Validate syntax and semantics against pinned Strudel documentation examples
 	@echo "$(YEL)Validating real Strudel documentation corpus...$(D)"

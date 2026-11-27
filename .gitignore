@@ -2,6 +2,9 @@
 node_modules/
 dist/
 
+# Local smoke harness link to the existing prototype client dependencies
+/smoke/vscode/node_modules
+
 # Files
 .DS_STORE
 

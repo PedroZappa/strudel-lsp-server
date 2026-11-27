@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: re-implementation roadmap complete through Phase 13; Phases 14–15 define the proposed `0.2.0` hardening/configuration increment and controlled release path. `strudel-lsp-server@0.1.0` remains the published release. The Phase 14 diagnostics-configuration, workspace-symbol filesystem-hardening, clean consumer-install, bounded soak/lifecycle and installed-binary end-to-end benchmark tasks are implemented and verified; the remaining Phase 14–15 work is not implemented or authorized for publication. ADR-051 records the scope and deferred work, ADR-052 records the configuration contract, ADR-053 records the filesystem boundary, ADR-054 records the `.npmrc` removal, ADR-055 records hermetic pack caching, ADR-056 records the advisory soak/lifecycle design, and ADR-057 records the separate advisory benchmark report. Missing provenance for the operator-managed first publish is recorded in ADR-050. Priorities are proposals and remain subject to approval.
+Status: re-implementation roadmap complete through Phase 13; Phases 14–15 define the proposed `0.2.0` hardening/configuration increment and controlled release path. `strudel-lsp-server@0.1.0` remains the published release. The Phase 14 diagnostics-configuration, workspace-symbol filesystem-hardening, clean consumer-install, bounded soak/lifecycle, installed-binary end-to-end benchmark and two-client smoke tasks are implemented and verified; the remaining Phase 14–15 work is not implemented or authorized for publication. ADR-051 records the scope and deferred work, ADR-052 records the configuration contract, ADR-053 records the filesystem boundary, ADR-054 records the `.npmrc` removal, ADR-055 records hermetic pack caching, ADR-056 records the advisory soak/lifecycle design, ADR-057 records the separate advisory benchmark report, and ADR-058 records the independent editor-client smoke evidence. Missing provenance for the operator-managed first publish is recorded in ADR-050. Priorities are proposals and remain subject to approval.
 
 Authority: `AGENTS.md` sections 2–18 and the other documents in `docs/`.
 
@@ -366,7 +366,7 @@ Exit criteria:
 
 Dependencies: Phase 13 and explicit approval of the v0.2.0 scope recorded in ADR-051. This phase prepares changes; it does not publish a release.
 
-**Status: the diagnostics-configuration, workspace-symbol filesystem-hardening, clean consumer-install, bounded soak/lifecycle and installed-binary end-to-end benchmark tasks are implemented and verified; the remaining tasks are planned. Nothing in this phase is authorized for release.**
+**Status: the diagnostics-configuration, workspace-symbol filesystem-hardening, clean consumer-install, bounded soak/lifecycle, installed-binary end-to-end benchmark and two-client smoke tasks are implemented and verified; the remaining task is planned. Nothing in this phase is authorized for release.**
 
 Tasks:
 
@@ -375,7 +375,7 @@ Tasks:
 - [x] Verify installation in a clean consumer environment that does not inherit this repository's `.npmrc`, especially `legacy-peer-deps=true`. Narrow or remove that setting only after compatibility is demonstrated, and record the decision with evidence. Implemented with `npm run verify:consumer`, `make verify-consumer`, CI coverage, removal of `.npmrc` and ADR-054.
 - [x] Add a bounded soak/lifecycle test covering rapid edits, repeated initialize/shutdown cycles and memory-growth observation. `test/soakLifecycle.test.ts` runs three process cycles with 64 rapid edits each, asserts clean transport, final document state and exit codes, and reports RSS observations from `ps` as advisory diagnostics without production telemetry; see ADR-056.
 - [x] Add one end-to-end JSON-RPC/installed-binary workload to the benchmark suite. `scripts/benchmark-e2e.mjs` packs and installs the built tarball offline, drives `textDocument/didChange` plus `textDocument/documentSymbol` through the installed bin, and writes p50/p95/p99 to the separate advisory `benchmarks/end-to-end.json`; see ADR-057.
-- [ ] Execute two independent LSP-client smoke tests with client configuration kept outside the server core. Record the client behaviours exercised and their results; add no editor dependency to the published server.
+- [x] Execute two independent LSP-client smoke tests with client configuration kept outside the server core. `scripts/smoke-clients.mjs` runs VS Code through `vscode-languageclient` and Neovim through its built-in LSP client against the built stdio server; `validation/client-smoke.json` records six behaviours and passing results for both. See ADR-058.
 - [ ] Update `docs/LSP_FEATURES.md`, `docs/TESTING_STRATEGY.md`, `docs/PERFORMANCE.md`, README and CHANGELOG as each behaviour lands. Do not describe planned behaviour as implemented before verification.
 
 Exit criteria:
@@ -383,7 +383,7 @@ Exit criteria:
 - [x] Diagnostics configuration is implemented, documented and covered by feature, protocol and stdio tests; default behaviour remains unchanged.
 - [x] Workspace-symbol filesystem edge cases have deterministic regression coverage and bounded limits remain enforced.
 - [x] Consumer installation without inherited npm configuration passes, and the `.npmrc` decision is recorded.
-- [ ] Bounded soak evidence is recorded without new core dependencies or production telemetry; two-client editor smoke evidence remains outstanding.
+- [x] Bounded soak evidence is recorded without new core dependencies or production telemetry, and two-client editor smoke evidence records passing VS Code and Neovim runs outside the published server.
 - [x] A separate advisory `benchmarks/end-to-end.json` records JSON-RPC p50/p95/p99 from the installed binary. This refines the earlier "baseline and advisory check" wording: per ADR-051 the result is reported separately and has no thresholds, while `benchmark:check` keeps its 18 layer-level workloads.
 - [ ] Full validation gate passes after the changes, and documentation matches implementation.
 
@@ -412,7 +412,7 @@ Exit criteria:
 
 These were the recommended, non-blocking items carried out of first publication. Items assigned to v0.2.0 remain open and are restated in Phase 14; all others remain unscheduled and are deferred beyond v0.2.0 unless later authorized.
 
-- [ ] **Assigned to Phase 14.** Perform editor-level smoke tests with at least two independent LSP clients using configuration kept outside the server core. Record which client behaviours were checked, not editor-specific implementation details in the server.
+- [x] **Assigned to Phase 14 and completed.** VS Code and Neovim smoke clients exercise initialization, diagnostics, completion, document symbols, incremental change and shutdown through stdio; client configuration stays in `smoke/` and evidence is in `validation/client-smoke.json`; see ADR-058.
 - [x] Add deterministic stdio error-path tests for malformed input and cancellation; `test/protocolRobustness.test.ts` now covers both at the JSON-RPC transport layer in addition to the semantic-engine suite.
 - [x] **Assigned to Phase 14 and completed.** A bounded soak test exercises rapid edits and repeated initialize/shutdown cycles, reports advisory RSS observations, and adds no production telemetry; see ADR-056 and `npm run test:soak`.
 - [x] **Assigned to Phase 14 and completed.** Workspace-symbol discovery now rejects symlinks, unsafe entry names and paths outside the normalized root, ignores unreadable or oversized files, enforces depth and file-count limits, and uses deterministic ordering; see ADR-053 and `test/lsp/workspaceFiles.test.ts`.

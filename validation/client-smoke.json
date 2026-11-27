@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "serverModule": "dist/src/server.js",
+  "transport": "stdio",
+  "environment": {
+    "platform": "darwin",
+    "architecture": "arm64",
+    "node": "v26.8.2"
+  },
+  "clients": [
+    {
+      "client": "vscode",
+      "editorVersion": "1.148.0",
+      "clientLibraryVersion": "9.0.1",
+      "transport": "stdio",
+      "status": "pass",
+      "behaviours": [
+        "initialize/capabilities over stdio through vscode-languageclient",
+        "didOpen publishes diagnostics for an unresolved global",
+        "position-aware completion returns the local declaration",
+        "document symbols expose the declared pattern",
+        "didChange is synchronized and updates document symbols",
+        "shutdown and language-client stop complete"
+      ]
+    },
+    {
+      "client": "nvim",
+      "editorVersion": "0.12.6",
+      "clientLibraryVersion": "built-in",
+      "transport": "stdio",
+      "status": "pass",
+      "behaviours": [
+        "initialize/capabilities over stdio through the built-in LSP client",
+        "didOpen publishes diagnostics for an unresolved global",
+        "position-aware completion returns the local declaration",
+        "document symbols expose the declared pattern",
+        "didChange is synchronized and updates document symbols",
+        "shutdown and client stop complete"
+      ]
+    }
+  ]
+}

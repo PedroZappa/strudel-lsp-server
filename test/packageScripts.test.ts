@@ -16,6 +16,10 @@ const packageJson = JSON.parse(readFileSync(join(repositoryRoot, 'package.json')
   files: string[];
   bin: Record<string, string>;
   scripts: Record<string, string>;
+  dependencies: Record<string, string>;
+  devDependencies: Record<string, string>;
+  optionalDependencies?: Record<string, string>;
+  peerDependencies?: Record<string, string>;
 };
 
 function testPattern(scriptName: string): string {
@@ -110,6 +114,63 @@ void test('end-to-end benchmark is advisory and separate from the layer baseline
     !baseline.workloads.some((workload) => workload.id === report.workload.id),
     'the installed-binary workload must not enter the layer-level baseline',
   );
+});
+
+void test('editor-client smoke evidence is separate from the published package', () => {
+  assert.match(packageJson.scripts['smoke:clients'], /scripts\/smoke-clients\.mjs$/);
+  assert.match(packageJson.scripts['smoke:clients:write'], /--write-report$/);
+  assert.match(packageJson.scripts['smoke:vscode'], /--client vscode$/);
+  assert.match(packageJson.scripts['smoke:nvim'], /--client nvim$/);
+
+  const dependencyGroups = [
+    packageJson.dependencies,
+    packageJson.devDependencies,
+    packageJson.optionalDependencies ?? {},
+    packageJson.peerDependencies ?? {},
+  ];
+  for (const dependency of ['vscode', 'vscode-languageclient', '@vscode/test-electron']) {
+    for (const group of dependencyGroups) {
+      assert.equal(group[dependency], undefined);
+    }
+  }
+
+  const report = JSON.parse(
+    readFileSync(join(repositoryRoot, 'validation', 'client-smoke.json'), 'utf8'),
+  ) as {
+    schemaVersion: number;
+    serverModule: string;
+    transport: string;
+    clients: {
+      client: string;
+      editorVersion: string;
+      status: string;
+      behaviours: string[];
+    }[];
+  };
+
+  assert.equal(report.schemaVersion, 1);
+  assert.equal(report.serverModule, 'dist/src/server.js');
+  assert.equal(report.transport, 'stdio');
+  assert.deepEqual(report.clients.map((client) => client.client).sort(), ['nvim', 'vscode']);
+
+  const requiredBehaviours = [
+    'initialize/capabilities',
+    'diagnostic',
+    'completion',
+    'document symbols',
+    'didChange',
+    'shutdown',
+  ];
+  for (const client of report.clients) {
+    assert.equal(client.status, 'pass');
+    assert.ok(client.editorVersion.length > 0);
+    for (const behaviour of requiredBehaviours) {
+      assert.ok(
+        client.behaviours.some((observed) => observed.includes(behaviour)),
+        `${client.client} did not exercise ${behaviour}`,
+      );
+    }
+  }
 });
 
 void test('package metadata describes the published server', () => {
