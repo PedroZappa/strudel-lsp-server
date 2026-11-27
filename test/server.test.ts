@@ -493,6 +493,34 @@ void test('stdio server advertises and serves implemented language capabilities'
   })) as { range: { start: { line: number } } }[];
   assert.equal(references.length, 2);
 
+  const highlights = (await client.request('textDocument/documentHighlight', {
+    textDocument: { uri },
+    position: { line: 0, character: 7 },
+  })) as {
+    range: {
+      start: { line: number; character: number };
+      end: { line: number; character: number };
+    };
+    kind: number;
+  }[];
+  assert.deepEqual(
+    highlights.map((highlight) => [
+      highlight.range.start.line,
+      highlight.range.start.character,
+      highlight.range.end.character,
+      highlight.kind,
+    ]),
+    [
+      [0, 6, 9, 3],
+      [1, 0, 3, 2],
+    ],
+  );
+  const noHighlight = (await client.request('textDocument/documentHighlight', {
+    textDocument: { uri },
+    position: { line: 0, character: 0 },
+  })) as unknown[];
+  assert.deepEqual(noHighlight, []);
+
   const documentSymbols = (await client.request('textDocument/documentSymbol', {
     textDocument: { uri },
   })) as {

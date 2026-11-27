@@ -5,6 +5,7 @@ import {
   CompletionItemKind,
   createConnection,
   DiagnosticSeverity,
+  DocumentHighlightKind,
   InlayHintKind,
   MarkupKind,
   ProposedFeatures,
@@ -28,6 +29,8 @@ import {
   type DefinitionParams,
   type Diagnostic,
   type DidChangeConfigurationParams,
+  type DocumentHighlight,
+  type DocumentHighlightParams,
   type DocumentFormattingParams,
   type FoldingRange,
   type DocumentRangeFormattingParams,
@@ -68,6 +71,7 @@ import {
   provideCompletion,
   provideDefinition,
   provideDiagnostics,
+  provideDocumentHighlights,
   provideDocumentSymbols,
   findImportPathCompletion,
   provideFoldingRanges,
@@ -91,6 +95,7 @@ import {
   type CodeActionKindName,
   type CompletionCandidateKind,
   type DiagnosticSeverityName,
+  type DocumentHighlightKindName,
   type DocumentSymbolKind,
   type DocumentSymbolResult,
   type FeatureContext,
@@ -405,6 +410,10 @@ function toCompletionItemKind(kind: CompletionCandidateKind): CompletionItemKind
     case 'variable':
       return CompletionItemKind.Variable;
   }
+}
+
+function toDocumentHighlightKind(kind: DocumentHighlightKindName): DocumentHighlightKind {
+  return kind === 'write' ? DocumentHighlightKind.Write : DocumentHighlightKind.Read;
 }
 
 function contextFor(analyzed: AnalyzedDocument, offset: number): FeatureContext {
@@ -743,6 +752,24 @@ connection.onReferences((params: ReferenceParams, token: CancellationToken): Pro
         range: toLspRange(reference.range),
       }),
     );
+  }),
+);
+
+// Implemented for the ADR-077 gate but deliberately not advertised until an
+// explicit re-freeze amends the published 0.5.0 capability surface.
+connection.onDocumentHighlight((params: DocumentHighlightParams): Promise<DocumentHighlight[]> =>
+  guardAsync([], async () => {
+    await awaitDocumentAnalysis(params.textDocument.uri);
+    const analyzed = documents.get(params.textDocument.uri);
+    if (analyzed === undefined) {
+      return [];
+    }
+    const offset = analyzed.document.offsetAt(params.position);
+    const context = contextFor(analyzed, offset);
+    return provideDocumentHighlights(context, offset).map((highlight) => ({
+      range: toLspRange(highlight.range),
+      kind: toDocumentHighlightKind(highlight.kind),
+    }));
   }),
 );
 

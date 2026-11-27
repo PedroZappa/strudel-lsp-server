@@ -101,6 +101,13 @@ export interface ReferenceResult {
   readonly range: SemanticRange;
 }
 
+export type DocumentHighlightKindName = 'read' | 'write';
+
+export interface DocumentHighlightResult {
+  readonly range: SemanticRange;
+  readonly kind: DocumentHighlightKindName;
+}
+
 export interface WorkspaceLocationResult {
   readonly uri: string;
   readonly range: SemanticRange;

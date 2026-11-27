@@ -2,6 +2,8 @@ import { findReferenceAt, findSymbolAt, resolveReference } from '../semantic/ind
 
 import type {
   DefinitionResult,
+  DocumentHighlightKindName,
+  DocumentHighlightResult,
   FeatureContext,
   ReferenceResult,
   SymbolLookupResult,
@@ -70,6 +72,38 @@ export function provideReferences(
   for (const reference of context.semantic.references) {
     if (reference.resolvedSymbolId === found.symbol.id) {
       add(reference.range);
+    }
+  }
+
+  return results;
+}
+
+export function provideDocumentHighlights(
+  context: FeatureContext,
+  offset: number,
+): readonly DocumentHighlightResult[] {
+  const found = findSymbolAtOffset(context, offset);
+  if (found === undefined) {
+    return [];
+  }
+
+  const results: DocumentHighlightResult[] = [];
+  const seen = new Set<string>();
+  const add = (range: DocumentHighlightResult['range'], kind: DocumentHighlightKindName): void => {
+    const key = rangeKey(range);
+    if (!seen.has(key)) {
+      seen.add(key);
+      results.push({ range, kind });
+    }
+  };
+
+  if (found.symbol.declaration !== undefined) {
+    add(found.symbol.declaration, 'write');
+  }
+
+  for (const reference of context.semantic.references) {
+    if (reference.resolvedSymbolId === found.symbol.id) {
+      add(reference.range, reference.kind === 'assignment' ? 'write' : 'read');
     }
   }
 

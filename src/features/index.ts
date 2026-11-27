@@ -7,7 +7,12 @@ export { provideFormatting, provideRangeFormatting } from './formatting.js';
 export { provideHover } from './hover.js';
 export { findImportPathCompletion } from './importPathCompletion.js';
 export type { ImportPathCompletionTarget } from './importPathCompletion.js';
-export { findSymbolAtOffset, provideDefinition, provideReferences } from './navigation.js';
+export {
+  findSymbolAtOffset,
+  provideDefinition,
+  provideDocumentHighlights,
+  provideReferences,
+} from './navigation.js';
 export { prepareRename, provideRename } from './rename.js';
 export { provideRefactorings } from './refactorings.js';
 export { resolveCompletion, resolveWorkspaceSymbol } from './resolve.js';
@@ -30,6 +35,8 @@ export type {
   DefinitionResult,
   DiagnosticFix,
   DiagnosticSeverityName,
+  DocumentHighlightKindName,
+  DocumentHighlightResult,
   DocumentSymbolKind,
   DocumentSymbolResult,
   FeatureContext,
