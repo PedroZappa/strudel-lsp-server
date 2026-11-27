@@ -2,19 +2,33 @@
 
 All notable changes to the `strudel-lsp-server` npm package are documented in this file. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-Version `0.2.0` was published on 2026-11-27 through the controlled OIDC workflow and is the latest published release; `0.1.0` remains documented for compatibility. Full user-facing notes are in `.github/RELEASE_TEMPLATE.md`.
+Version `0.2.0` was published on 2026-11-27 through the controlled OIDC workflow; `0.1.0` remains documented for compatibility. Version `0.3.0` is prepared for controlled publication from the exact candidate. Full user-facing notes for `0.3.0` are in `.github/RELEASE_NOTES_v0.3.0.md`; the published `0.2.0` body remains immutable in `.github/RELEASE_TEMPLATE.md`.
 
 ## [Unreleased]
+
+## [0.3.0] - 2026-11-27
 
 ### Added
 
 - ADR-063 records the initial v1 stability contract: package, transport, runtime and platform support, capability baseline, diagnostics settings and codes, parser/metadata pins, known limitations, additive candidates, standing non-goals and SemVer rules. The roadmap's Phase 16 charter is complete; later phases may extend the contract before Phase 26 freezes it.
 - ADR-064 records the Phase 17 package-content, support-guidance and SBOM decisions: the npm allowlist stays minimal, README documents privacy-preserving problem reports, and SBOM generation is deferred to the Phase 26 review. Documentation-contract tests cover the recorded decisions.
 - ADR-065 closes Phase 18 compatibility: Strudel `1.2.6` is named as the supported language snapshot, the two upstream `tree-sitter-strudel@2.0.2` grammar gaps and the 1,308 unresolved corpus references are accepted baselines, and explicit Strudel/parser/Node update triggers, corpus/compatibility reruns and SemVer rules are recorded. The refreshed corpus report is byte-identical and compatibility-contract tests cover the pins and matrix.
+- ADR-066 records the exact Phase 19 publication authorization for `strudel-lsp-server@0.3.0`, tag `v0.3.0` and operator `pedrozappa`, including the requirement to preserve the published `0.2.0` release body as historical evidence.
+
+### Changed
+
+- Bumped the package version to `0.3.0` without changing dependencies, runtime requirements, the published file allowlist or the parser and metadata pins.
+- Added version-specific release notes for `0.3.0` so `.github/RELEASE_TEMPLATE.md` remains the immutable published `0.2.0` release body.
 
 ### Fixed
 
 - Made `npm run verify:release` idempotent after publication: unpublished candidates keep pack/publish dry-run parity, while published versions compare the local tarball with registry identity instead of calling `npm publish --dry-run` again. See ADR-062.
+
+### Known issues
+
+- Seven pinned documentation examples expose two upstream `tree-sitter-strudel@2.0.2` grammar gaps: `%` modulo in JavaScript expressions and `//` inside string literals. The grammar is not vendored or patched.
+- Strudel version selection remains deferred; the narrow configuration surface does not expose internal engine settings.
+- Incremental semantic reuse is statement-level, mini-notation tokenization is lexical rather than a full recovery parser, and platforms outside the validated matrix are best-effort.
 
 ## [0.2.0] - 2026-11-27
 

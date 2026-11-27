@@ -25,6 +25,10 @@ const packageJson = JSON.parse(readFileSync(join(repositoryRoot, 'package.json')
   bin: Record<string, string>;
   scripts: Record<string, string>;
 };
+const currentReleaseNotes = readFileSync(
+  join(repositoryRoot, '.github', `RELEASE_NOTES_v${packageJson.version}.md`),
+  'utf8',
+);
 
 void test('release workflow publishes only from a tagged commit after approval', () => {
   assert.match(workflow, /^[ ]{2}push:\n[ ]{4}tags:\n[ ]{6}- 'v\*'$/m);
@@ -97,17 +101,17 @@ void test('release verifier switches from dry-run parity to published registry p
   assert.match(testingStrategy, /^### Post-publication verification hardening/m);
 });
 
-void test('changelog and GitHub release notes are versioned for the package release', () => {
+void test('changelog and current release notes are versioned for the package release', () => {
   const version = packageJson.version.replaceAll('.', '\\.');
   assert.match(changelog, new RegExp(`^## \\[${version}\\] - \\d{4}-\\d{2}-\\d{2}$`, 'm'));
   assert.match(changelog, /^## \[Unreleased\]$/m);
   assert.match(changelog, /^### Known issues$/m);
-  assert.ok(releaseTemplate.includes(`${packageJson.name}@${packageJson.version}`));
-  assert.match(releaseTemplate, /@strudel\/reference@1\.2\.2/);
-  assert.match(releaseTemplate, /Node\.js 24 or 26 with npm 11/);
-  assert.match(releaseTemplate, /^## Explicit limitations and known issues$/m);
-  assert.match(releaseTemplate, /^## Installed-package verification$/m);
-  assert.match(releaseTemplate, /^## Corrections and rollback$/m);
+  assert.ok(currentReleaseNotes.includes(`${packageJson.name}@${packageJson.version}`));
+  assert.match(currentReleaseNotes, /@strudel\/reference@1\.2\.2/);
+  assert.match(currentReleaseNotes, /Node\.js 24 or 26 with npm 11/);
+  assert.match(currentReleaseNotes, /^## Explicit limitations and known issues$/m);
+  assert.match(currentReleaseNotes, /^## Installed-package verification$/m);
+  assert.match(currentReleaseNotes, /^## Corrections and rollback$/m);
 });
 
 void test('post-publication smoke plan covers registry, installed launch and release record', () => {
@@ -153,6 +157,20 @@ void test('Phase 15 authorization and evidence record the exact published releas
   assert.match(evidence, /SLSA v1/);
   assert.match(evidence, /7d611a8d61dae2ab2eea21a12ce2ebdec59e4488/);
   assert.match(evidence, /[Nn]o deprecation, dist-tag change, unpublish or retag/);
+});
+
+void test('Phase 19 authorization records the exact version tag and operator', () => {
+  const marker = '## ADR-066 — Phase 19 controlled publication authorization';
+  const start = decisions.indexOf(marker);
+  assert.notEqual(start, -1);
+  const authorization = decisions.slice(start);
+  assert.match(authorization, /exactly `strudel-lsp-server@0\.3\.0`/);
+  assert.match(authorization, /tagging exactly `v0\.3\.0`/);
+  assert.match(authorization, /`pedrozappa` as the named release operator/);
+  assert.match(authorization, /controlled OIDC workflow/);
+  assert.match(authorization, /ADR-049 applies only to `0\.1\.0`/);
+  assert.match(authorization, /RELEASE_NOTES_v0\.3\.0\.md/);
+  assert.match(authorization, /does not permit a local publish/);
 });
 
 void test('first-publish bootstrap exception is version-limited and blocks workflow publishing', () => {

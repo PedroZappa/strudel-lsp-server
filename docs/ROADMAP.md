@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: re-implementation roadmap complete through Phase 15. `strudel-lsp-server@0.2.0` was published on 2026-11-27 from tag `v0.2.0` at commit `7d611a8d61dae2ab2eea21a12ce2ebdec59e4488` through the controlled OIDC workflow with `pedrozappa` as operator; `0.1.0` remains available. ADR-060 records the exact publication authorization and ADR-061 records the registry, signature, provenance and smoke evidence. ADR-051 records the scope and deferred work, ADR-052 records the configuration contract, ADR-053 records the filesystem boundary, ADR-054 records the `.npmrc` removal, ADR-055 records hermetic pack caching, ADR-056 records the advisory soak/lifecycle design, ADR-057 records the separate advisory benchmark report, ADR-058 records the independent editor-client smoke evidence, ADR-059 records the release-preparation authorization, ADR-062 records publication-state-aware verification, ADR-063 records the initial v1 stability charter, ADR-064 records the Phase 17 package, support and SBOM decisions, and ADR-065 records the Phase 18 parser, metadata and platform compatibility closure. Missing provenance for the operator-managed first publish is recorded in ADR-050. The feature-expanded route below describes proposed work through `v1.0.0`, split into `v0.3.0`, `v0.4.0`, `v0.5.0` and `v1.0.0` increments. Phases 16–18 are complete; Phases 19–27 remain proposed and subject to approval.
+Status: re-implementation roadmap complete through Phase 15. `strudel-lsp-server@0.2.0` was published on 2026-11-27 from tag `v0.2.0` at commit `7d611a8d61dae2ab2eea21a12ce2ebdec59e4488` through the controlled OIDC workflow with `pedrozappa` as operator; `0.1.0` remains available. ADR-060 records the exact publication authorization and ADR-061 records the registry, signature, provenance and smoke evidence. ADR-051 records the scope and deferred work, ADR-052 records the configuration contract, ADR-053 records the filesystem boundary, ADR-054 records the `.npmrc` removal, ADR-055 records hermetic pack caching, ADR-056 records the advisory soak/lifecycle design, ADR-057 records the separate advisory benchmark report, ADR-058 records the independent editor-client smoke evidence, ADR-059 records the release-preparation authorization, ADR-062 records publication-state-aware verification, ADR-063 records the initial v1 stability charter, ADR-064 records the Phase 17 package, support and SBOM decisions, and ADR-065 records the Phase 18 parser, metadata and platform compatibility closure, and ADR-066 authorizes the exact Phase 19 publication. Missing provenance for the operator-managed first publish is recorded in ADR-050. The feature-expanded route below describes proposed work through `v1.0.0`, split into `v0.3.0`, `v0.4.0`, `v0.5.0` and `v1.0.0` increments. Phases 16–18 are complete; Phase 19 is authorized with its candidate prepared and awaiting controlled publication; Phases 20–27 remain proposed and subject to approval.
 
 Authority: `AGENTS.md` sections 2–18 and the other documents in `docs/`.
 
@@ -488,13 +488,13 @@ Exit criteria:
 - [x] Parser integration tests remain separate from semantic-engine tests, and no grammar or generated parser is copied into this repository.
 - [x] ADR-065 states whether parser or metadata upgrades are patch, minor or major events under the v1 contract.
 
-### Phase 19 — `v0.3.0` controlled release (proposed)
+### Phase 19 — `v0.3.0` controlled release (authorized, candidate prepared)
 
 Dependencies: Phases 16–18 and an exact publication ADR naming `strudel-lsp-server@0.3.0`, tag `v0.3.0` and the operator.
 
 Tasks:
 
-- [ ] Repeat the full gate on the exact candidate: typecheck, lint, formatting, all test suites, corpus validation, package and consumer verification, benchmarks, audits and client smoke runs.
+- [x] Repeat the full gate on the exact candidate: typecheck, lint, formatting, all test suites, corpus validation, package and consumer verification, benchmarks, audits and client smoke runs. The candidate gate passed with 94/94 tests and the evidence recorded under ADR-066.
 - [ ] Ensure the release tag carries ADR-062 publication-state-aware verification so post-publication reruns validate registry identity instead of calling an immutable publish dry-run.
 - [ ] Publish only through the controlled OIDC workflow with `npm-release` approval; no local publish is permitted.
 - [ ] Verify provenance, signatures, registry metadata, tarball identity, clean installs and installed stdio handshake, then publish release notes generated from the exact candidate.
