@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: re-implementation roadmap complete through Phase 15. `strudel-lsp-server@0.2.0` was published on 2026-11-27 from tag `v0.2.0` at commit `7d611a8d61dae2ab2eea21a12ce2ebdec59e4488` through the controlled OIDC workflow with `pedrozappa` as operator; `0.1.0` remains available. ADR-060 records the exact publication authorization and ADR-061 records the registry, signature, provenance and smoke evidence. ADR-051 records the scope and deferred work, ADR-052 records the configuration contract, ADR-053 records the filesystem boundary, ADR-054 records the `.npmrc` removal, ADR-055 records hermetic pack caching, ADR-056 records the advisory soak/lifecycle design, ADR-057 records the separate advisory benchmark report, ADR-058 records the independent editor-client smoke evidence, ADR-059 records the release-preparation authorization, and ADR-062 records publication-state-aware verification. Missing provenance for the operator-managed first publish is recorded in ADR-050. Proposed Phases 16–27 below describe a feature-expanded route to `v1.0.0`, split into `v0.3.0`, `v0.4.0`, `v0.5.0` and `v1.0.0` increments. Priorities are proposals and remain subject to approval.
+Status: re-implementation roadmap complete through Phase 15. `strudel-lsp-server@0.2.0` was published on 2026-11-27 from tag `v0.2.0` at commit `7d611a8d61dae2ab2eea21a12ce2ebdec59e4488` through the controlled OIDC workflow with `pedrozappa` as operator; `0.1.0` remains available. ADR-060 records the exact publication authorization and ADR-061 records the registry, signature, provenance and smoke evidence. ADR-051 records the scope and deferred work, ADR-052 records the configuration contract, ADR-053 records the filesystem boundary, ADR-054 records the `.npmrc` removal, ADR-055 records hermetic pack caching, ADR-056 records the advisory soak/lifecycle design, ADR-057 records the separate advisory benchmark report, ADR-058 records the independent editor-client smoke evidence, ADR-059 records the release-preparation authorization, and ADR-062 records publication-state-aware verification. Missing provenance for the operator-managed first publish is recorded in ADR-050. Proposed Phases 16–27 below describe a feature-expanded route to `v1.0.0`, split into `v0.3.0`, `v0.4.0`, `v0.5.0` and `v1.0.0` increments. Phase 16 initial charter is complete; Phases 17–27 remain proposed and subject to approval.
 
 Authority: `AGENTS.md` sections 2–18 and the other documents in `docs/`.
 
@@ -412,7 +412,7 @@ Post-release hardening: ADR-062 makes `npm run verify:release` publication-state
 
 ## Proposed feature-expanded route to `v1.0.0`
 
-**Status: proposed only. No phase in this section is authorized for implementation or release.** This route includes every optional capability identified after `0.2.0` and splits the work into four independently verifiable increments. Each controlled release requires its own ADR naming the exact version, tag and operator; no release below is approved by the roadmap alone.
+**Status: Phase 16 is complete; Phases 17–27 are proposed only and are not authorized for implementation or release.** This route includes every optional capability identified after `0.2.0` and splits the work into four independently verifiable increments. Each controlled release requires its own ADR naming the exact version, tag and operator; no release below is approved by the roadmap alone.
 
 | Increment | Phases | Theme                                                  |
 | --------- | ------ | ------------------------------------------------------ |
@@ -430,21 +430,23 @@ Dependency chain:
 19, 22, 25 → 26 → 27
 ```
 
-### Phase 16 — v1 stability charter (proposed, `v0.3.0`)
+### Phase 16 — v1 stability charter (complete, `v0.3.0`)
 
 Dependencies: Phase 15 and ADR-033, which reserves `1.0.0` for a separate stability decision.
 
+**Status: complete for the initial charter. It is a baseline that Phases 20–24 may extend and Phase 26 freezes; it does not authorize feature implementation or publication.**
+
 Tasks:
 
-- [ ] Draft a new ADR defining the initial v1 public contract: package name and executable, Node/npm range, LSP capability surface, configuration schema, diagnostic-code naming and severity semantics, parser and language-metadata pins, supported platform matrix, supported Strudel snapshot, non-goals, and SemVer rules for `1.x`.
-- [ ] Revisit ADR-034 and decide whether `strudelLsp.diagnostics.enabled` and severity overrides are stable, additive-only or still provisional.
-- [ ] Record the amendment process: Phases 20–24 may extend the contract, and Phase 26 freezes it before `v1.0.0`.
+- [x] Draft a new ADR defining the initial v1 public contract: package name and executable, Node/npm range, LSP capability surface, configuration schema, diagnostic-code naming and severity semantics, parser and language-metadata pins, supported platform matrix, supported Strudel snapshot, non-goals, and SemVer rules for `1.x`. ADR-063 records the baseline contract.
+- [x] Revisit ADR-034 and decide whether `strudelLsp.diagnostics.enabled` and severity overrides are stable, additive-only or still provisional. ADR-063 makes the diagnostics surface stable-additive for v1 and leaves Strudel version selection deferred.
+- [x] Record the amendment process: Phases 20–24 may extend the contract, and Phase 26 freezes it before `v1.0.0`. ADR-063 records the amendment and SemVer rules.
 
 Exit criteria:
 
-- [ ] The stability ADR is accepted and referenced as authoritative for the v1 route.
-- [ ] Documentation distinguishes stable contract, known limitation, post-v1 candidate and standing non-goal.
-- [ ] A contract-test plan exists for capabilities, configuration, diagnostic codes and deliberately unsupported capabilities.
+- [x] The stability ADR is accepted and referenced as authoritative for the v1 route.
+- [x] Documentation distinguishes stable contract, known limitation, post-v1 candidate and standing non-goal.
+- [x] A contract-test plan exists for capabilities, configuration, diagnostic codes and deliberately unsupported capabilities.
 
 ### Phase 17 — Documentation, packaging and support readiness (proposed, `v0.3.0`)
 
