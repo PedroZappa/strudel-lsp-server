@@ -8,10 +8,12 @@ import {
   listPatternMethodRecords,
   recordDocumentation,
 } from './metadata.js';
+import { findImportPathCompletion, provideImportPathCompletion } from './importPathCompletion.js';
 import { provideMiniNotationStepCompletion, stepContextAt } from './miniNotationCandidates.js';
 import type {
   CompletionCandidate,
   CompletionCandidateKind,
+  CompletionRequestOptions,
   CompletionResolveData,
   FeatureContext,
 } from './types.js';
@@ -158,7 +160,13 @@ function matches(label: string, prefix: string): boolean {
 export function provideCompletion(
   context: FeatureContext,
   offset: number,
+  options: CompletionRequestOptions = {},
 ): readonly CompletionCandidate[] {
+  const importPath = findImportPathCompletion(context, offset);
+  if (importPath !== undefined) {
+    return provideImportPathCompletion(context, importPath, options.workspaceFileUris ?? []);
+  }
+
   const miniNotation = provideMiniNotationCompletion(context, offset);
   if (miniNotation.handled) {
     return miniNotation.candidates;

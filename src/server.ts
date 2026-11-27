@@ -69,6 +69,7 @@ import {
   provideDefinition,
   provideDiagnostics,
   provideDocumentSymbols,
+  findImportPathCompletion,
   provideFoldingRanges,
   provideFormatting,
   provideInlayHints,
@@ -393,6 +394,8 @@ function toCompletionItemKind(kind: CompletionCandidateKind): CompletionItemKind
   switch (kind) {
     case 'function':
       return CompletionItemKind.Function;
+    case 'file':
+      return CompletionItemKind.File;
     case 'method':
       return CompletionItemKind.Method;
     case 'class':
@@ -439,6 +442,34 @@ function workspaceContextsFor(token: CancellationToken): Promise<readonly Featur
       contexts.push({ uri: file.uri, text: file.text, syntax, semantic, database });
     }
     return contexts;
+  });
+}
+
+async function workspaceFileUrisFor(token: CancellationToken): Promise<readonly string[]> {
+  return guardAsync([], async () => {
+    if (token.isCancellationRequested) {
+      return [];
+    }
+    const uris = new Set<string>();
+    for (const entry of documents.all()) {
+      const uri = entry.document.uri;
+      if (uri.startsWith('file:') && uri.endsWith('.strudel')) {
+        uris.add(uri);
+      }
+    }
+
+    const roots = await workspaceRoots();
+    if (roots.length === 0) {
+      return [...uris];
+    }
+    const files = await readWorkspaceFiles(roots, { token });
+    if (token.isCancellationRequested) {
+      return [];
+    }
+    for (const file of files) {
+      uris.add(file.uri);
+    }
+    return [...uris];
   });
 }
 
@@ -564,31 +595,37 @@ connection.onDidCloseTextDocument((params) => {
   void connection.sendDiagnostics({ uri: params.textDocument.uri, diagnostics: [] });
 });
 
-connection.onCompletion((params: CompletionParams): Promise<CompletionItem[]> =>
-  guardAsync([], async () => {
-    await awaitDocumentAnalysis(params.textDocument.uri);
-    const analyzed = documents.get(params.textDocument.uri);
-    if (analyzed === undefined) {
-      return [];
-    }
-    const offset = analyzed.document.offsetAt(params.position);
-    return provideCompletion(contextFor(analyzed, offset), offset).map(
-      (candidate): CompletionItem => ({
-        label: candidate.label,
-        kind: toCompletionItemKind(candidate.kind),
-        detail: candidate.detail,
-        documentation:
-          candidate.documentation === undefined
-            ? undefined
-            : { kind: MarkupKind.Markdown, value: candidate.documentation },
-        data: candidate.data,
-        textEdit: {
-          range: toLspRange(candidate.replacementRange),
-          newText: candidate.label,
-        },
-      }),
-    );
-  }),
+connection.onCompletion(
+  (params: CompletionParams, token: CancellationToken): Promise<CompletionItem[]> =>
+    guardAsync([], async () => {
+      await awaitDocumentAnalysis(params.textDocument.uri);
+      const analyzed = documents.get(params.textDocument.uri);
+      if (analyzed === undefined) {
+        return [];
+      }
+      const offset = analyzed.document.offsetAt(params.position);
+      const context = contextFor(analyzed, offset);
+      const workspaceFileUris =
+        findImportPathCompletion(context, offset) === undefined
+          ? []
+          : await workspaceFileUrisFor(token);
+      return provideCompletion(context, offset, { workspaceFileUris }).map(
+        (candidate): CompletionItem => ({
+          label: candidate.label,
+          kind: toCompletionItemKind(candidate.kind),
+          detail: candidate.detail,
+          documentation:
+            candidate.documentation === undefined
+              ? undefined
+              : { kind: MarkupKind.Markdown, value: candidate.documentation },
+          data: candidate.data,
+          textEdit: {
+            range: toLspRange(candidate.replacementRange),
+            newText: candidate.label,
+          },
+        }),
+      );
+    }),
 );
 
 connection.onCompletionResolve((item: CompletionItem): CompletionItem =>

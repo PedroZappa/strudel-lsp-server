@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict';
 import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { once } from 'node:events';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-import { SymbolKind } from 'vscode-languageserver/node';
+import { CompletionItemKind, SymbolKind } from 'vscode-languageserver/node';
 
 interface JsonRpcRequest {
   jsonrpc: '2.0';
@@ -793,6 +793,18 @@ interface WorkspaceSymbolInformation {
   };
 }
 
+interface CompletionItemResult {
+  readonly label: string;
+  readonly kind?: number;
+  readonly textEdit?: {
+    readonly range: {
+      readonly start: { readonly line: number; readonly character: number };
+      readonly end: { readonly line: number; readonly character: number };
+    };
+    readonly newText: string;
+  };
+}
+
 void test('stdio server searches workspace files and open documents', async (t) => {
   const root = await mkdtemp(join(tmpdir(), 'strudel-workspace-'));
   const serverPath = fileURLToPath(new URL('../src/server.js', import.meta.url));
@@ -864,6 +876,78 @@ void test('stdio server searches workspace files and open documents', async (t) 
   assert.equal(parameterSymbols[0]?.kind, SymbolKind.Variable);
   assert.equal(parameterSymbols[0]?.containerName, 'closed');
   assert.equal(parameterSymbols[0]?.location.range.start.line, 0);
+
+  assert.equal(await client.request('shutdown'), null);
+  client.notify('exit', {});
+  await client.waitForExit();
+});
+
+void test('stdio server completes relative .strudel import paths from the bounded scan', async (t) => {
+  const root = await mkdtemp(join(tmpdir(), 'strudel-import-completion-'));
+  const serverPath = fileURLToPath(new URL('../src/server.js', import.meta.url));
+  const client = new StdioLspClient(serverPath);
+  t.after(async () => {
+    await client.terminate();
+    await rm(root, { recursive: true, force: true });
+  });
+
+  const libDirectory = join(root, 'lib');
+  await mkdir(libDirectory);
+  const mainPath = join(root, 'main.strudel');
+  const text = 'import { kick } from "./li"';
+  const cursor = text.length - 1;
+  await writeFile(mainPath, text, 'utf8');
+  await writeFile(join(libDirectory, 'kick.strudel'), 'export const kick = 1;', 'utf8');
+  await writeFile(join(libDirectory, 'snare.strudel'), 'export const snare = 2;', 'utf8');
+  await writeFile(join(root, 'ignored.txt'), 'export const ignored = 3;', 'utf8');
+
+  const rootUri = pathToFileURL(root).href;
+  const initializeResult = (await client.request('initialize', {
+    processId: process.pid,
+    rootUri,
+    capabilities: {},
+    workspaceFolders: [{ uri: rootUri, name: 'workspace' }],
+  })) as {
+    capabilities: {
+      completionProvider: { triggerCharacters?: string[] };
+      documentHighlightProvider?: boolean;
+    };
+  };
+  assert.deepEqual(initializeResult.capabilities.completionProvider.triggerCharacters, ['.']);
+  assert.equal(initializeResult.capabilities.documentHighlightProvider, undefined);
+  client.notify('initialized', {});
+
+  const mainUri = pathToFileURL(mainPath).href;
+  const openedDiagnostics = client.waitForNotification('textDocument/publishDiagnostics');
+  client.notify('textDocument/didOpen', {
+    textDocument: {
+      uri: mainUri,
+      languageId: 'strudel',
+      version: 1,
+      text,
+    },
+  });
+  await openedDiagnostics;
+
+  const items = (await client.request('textDocument/completion', {
+    textDocument: { uri: mainUri },
+    position: { line: 0, character: cursor },
+    context: { triggerKind: 1 },
+  })) as CompletionItemResult[];
+
+  const paths = items.filter((item) => item.kind === CompletionItemKind.File);
+  assert.deepEqual(
+    paths.map((item) => item.label),
+    ['./lib/kick.strudel', './lib/snare.strudel'],
+  );
+  const kick = paths[0];
+  assert.equal(kick?.textEdit?.newText, './lib/kick.strudel');
+  assert.equal(kick?.textEdit?.range.start.character, text.indexOf('./li'));
+  assert.equal(kick?.textEdit?.range.end.character, cursor);
+  assert.equal(
+    items.some((item) => item.label.includes('ignored')),
+    false,
+  );
 
   assert.equal(await client.request('shutdown'), null);
   client.notify('exit', {});

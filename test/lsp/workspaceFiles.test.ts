@@ -3,12 +3,14 @@ import { isAbsolute, relative, resolve, sep } from 'node:path';
 import { test } from 'node:test';
 import { pathToFileURL } from 'node:url';
 
+import { provideCompletion } from '../../src/features/index.js';
 import {
   readWorkspaceFiles,
   type WorkspaceFile,
   type WorkspaceScanDirent,
   type WorkspaceScanFileSystem,
 } from '../../src/lsp/index.js';
+import { createFeatureHarness } from '../features/helpers.js';
 
 type FakeNodeKind = 'file' | 'directory' | 'symlink';
 
@@ -214,4 +216,42 @@ void test('workspace discovery ignores unreadable paths and honours cancellation
     token: { isCancellationRequested: true },
   });
   assert.deepEqual(cancelled, []);
+});
+
+void test('import-path completion consumes only files admitted by the guarded scan', async () => {
+  const nestedChildren = [entry('inside.strudel', file('i=1;'))];
+  const tree = new Map<string, FakeNode>([
+    [
+      ROOT,
+      directory([
+        entry('safe.strudel', file('s=1;')),
+        entry('linked.strudel', { kind: 'symlink' }),
+        entry('nested/../escape.strudel', file('escaped=1;')),
+        entry('oversized.strudel', file('0123456789abcdef')),
+        entry('unreadable.strudel', file('u=1;', { readError: true })),
+        entry('nested', directory(nestedChildren)),
+      ]),
+    ],
+    [resolve(ROOT, 'nested'), directory(nestedChildren)],
+    [resolve(ROOT, 'nested', 'deeper'), directory([entry('deep.strudel', file('d=1;'))])],
+  ]);
+
+  const files = await readWorkspaceFiles([ROOT_URI], {
+    fileSystem: createFileSystem(tree),
+    maxDepth: 1,
+    maxFileBytes: 10,
+  });
+  const text = 'import { x } from "./';
+  const harness = createFeatureHarness(text, text.length, {
+    uri: pathToFileURL(resolve(ROOT, 'main.strudel')).href,
+  });
+
+  const candidates = provideCompletion(harness.context, text.length, {
+    workspaceFileUris: files.map((item) => item.uri),
+  });
+
+  assert.deepEqual(
+    candidates.map((candidate) => candidate.label),
+    ['./nested/inside.strudel', './safe.strudel'],
+  );
 });

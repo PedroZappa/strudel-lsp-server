@@ -4,7 +4,8 @@ import type { SyntaxDocument, SyntaxNode, SyntaxPosition } from '../syntax/index
 
 export type DiagnosticSeverityName = 'error' | 'warning' | 'information' | 'hint';
 
-export type CompletionCandidateKind = 'function' | 'method' | 'variable' | 'class' | 'value';
+export type CompletionCandidateKind =
+  'function' | 'method' | 'variable' | 'class' | 'value' | 'file';
 
 export interface FeatureContext {
   readonly uri: string;
@@ -52,6 +53,11 @@ export interface RefactoringResult {
 }
 
 export type CodeActionResult = QuickFixResult | RefactoringResult;
+
+export interface CompletionRequestOptions {
+  /** Transport-supplied file URIs from the bounded on-demand workspace scan. */
+  readonly workspaceFileUris?: readonly string[];
+}
 
 export interface CompletionCandidate {
   readonly label: string;

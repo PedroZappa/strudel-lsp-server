@@ -5,6 +5,8 @@ export { provideDiagnostics } from './diagnostics.js';
 export { provideDocumentSymbols } from './documentSymbols.js';
 export { provideFormatting, provideRangeFormatting } from './formatting.js';
 export { provideHover } from './hover.js';
+export { findImportPathCompletion } from './importPathCompletion.js';
+export type { ImportPathCompletionTarget } from './importPathCompletion.js';
 export { findSymbolAtOffset, provideDefinition, provideReferences } from './navigation.js';
 export { prepareRename, provideRename } from './rename.js';
 export { provideRefactorings } from './refactorings.js';
@@ -21,6 +23,7 @@ export type {
   CodeActionResult,
   CompletionCandidate,
   CompletionCandidateKind,
+  CompletionRequestOptions,
   CompletionResolveData,
   CompletionResolveInput,
   CompletionResolveResult,
