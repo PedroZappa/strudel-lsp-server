@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: re-implementation roadmap updated with resolved blocker decisions, Phase 6 completion, Phase 7 extended capabilities, Phase 8 benchmark harness, Phase 9 local packaging preparation and a proposed first-release readiness review, 2026-11-27. Priorities are proposals and remain subject to approval.
+Status: re-implementation roadmap updated with completed Phases 0–9 and proposed Phases 10–13 for release metadata, compatibility validation, release governance and controlled first publication, 2026-11-27. Priorities are proposals and remain subject to approval.
 
 Authority: `AGENTS.md` sections 2–18 and the other documents in `docs/`.
 
@@ -23,7 +23,7 @@ Exit criteria:
 
 ## Phase 1 — Resolve blockers
 
-**Status: complete.** All blocker decisions are resolved. The adopted parser is AGPL-3.0-only and ADR-032 aligns the project licence with it; npm publication remains a Phase 9 authorization gate.
+**Status: complete.** All blocker decisions are resolved. The adopted parser is AGPL-3.0-only and ADR-032 aligns the project licence with it; npm publication remains a Phase 13 authorization gate.
 
 Tasks:
 
@@ -250,24 +250,23 @@ Phase 8 exit criteria:
 
 Dependencies: validated core capabilities and performance baseline.
 
-**Status: local packaging preparation is complete; publication awaits the first-release readiness review below and explicit release authorization.**
+**Status: complete.** The packaging foundation and local distributable verification are complete; first-release gates and publication are tracked in Phases 10–13.
 
 The package is already ESM with a stdio executable at `dist/src/server.js`, an `AGPL-3.0-only` project licence and a controlled `files` allowlist. Phase 9 replaces the stale prototype README with authoritative package documentation and adds `scripts/verify-package.mjs`, exposed as `npm run verify:package` and `make verify-package`. That check packs the built server, verifies the tarball contents, performs a clean runtime-only offline installation from a temporary project with the committed lockfile, checks the installed licence metadata and text, and exercises the installed executable with an LSP initialize/shutdown handshake. The same command now runs in CI after the package-contents preview.
 
 Tasks:
 
-- [ ] Publish the server as an npm package with stdio as the primary transport.
 - [x] Keep editor-specific examples separate.
 - [x] Verify AGPL-compatible parser licensing before redistribution: the project and pinned parser are both `AGPL-3.0-only` under ADR-032.
 - [x] Verify a clean offline installation with `npm run verify:package`.
 
+Publication was removed from this phase and moved to Phase 13 so the remaining release gates can be implemented and verified as explicit phases.
+
 The pinned `tree-sitter-strudel@2.0.2` declares `AGPL-3.0-only` and bundles a matching AGPL licence, so the earlier MIT-corrected release requirement is superseded. No `npm publish` has been performed or authorized.
 
-### First-release readiness review (proposed, not yet started)
+## Release baseline and open gaps
 
-This checklist is the brainstormed quality gate for the first npm release. It does not reopen completed implementation phases. "Blocking" items must be closed and revalidated on the exact release commit before `npm publish`; "recommended" items should be closed unless a written exception records why they are deferred. Unchecked items are review gates, not claims that the feature is absent.
-
-Current audit findings:
+The following findings define the starting state for Phases 10–13. Each open gap is assigned to a phase below rather than left in a flat checklist.
 
 - The package name `strudel-lsp-server` returned 404 from the npm registry on 2026-11-27; availability must be rechecked at release time.
 - The manifest has no `engines.node` field. CI tests Node 24 and 26 on Ubuntu only; no Windows or macOS job exists.
@@ -276,17 +275,55 @@ Current audit findings:
 - Parser validation still has an unchecked real-Strudel-corpus item; committed benchmark fixtures are synthetic and measure layer boundaries rather than an editor process.
 - CI verifies correctness and package contents but has no controlled publish workflow or provenance/trusted-publishing configuration.
 
-#### Blocking before first publication
+## Phase 10 — Release identity and compatibility metadata
+
+Dependencies: Phase 9 packaging foundation.
+
+**Status: not started.**
+
+Tasks:
 
 - [ ] Decide the release identity: initial version, tag format (`vX.Y.Z`) and SemVer policy for a `0.x` package. `0.1.0` is the recommended first public version; `1.0.0` should imply a documented stability commitment.
-- [ ] Obtain explicit authorization naming the exact version to publish and the operator who will run the release.
 - [ ] Reconcile configuration documentation with behaviour: either implement a minimal user-facing diagnostics/Strudel-version option or mark those items clearly as deferred before release notes are written.
-- [ ] Define and declare supported runtimes: add `engines.node`, document the supported Node/npm range, and decide whether Node 24 and 26 are both release-supported or whether Node 24 alone is the initial target.
-- [ ] Recheck npm namespace/ownership immediately before publication, including account access, 2FA or trusted-publisher setup, and the exact unscoped package name.
+- [ ] Define and declare supported runtimes: add `engines.node`, document the supported Node/npm range, and decide whether Node 24 and 26 are both release-supported or whether Node 24 alone is the initial target. Record the intended OS matrix for Phase 11.
+- [ ] Final README and manifest review: installation command, supported versions, known limitations, legacy prototype separation, and accurate `repository`, `homepage` and `bugs` metadata.
+
+Exit criteria:
+
+- [ ] Version, tag format and SemVer policy are recorded and approved.
+- [ ] Configuration documentation matches implemented behaviour or explicitly deferred items.
+- [ ] `engines.node` and the supported runtime/OS matrix are documented.
+- [ ] README and manifest metadata accurately describe the first-release scope.
+
+## Phase 11 — Compatibility and robustness validation
+
+Dependencies: Phase 10 runtime and OS matrix.
+
+**Status: not started.**
+
+Tasks:
+
 - [ ] Perform clean-room installs on every supported OS, Node version and npm version. Test both `npm install` with scripts enabled and the existing `--ignore-scripts` path; confirm native parser prebuilds load without requiring a compiler.
 - [ ] Exercise the installed `strudel-lsp-server` executable's stdio handshake on Linux, macOS and Windows, using the platform-specific bin shim where applicable.
 - [ ] Validate the parser and semantic engine against a small corpus of real Strudel compositions from authoritative documentation or examples, without copying those compositions into the package.
 - [ ] Complete a protocol robustness review for stdout purity, malformed JSON-RPC, unknown methods, invalid parameters, `$/cancelRequest`, rapid edits, no-workspace and multi-root initialization, document closure, shutdown and exit codes.
+
+Exit criteria:
+
+- [ ] Every supported OS/Node/npm combination passes clean-room installation with and without install scripts where applicable.
+- [ ] Native parser prebuilds work without requiring a local compiler.
+- [ ] Installed executable handshakes pass on every supported platform.
+- [ ] Real-corpus validation and protocol robustness evidence are recorded, with no copied compositions in the package.
+
+## Phase 12 — Release governance and automation
+
+Dependencies: Phases 10 and 11.
+
+**Status: not started.**
+
+Tasks:
+
+- [ ] Recheck npm namespace/ownership immediately before publication, including account access, 2FA or trusted-publisher setup, and the exact unscoped package name.
 - [ ] Complete a licensing/provenance sign-off: AGPL notices in the distributed artifact, pinned dependency licences, generated metadata provenance, no copied grammar/parser/binding source, no secrets, and a public source URL in package metadata and README. This is a release review, not legal advice.
 - [ ] Re-run the final dependency and secret audit on the release commit: `npm audit --omit=dev` as a blocking gate, full `npm audit` reviewed, prototype client audit reviewed, and a runtime check confirming no telemetry or network use by the stdio server.
 - [ ] Add a controlled release workflow: tag or GitHub release trigger, manual approval environment, pinned actions, immutable release commit, npm trusted publishing/OIDC with automatic provenance, no automatic publish from ordinary commits, and no long-lived npm token when trusted publishing is available. Source: <https://docs.npmjs.com/trusted-publishers>.
@@ -294,9 +331,39 @@ Current audit findings:
 - [ ] Prepare versioned `CHANGELOG.md` entries and GitHub release notes covering supported Strudel/Node versions, implemented capabilities, explicit limitations, installed-package verification and known issues.
 - [ ] Decide and document rollback policy before publishing: npm versions are immutable, so define whether a correction uses a patch release, deprecation or unpublish request, and how users will be notified.
 - [ ] Define the post-publication smoke plan: verify registry metadata and licence, install from the public registry on a clean machine, run the stdio handshake, confirm the documented launch command, and create the Git/GitHub release record.
-- [ ] Final README and manifest review: installation command, supported versions, known limitations, legacy prototype separation, and accurate `repository`, `homepage` and `bugs` metadata.
 
-#### Recommended hardening before the first release
+Exit criteria:
+
+- [ ] Licensing, provenance and audit sign-offs are recorded with evidence.
+- [ ] The release workflow is validated without publishing and produces provenance.
+- [ ] Publish dry-run matches the verified package contents and manifest.
+- [ ] Changelog, release notes, rollback policy and post-publication plan are ready for the exact release commit.
+
+## Phase 13 — Controlled first publication
+
+Dependencies: Phases 10–12 and explicit release authorization.
+
+**Status: blocked pending explicit release authorization.**
+
+Tasks:
+
+- [ ] Obtain explicit authorization naming the exact version to publish and the operator who will run the release.
+- [ ] Confirm every blocking gate is checked or has an explicit, approved exception recorded in `docs/DECISIONS.md`.
+- [ ] Confirm CI is green on the exact tagged release commit, including package verification and dependency audit.
+- [ ] Tag the validated commit and create the GitHub release record.
+- [ ] Publish through the controlled workflow with provenance and no ordinary-commit publication path.
+- [ ] Execute the post-publication smoke plan: verify registry metadata and licence, install from the public registry on a clean machine, run the stdio handshake, confirm the documented launch command, and verify release notes/tag.
+
+Exit criteria:
+
+- [ ] Explicit authorization for the exact version is recorded.
+- [ ] Publication uses the controlled workflow and provenance is generated.
+- [ ] Public registry metadata, licence and installed executable smoke checks pass.
+- [ ] Git tag, GitHub release record and versioned changelog are present.
+
+## Release-quality backlog (recommended, not blocking)
+
+These items may be pulled into Phases 10–12 when capacity allows. Deferring one does not block first publication, but each deferral should be intentional and visible in release notes where user-facing.
 
 - [ ] Perform editor-level smoke tests with at least two independent LSP clients using configuration kept outside the server core. Record which client behaviours were checked, not editor-specific implementation details in the server.
 - [ ] Add deterministic stdio error-path tests for malformed input and cancellation; current cancellation coverage is strongest at the semantic-engine layer.
@@ -309,19 +376,12 @@ Current audit findings:
 - [ ] Add issue templates or a support section that tells users which diagnostics and server logs to include, while preserving privacy and avoiding secret disclosure.
 - [ ] Verify installation when the consumer does not inherit this repository's `.npmrc`, especially the `legacy-peer-deps=true` setting.
 
-#### Deferred until after the first release
+## Deferred until after the first release
 
 - [ ] Replace synthetic benchmark fixtures with representative real-world workloads once provenance and redistribution terms are confirmed.
 - [ ] Optimise incremental semantic reuse; current large-document updates rebuild the semantic snapshot and are documented in `docs/PERFORMANCE.md`.
 - [ ] Add production-side timing hooks or live-editor telemetry only if a concrete latency question requires them; no telemetry is part of the first release.
 - [ ] Continue evaluating folding, selection ranges, inlay hints, call hierarchy, completion resolution, range formatting, broader refactoring and cross-file navigation under the existing deferred-capability policy.
-
-First-release exit criteria:
-
-- [ ] Every blocking item is checked or has an explicit, approved exception recorded in `docs/DECISIONS.md`.
-- [ ] CI is green on the exact tagged release commit, including package verification and dependency audit.
-- [ ] Explicit release authorization has been received for the exact version.
-- [ ] Publication uses the controlled workflow, provenance is generated, post-publication smoke checks pass, and release notes/tag are present.
 
 ## Deferred / explicitly not planned
 
