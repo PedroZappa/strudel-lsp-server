@@ -95,6 +95,10 @@ export class DocumentAnalysisService {
     return this.entries.get(uri);
   }
 
+  all(): readonly AnalyzedDocument[] {
+    return [...this.entries.values()];
+  }
+
   private analyze(
     document: TextDocument,
     previous?: AnalyzedDocument,

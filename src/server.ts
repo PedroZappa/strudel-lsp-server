@@ -11,6 +11,7 @@ import {
   SymbolKind,
   TextDocumentSyncKind,
   type CodeAction,
+  type CancellationToken,
   type CodeActionParams,
   type CompletionItem,
   type CompletionParams,
@@ -21,6 +22,7 @@ import {
   type DocumentSymbolParams,
   type Hover,
   type HoverParams,
+  type InitializeParams,
   type InitializeResult,
   type Location,
   type PrepareRenameParams,
@@ -32,8 +34,11 @@ import {
   type SemanticTokensParams,
   type SignatureHelp,
   type SignatureHelpParams,
+  type SymbolInformation,
   type TextEdit,
   type WorkspaceEdit,
+  type WorkspaceFolder,
+  type WorkspaceSymbolParams,
 } from 'vscode-languageserver/node';
 
 import {
@@ -50,6 +55,7 @@ import {
   provideRename,
   provideSemanticTokens,
   provideSignatureHelp,
+  provideWorkspaceSymbols,
   type CodeActionKindName,
   type CompletionCandidateKind,
   type DiagnosticSeverityName,
@@ -60,12 +66,13 @@ import {
   type SemanticTokenModifier,
   type SemanticTokenType,
   type TextEditResult,
+  type WorkspaceSymbolResult,
 } from './features/index.js';
 import {
   createDefaultLanguageDatabase,
   createCatalogFromLanguageDatabase,
 } from './languageDatabase/index.js';
-import { DocumentAnalysisService, type AnalyzedDocument } from './lsp/index.js';
+import { DocumentAnalysisService, readWorkspaceFiles, type AnalyzedDocument } from './lsp/index.js';
 import { createSemanticEngine, type SemanticRange } from './semantic/index.js';
 import { createSyntaxAdapter } from './syntax/index.js';
 
@@ -77,6 +84,7 @@ const engine = createSemanticEngine(catalog);
 const documents = new DocumentAnalysisService(adapter, engine);
 const pendingAnalyses = new Map<string, Promise<void>>();
 const latestVersions = new Map<string, number>();
+let workspaceRootUris: readonly string[] = [];
 
 const SEMANTIC_TOKEN_TYPES: readonly SemanticTokenType[] = [
   'function',
@@ -239,6 +247,32 @@ function toLspDocumentSymbol(symbol: DocumentSymbolResult): LspDocumentSymbol {
   };
 }
 
+function toLspSymbolInformation(symbol: WorkspaceSymbolResult): SymbolInformation {
+  return {
+    name: symbol.name,
+    kind: toLspSymbolKind(symbol.kind),
+    location: { uri: symbol.uri, range: toLspRange(symbol.range) },
+    containerName: symbol.containerName,
+  };
+}
+
+function rememberWorkspaceRoots(params: InitializeParams): void {
+  const folders: readonly WorkspaceFolder[] | undefined = params.workspaceFolders ?? undefined;
+  const roots =
+    folders?.map((folder) => folder.uri) ?? (params.rootUri === null ? [] : [params.rootUri]);
+  workspaceRootUris = [...new Set(roots)].filter((uri) => uri.startsWith('file:'));
+}
+
+async function workspaceRoots(): Promise<readonly string[]> {
+  if (workspaceRootUris.length > 0) {
+    return workspaceRootUris;
+  }
+  const folders = await connection.workspace.getWorkspaceFolders();
+  return [...new Set((folders ?? []).map((folder) => folder.uri))].filter((uri) =>
+    uri.startsWith('file:'),
+  );
+}
+
 function toSemanticTokenModifiers(modifiers: readonly SemanticTokenModifier[]): number {
   let bits = 0;
   for (const modifier of modifiers) {
@@ -284,28 +318,32 @@ function publishDiagnostics(analyzed: AnalyzedDocument): void {
   });
 }
 
-connection.onInitialize((): InitializeResult => ({
-  capabilities: {
-    textDocumentSync: TextDocumentSyncKind.Incremental,
-    completionProvider: { triggerCharacters: ['.'] },
-    codeActionProvider: {
-      codeActionKinds: [CodeActionKind.QuickFix, CodeActionKind.RefactorInline],
-      resolveProvider: false,
+connection.onInitialize((params: InitializeParams): InitializeResult => {
+  rememberWorkspaceRoots(params);
+  return {
+    capabilities: {
+      textDocumentSync: TextDocumentSyncKind.Incremental,
+      completionProvider: { triggerCharacters: ['.'] },
+      codeActionProvider: {
+        codeActionKinds: [CodeActionKind.QuickFix, CodeActionKind.RefactorInline],
+        resolveProvider: false,
+      },
+      hoverProvider: true,
+      signatureHelpProvider: { triggerCharacters: ['(', ','] },
+      definitionProvider: true,
+      referencesProvider: true,
+      documentSymbolProvider: true,
+      workspaceSymbolProvider: true,
+      documentFormattingProvider: true,
+      semanticTokensProvider: {
+        legend: SEMANTIC_TOKENS_LEGEND,
+        range: false,
+        full: true,
+      },
+      renameProvider: { prepareProvider: true },
     },
-    hoverProvider: true,
-    signatureHelpProvider: { triggerCharacters: ['(', ','] },
-    definitionProvider: true,
-    referencesProvider: true,
-    documentSymbolProvider: true,
-    documentFormattingProvider: true,
-    semanticTokensProvider: {
-      legend: SEMANTIC_TOKENS_LEGEND,
-      range: false,
-      full: true,
-    },
-    renameProvider: { prepareProvider: true },
-  },
-}));
+  };
+});
 
 connection.onInitialized(() => undefined);
 
@@ -443,6 +481,40 @@ connection.onDocumentSymbol((params: DocumentSymbolParams): Promise<LspDocumentS
     }
     return provideDocumentSymbols(contextFor(analyzed, 0)).map(toLspDocumentSymbol);
   }),
+);
+
+connection.onWorkspaceSymbol(
+  (params: WorkspaceSymbolParams, token: CancellationToken): Promise<SymbolInformation[]> =>
+    guardAsync([], async () => {
+      try {
+        await Promise.all([...pendingAnalyses.values()]);
+        const openDocuments = documents.all();
+        const openUris = new Set(openDocuments.map((entry) => entry.document.uri));
+        const contexts = openDocuments.map((entry) => contextFor(entry, 0));
+
+        const roots = await workspaceRoots();
+        const files = await readWorkspaceFiles(roots, { token });
+        for (const file of files) {
+          if (token.isCancellationRequested) {
+            return [];
+          }
+          if (openUris.has(file.uri)) {
+            continue;
+          }
+
+          const syntax = adapter.parse({ uri: file.uri, version: 1, text: file.text });
+          const semantic = engine.analyze(syntax, { token });
+          contexts.push({ uri: file.uri, text: file.text, syntax, semantic, database });
+        }
+
+        return provideWorkspaceSymbols(contexts, params.query).map(toLspSymbolInformation);
+      } catch (error) {
+        if (token.isCancellationRequested) {
+          return [];
+        }
+        throw error;
+      }
+    }),
 );
 
 connection.onDocumentFormatting((params: DocumentFormattingParams): Promise<TextEdit[]> =>

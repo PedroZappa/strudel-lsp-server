@@ -9,6 +9,7 @@ export { prepareRename, provideRename } from './rename.js';
 export { provideRefactorings } from './refactorings.js';
 export { provideSemanticTokens } from './semanticTokens.js';
 export { provideSignatureHelp } from './signatureHelp.js';
+export { provideWorkspaceSymbols } from './workspaceSymbols.js';
 export type {
   CodeActionKindName,
   CodeActionResult,
@@ -36,4 +37,5 @@ export type {
   SignatureParameter,
   SymbolLookupResult,
   TextEditResult,
+  WorkspaceSymbolResult,
 } from './types.js';

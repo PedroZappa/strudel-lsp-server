@@ -1,6 +1,6 @@
 # Architecture
 
-Status: transport, syntax adapter, semantic engine, language database, document store, feature providers, signature help, mini-notation token analysis, quick fixes, inline-constant refactoring, document-scoped rename, document symbols, semantic tokens and conservative formatting implemented on 2026-11-27; remaining extended capabilities are under evaluation.
+Status: transport, syntax adapter, semantic engine, language database, document store, feature providers, signature help, mini-notation token analysis, quick fixes, inline-constant refactoring, document-scoped rename, document and workspace symbols, semantic tokens and conservative formatting implemented on 2026-11-27; remaining extended capabilities are under evaluation.
 
 Authority: `AGENTS.md` sections 3–6.
 
@@ -27,7 +27,7 @@ Editor (any LSP client)
         v
 +---------------------------+
 | Language intelligence     |  diagnostics, quick fixes, inline refactoring, completion, hover, signature help,
-| feature providers         |  navigation, rename, document symbols, semantic tokens, formatting, mini-notation rules and other evaluated capabilities
+| feature providers         |  navigation, rename, document and workspace symbols, semantic tokens, formatting, mini-notation rules and other evaluated capabilities
 +---------------------------+
         |  semantic queries
         v
@@ -52,7 +52,7 @@ Side inputs:
   - User configuration (focused, user-facing options only)
 ```
 
-The current `src/server.ts` implements LSP lifecycle, incremental text sync, completion, code actions for quick fixes and inline refactoring, hover, signature help, definition, references, document symbols, semantic tokens, document formatting, prepare rename, rename and push diagnostics. `src/syntax/` implements the pinned Tree-sitter adapter and the parser-independent `SyntaxDocument` contract. `src/semantic/` implements parser-independent snapshots, scopes, symbols, references, limited type inference, incremental reuse and cancellation checks. `src/miniNotation/` implements a lexical token and conservative issue submodel over mini-notation string content. `src/languageDatabase/` implements a reproducible, offline-capable metadata snapshot with a `SemanticCatalog` adapter. `src/lsp/` owns the text document store and per-version syntax/semantic snapshots. `src/features/` contains transport-independent diagnostics, quick-fix, inline-refactoring, completion, hover, signature help, navigation, document-symbol, semantic-token, formatting and rename providers. Document updates are analysed outside the request handlers on the next event-loop turn; request handlers await the latest scheduled analysis, and superseded document versions are discarded before publication.
+The current `src/server.ts` implements LSP lifecycle, incremental text sync, completion, code actions for quick fixes and inline refactoring, hover, signature help, definition, references, document and workspace symbols, semantic tokens, document formatting, prepare rename, rename and push diagnostics. `src/syntax/` implements the pinned Tree-sitter adapter and the parser-independent `SyntaxDocument` contract. `src/semantic/` implements parser-independent snapshots, scopes, symbols, references, limited type inference, incremental reuse and cancellation checks. `src/miniNotation/` implements a lexical token and conservative issue submodel over mini-notation string content. `src/languageDatabase/` implements a reproducible, offline-capable metadata snapshot with a `SemanticCatalog` adapter. `src/lsp/` owns the text document store, bounded workspace file discovery and per-version syntax/semantic snapshots. `src/features/` contains transport-independent diagnostics, quick-fix, inline-refactoring, completion, hover, signature help, navigation, document-symbol, workspace-symbol, semantic-token, formatting and rename providers. Document updates are analysed outside the request handlers on the next event-loop turn; request handlers await the latest scheduled analysis, and superseded document versions are discarded before publication.
 
 ## Responsibilities
 
@@ -63,6 +63,7 @@ The current `src/server.ts` implements LSP lifecycle, incremental text sync, com
 - Translate LSP requests into feature-provider calls and map results back to LSP types.
 - Propagate cancellation and discard superseded work where appropriate.
 - Keep expensive work off the communication-critical path.
+- Perform bounded on-demand workspace file discovery for cross-file navigation requests.
 - Contain all editor-specific behaviour outside the server core.
 
 ### Language intelligence

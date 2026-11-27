@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: re-implementation roadmap updated with resolved blocker decisions, Phase 6 completion, Phase 7 quick fixes, rename, document symbols, semantic tokens, formatting and inline-constant refactoring, 2026-11-27. Priorities are proposals and remain subject to approval.
+Status: re-implementation roadmap updated with resolved blocker decisions, Phase 6 completion, Phase 7 quick fixes, rename, document and workspace symbols, semantic tokens, formatting and inline-constant refactoring, 2026-11-27. Priorities are proposals and remain subject to approval.
 
 Authority: `AGENTS.md` sections 2–18 and the other documents in `docs/`.
 
@@ -159,7 +159,7 @@ Phase 6 exit criteria:
 
 ## Phase 7 — Extended capabilities
 
-**Status: quick fixes, rename, document symbols, semantic tokens, formatting and inline-constant refactoring implemented and verified; workspace symbols and the other candidates remain under evaluation.**
+**Status: quick fixes, rename, document symbols, workspace symbols, semantic tokens, formatting and inline-constant refactoring implemented and verified; the remaining candidates remain under evaluation.**
 
 Dependencies: Phase 6.
 
@@ -168,7 +168,7 @@ Candidate extended capabilities, evaluate and implement only where justified:
 - [x] Quick fixes.
 - [x] Rename.
 - [x] Document symbols.
-- [ ] Workspace symbols (deferred; no workspace index exists).
+- [x] Workspace symbols (bounded on-demand workspace scan with open-document overrides).
 - [x] Semantic tokens.
 - [x] Formatting.
 - [x] Code actions and refactoring (narrow inline-constant refactor; broader refactorings remain deferred).
@@ -189,13 +189,21 @@ Rename exit criteria:
 - [x] `renameProvider` advertises `prepareProvider` and both requests are implemented.
 - [x] Feature and stdio tests cover declaration and reference edits, non-user symbols, invalid names and incomplete input.
 
-Document symbols are derived from the current semantic snapshot: declared variables, functions, parameters and import bindings are returned with exact selection ranges, and a named function owns the declarations in its function scope as children. Catalog-only symbols and declarations whose recorded range no longer matches the source are omitted. Workspace symbols are deferred because there is no workspace index or authoritative cross-file module graph; searching only open documents would be incomplete and misleading to clients.
+Document symbols are derived from the current semantic snapshot: declared variables, functions, parameters and import bindings are returned with exact selection ranges, and a named function owns the declarations in its function scope as children. Catalog-only symbols and declarations whose recorded range no longer matches the source are omitted.
 
 Document symbol exit criteria:
 
 - [x] `documentSymbolProvider` is advertised and `textDocument/documentSymbol` is implemented.
 - [x] Feature and stdio tests cover source ranges, inferred type details, function-scope children, catalog-only exclusion and incomplete input.
-- [x] Workspace-symbol deferral is recorded in `docs/DECISIONS.md` and `docs/LSP_FEATURES.md`.
+
+Workspace symbols use a bounded on-demand scan of workspace folders instead of a persistent index or an open-documents-only search. At request time the server discovers `.strudel` files with file-count, file-size and depth limits, skips hidden and generated directories, parses and analyzes unopened files, and replaces any scanned file with its current in-memory document when that file is open. Results are the verified declarations from each document outline, flattened with container names and matched using relaxed, case-insensitive LSP subsequence matching. No cross-file module graph is inferred and no symbol resolution capability is claimed.
+
+Workspace symbol exit criteria:
+
+- [x] `workspaceSymbolProvider` is advertised and `workspace/symbol` is implemented without resolve support.
+- [x] File discovery is deterministic and bounded, and open documents override stale file contents.
+- [x] Feature and stdio tests cover relaxed matching, container names, result limits, open-document overrides, unopened workspace files and non-Strudel file exclusion.
+- [x] The strategy supersedes the earlier deferral and is recorded in `docs/DECISIONS.md` and `docs/LSP_FEATURES.md`.
 
 Semantic tokens are emitted only for classifications backed by the semantic model or the pinned mini-notation lexer: resolved user and library symbols, inferred declarations, mini-notation numbers and operators. Unresolved identifiers, ordinary mini-notation steps, syntax errors and unknown characters receive no semantic token. The LSP legend contains only types and modifiers actually used by the provider, and range-based token requests are not advertised.
 

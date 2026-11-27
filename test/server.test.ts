@@ -1,8 +1,11 @@
 import assert from 'node:assert/strict';
 import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { once } from 'node:events';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { test } from 'node:test';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { SymbolKind } from 'vscode-languageserver/node';
 
@@ -249,6 +252,7 @@ void test('stdio server advertises and serves implemented language capabilities'
       definitionProvider: boolean;
       referencesProvider: boolean;
       documentSymbolProvider: boolean;
+      workspaceSymbolProvider?: boolean;
       documentFormattingProvider: boolean;
       semanticTokensProvider?: {
         legend: { tokenTypes: string[]; tokenModifiers: string[] };
@@ -274,6 +278,7 @@ void test('stdio server advertises and serves implemented language capabilities'
   assert.equal(initializeResult.capabilities.definitionProvider, true);
   assert.equal(initializeResult.capabilities.referencesProvider, true);
   assert.equal(initializeResult.capabilities.documentSymbolProvider, true);
+  assert.equal(initializeResult.capabilities.workspaceSymbolProvider, true);
   assert.equal(initializeResult.capabilities.documentFormattingProvider, true);
   assert.deepEqual(initializeResult.capabilities.semanticTokensProvider?.legend.tokenTypes, [
     'function',
@@ -523,6 +528,94 @@ void test('stdio server advertises and serves implemented language capabilities'
   client.notify('textDocument/didClose', { textDocument: { uri } });
   const cleared = (await clearedDiagnostics) as PublishDiagnosticsParams;
   assert.deepEqual(cleared.diagnostics, []);
+
+  assert.equal(await client.request('shutdown'), null);
+  client.notify('exit', {});
+  await client.waitForExit();
+});
+
+interface WorkspaceSymbolInformation {
+  readonly name: string;
+  readonly kind: number;
+  readonly containerName?: string;
+  readonly location: {
+    readonly uri: string;
+    readonly range: {
+      readonly start: { readonly line: number; readonly character: number };
+      readonly end: { readonly line: number; readonly character: number };
+    };
+  };
+}
+
+void test('stdio server searches workspace files and open documents', async (t) => {
+  const root = await mkdtemp(join(tmpdir(), 'strudel-workspace-'));
+  const serverPath = fileURLToPath(new URL('../src/server.js', import.meta.url));
+  const client = new StdioLspClient(serverPath);
+  t.after(async () => {
+    await client.terminate();
+    await rm(root, { recursive: true, force: true });
+  });
+
+  await writeFile(join(root, 'open.strudel'), 'const stale = s("sd");', 'utf8');
+  await writeFile(
+    join(root, 'closed.strudel'),
+    'function closed(drum) { return s(drum); }',
+    'utf8',
+  );
+  await writeFile(join(root, 'ignored.txt'), 'const ignored = 1;', 'utf8');
+
+  const rootUri = pathToFileURL(root).href;
+  const initializeResult = (await client.request('initialize', {
+    processId: process.pid,
+    rootUri,
+    capabilities: {},
+    workspaceFolders: [{ uri: rootUri, name: 'workspace' }],
+  })) as { capabilities: { workspaceSymbolProvider?: boolean } };
+  assert.equal(initializeResult.capabilities.workspaceSymbolProvider, true);
+  client.notify('initialized', {});
+
+  const openUri = pathToFileURL(join(root, 'open.strudel')).href;
+  const openedDiagnostics = client.waitForNotification('textDocument/publishDiagnostics');
+  client.notify('textDocument/didOpen', {
+    textDocument: {
+      uri: openUri,
+      languageId: 'strudel',
+      version: 1,
+      text: 'const live = s("bd");',
+    },
+  });
+  await openedDiagnostics;
+
+  const liveSymbols = (await client.request('workspace/symbol', {
+    query: 'li',
+  })) as WorkspaceSymbolInformation[];
+  assert.deepEqual(
+    liveSymbols.map((symbol) => ({
+      name: symbol.name,
+      kind: symbol.kind,
+      uri: symbol.location.uri,
+    })),
+    [{ name: 'live', kind: SymbolKind.Variable, uri: openUri }],
+  );
+  assert.equal(
+    liveSymbols.some((symbol) => symbol.name === 'stale'),
+    false,
+  );
+
+  const closedSymbols = (await client.request('workspace/symbol', {
+    query: 'cl',
+  })) as WorkspaceSymbolInformation[];
+  assert.equal(closedSymbols[0]?.name, 'closed');
+  assert.equal(closedSymbols[0]?.kind, SymbolKind.Function);
+  assert.equal(closedSymbols[0]?.location.uri, pathToFileURL(join(root, 'closed.strudel')).href);
+
+  const parameterSymbols = (await client.request('workspace/symbol', {
+    query: 'dr',
+  })) as WorkspaceSymbolInformation[];
+  assert.equal(parameterSymbols[0]?.name, 'drum');
+  assert.equal(parameterSymbols[0]?.kind, SymbolKind.Variable);
+  assert.equal(parameterSymbols[0]?.containerName, 'closed');
+  assert.equal(parameterSymbols[0]?.location.range.start.line, 0);
 
   assert.equal(await client.request('shutdown'), null);
   client.notify('exit', {});

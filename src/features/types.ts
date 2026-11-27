@@ -116,6 +116,15 @@ export interface DocumentSymbolResult {
   readonly children: readonly DocumentSymbolResult[];
 }
 
+export interface WorkspaceSymbolResult {
+  readonly name: string;
+  readonly kind: DocumentSymbolKind;
+  readonly uri: string;
+  /** Exact name token used to reveal the symbol in the editor. */
+  readonly range: SemanticRange;
+  readonly containerName?: string;
+}
+
 export type SemanticTokenType =
   'function' | 'method' | 'variable' | 'parameter' | 'number' | 'operator';
 

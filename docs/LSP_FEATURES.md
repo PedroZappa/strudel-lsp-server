@@ -1,6 +1,6 @@
 # LSP Features
 
-Status: Phase 6 capabilities, signature help, conservative token-level mini-notation analysis, Phase 7 quick fixes, rename, document symbols, semantic tokens, formatting and inline-constant refactoring implemented and verified; remaining candidates are tracked below.
+Status: Phase 6 capabilities, signature help, conservative token-level mini-notation analysis, Phase 7 quick fixes, rename, document and workspace symbols, semantic tokens, formatting and inline-constant refactoring implemented and verified; remaining candidates are tracked below.
 
 Authority: `AGENTS.md` sections 4 and 5.
 
@@ -33,7 +33,7 @@ None of this behaviour is treated as a specification.
 | References                         | Implemented     | Early           | Resolved references plus optional declarations.                                          |
 | Rename                             | Implemented     | Extended        | Document-scoped user symbols only; prepare and invalid-name checks are implemented.      |
 | Document symbols                   | Implemented     | Extended        | Declared user symbols from the current semantic snapshot with exact selection ranges.    |
-| Workspace symbols                  | Deferred        | Deferred        | No workspace index exists; open-document-only search would be incomplete.                |
+| Workspace symbols                  | Implemented     | Extended        | Bounded on-demand folder scan with open-document overrides; no cross-file resolution.    |
 | Semantic tokens                    | Implemented     | Extended        | Verified symbols and mini-notation tokens only; no unresolved-name guessing.             |
 | Formatting                         | Implemented     | Extended        | Conservative indentation only; preferences come from standard LSP formatting options.    |
 | Refactoring and other code actions | Implemented     | Extended        | Narrow `refactor.inline` for single-use literal constants; broader actions are deferred. |
@@ -90,7 +90,15 @@ Current implementation: outermost non-empty syntax error nodes produce warnings;
 - Catalog-only builtins, methods and samples have no declaration and are omitted.
 - A named function owns the declarations in its function scope as children; scopes without a declared owner are flattened into the enclosing level.
 - `detail` reports the limited Strudel type inferred by the semantic engine, not a JavaScript type.
-- Workspace symbols remain deferred until a workspace index and cross-file module graph exist.
+
+## Workspace symbols policy
+
+- `workspace/symbol` scans workspace folders on demand; no persistent index or file watcher is maintained.
+- Discovery is limited to `.strudel` files and bounded by file count, file size and directory depth. Hidden and generated directories are skipped.
+- Open documents override scanned file contents so unsaved edits are reflected in results.
+- Symbols are the verified declarations from document outlines, flattened with container names and revealed using their exact name ranges.
+- Queries use relaxed, case-insensitive subsequence matching. Empty queries return all symbols up to the result limit.
+- No cross-file module graph, symbol resolution or `workspaceSymbol/resolve` support is claimed.
 
 ## Semantic tokens policy
 
@@ -126,7 +134,7 @@ Implemented and advertised in `initialize`:
 - `completionProvider` with the `.` trigger character.
 - `codeActionProvider` with the `quickfix` and `refactor.inline` kinds and `resolveProvider: false`.
 - `hoverProvider`, `definitionProvider` and `referencesProvider`.
-- `documentSymbolProvider` for `textDocument/documentSymbol`; no workspace-symbol capability is claimed.
+- `documentSymbolProvider` for `textDocument/documentSymbol` and `workspaceSymbolProvider` for `workspace/symbol`; no resolve support is claimed.
 - `documentFormattingProvider` for `textDocument/formatting`; no range or on-type formatting is claimed.
 - `semanticTokensProvider` with the exact legend and `full: true`; no range or delta provider is claimed.
 - `renameProvider` with `prepareProvider: true` for `textDocument/prepareRename` and `textDocument/rename`.
@@ -135,8 +143,8 @@ Implemented and advertised in `initialize`:
 
 Verification evidence:
 
-- `npm run test:features`: twenty-six provider tests cover conservative diagnostics, malformed input, quick-fix edits and range filtering, inline-constant refactoring and unsafe-binding rejection, position-aware completion, hover content, resolved-symbol navigation, document-symbol ranges and hierarchy, formatting indentation and preferences, rename preparation and edits, semantic-token classification, signature help, mini-notation diagnostics and hover, and incremental range shifting.
+- `npm run test:features`: twenty-nine provider tests cover conservative diagnostics, malformed input, quick-fix edits and range filtering, inline-constant refactoring and unsafe-binding rejection, position-aware completion, hover content, resolved-symbol navigation, document-symbol ranges and hierarchy, workspace-symbol matching, container names and result limits, formatting indentation and preferences, rename preparation and edits, semantic-token classification, signature help, mini-notation diagnostics and hover, and incremental range shifting.
 - `npm run test:mini`: five isolated token-model tests cover documented operators, token descriptions, structural faults, expected-closer metadata, live-coding suppression and unsupported-character progress.
-- `npm test`: 50 tests include a stdio integration test that verifies capability advertisement, all eleven implemented request types, diagnostic publication, quick-fix and inline-refactor code-action mapping, document-symbol, formatting, semantic-token and rename mapping, document closure and rapid-edit version suppression, plus one test-script discovery regression check.
+- `npm test`: 54 tests include two stdio integration tests that verify capability advertisement, all twelve implemented request types, diagnostic publication, quick-fix and inline-refactor code-action mapping, document-symbol and workspace-symbol, formatting, semantic-token and rename mapping, workspace file scanning with open-document overrides, document closure and rapid-edit version suppression, plus one test-script discovery regression check.
 
-Deferred: completion resolution, workspace symbols, range formatting, broader refactoring and remaining extended capabilities. Custom user-facing configuration for diagnostics and Strudel version selection is not exposed yet.
+Deferred: completion resolution, range formatting, broader refactoring and remaining extended capabilities. Custom user-facing configuration for diagnostics and Strudel version selection is not exposed yet.

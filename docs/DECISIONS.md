@@ -1,6 +1,6 @@
 # Decisions
 
-Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened; ADR-021 records the Phase 6 deferred-item completion, ADR-022 records Phase 7 quick fixes, ADR-023 records document-scoped rename, ADR-024 records document symbols with workspace symbols deferred, ADR-025 records semantic tokens, ADR-026 records conservative formatting, ADR-027 records prototype client dependency remediation and ADR-028 records inline-constant refactoring.
+Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened; ADR-021 records the Phase 6 deferred-item completion, ADR-022 records Phase 7 quick fixes, ADR-023 records document-scoped rename, ADR-024 records document symbols, ADR-025 records semantic tokens, ADR-026 records conservative formatting, ADR-027 records prototype client dependency remediation, ADR-028 records inline-constant refactoring and ADR-029 records bounded on-demand workspace symbols.
 
 ## ADR-001 — Clean-slate re-implementation
 
@@ -370,7 +370,7 @@ Consequences:
 - `detail` reflects the limited Strudel type model, not a JavaScript type checker.
 - Feature tests cover function-scope children, type details, catalog-only exclusion, imports and incomplete input; the stdio test covers capability advertisement and response mapping.
 - Document-symbol traversal uses the cached semantic snapshot and has no measured latency figure; Phase 8 must include it in representative request workloads.
-- `workspace/symbol` is not advertised until a workspace indexing strategy is approved.
+- `workspace/symbol` was not advertised until a workspace indexing strategy was approved; ADR-029 supersedes this deferral with a bounded on-demand scan.
 
 ## ADR-025 — Conservative semantic tokens
 
@@ -443,3 +443,19 @@ Consequences:
 - Inlining preserves expression text and does not reflow or rewrite unrelated code.
 - Feature tests cover literal inlining, range filtering, numbers, multi-use, assignment, exported, multi-declarator, call, template-substitution and malformed cases; the stdio test verifies advertisement and response mapping.
 - Refactoring computation uses the cached semantic snapshot and has no measured latency figure; Phase 8 must include it in representative code-action workloads.
+
+## ADR-029 — Bounded on-demand workspace symbols
+
+Status: accepted on 2026-11-27.
+
+Decision: supersede the ADR-024 deferral and implement `workspace/symbol` with a bounded on-demand workspace scan. `src/lsp/workspaceFiles.ts` discovers `.strudel` files beneath the initialized workspace folders, using deterministic traversal with file-count, file-size and depth limits and skipping hidden and generated directories. `src/server.ts` analyzes unopened files at request time, replaces any scanned file with its current in-memory document when open, and uses `src/features/workspaceSymbols.ts` to flatten verified document outlines with container names. Queries use relaxed case-insensitive subsequence matching, and results are limited. No persistent index, watcher, cross-file module graph, symbol resolution or new dependency is introduced.
+
+Rationale: an open-documents-only provider would be incomplete and could mislead clients, while a persistent index with watcher invalidation adds substantial state and failure modes for a single navigation request. A bounded scan is current at request time, uses the same semantic engine and verified declaration ranges as document symbols, and fails safely when individual files are unreadable or oversized.
+
+Consequences:
+
+- `workspaceSymbolProvider` is advertised; `workspaceSymbol/resolve` is not.
+- Results reflect unsaved open-document state and on-disk `.strudel` files; files outside workspace folders, other extensions and oversized files are not indexed.
+- The scan respects request cancellation and applies explicit limits, so worst-case work is bounded rather than proportional to an unbounded repository.
+- Feature tests cover relaxed matching, container names and result limits; stdio tests cover advertisement, scanning of unopened files, open-document overrides and exclusion of non-Strudel files.
+- Workspace-symbol scanning has no measured latency figure; Phase 8 must include representative workspace sizes and request workloads.
