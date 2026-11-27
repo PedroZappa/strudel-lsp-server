@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: re-implementation roadmap updated with resolved blocker decisions, Phase 6 completion, Phase 7 extended capabilities, Phase 8 benchmark harness and Phase 9 local packaging preparation, 2026-11-27. Priorities are proposals and remain subject to approval.
+Status: re-implementation roadmap updated with resolved blocker decisions, Phase 6 completion, Phase 7 extended capabilities, Phase 8 benchmark harness, Phase 9 local packaging preparation and a proposed first-release readiness review, 2026-11-27. Priorities are proposals and remain subject to approval.
 
 Authority: `AGENTS.md` sections 2–18 and the other documents in `docs/`.
 
@@ -250,7 +250,7 @@ Phase 8 exit criteria:
 
 Dependencies: validated core capabilities and performance baseline.
 
-**Status: local packaging preparation is complete; publication awaits explicit release authorization.**
+**Status: local packaging preparation is complete; publication awaits the first-release readiness review below and explicit release authorization.**
 
 The package is already ESM with a stdio executable at `dist/src/server.js`, an `AGPL-3.0-only` project licence and a controlled `files` allowlist. Phase 9 replaces the stale prototype README with authoritative package documentation and adds `scripts/verify-package.mjs`, exposed as `npm run verify:package` and `make verify-package`. That check packs the built server, verifies the tarball contents, performs a clean runtime-only offline installation from a temporary project with the committed lockfile, checks the installed licence metadata and text, and exercises the installed executable with an LSP initialize/shutdown handshake. The same command now runs in CI after the package-contents preview.
 
@@ -262,6 +262,66 @@ Tasks:
 - [x] Verify a clean offline installation with `npm run verify:package`.
 
 The pinned `tree-sitter-strudel@2.0.2` declares `AGPL-3.0-only` and bundles a matching AGPL licence, so the earlier MIT-corrected release requirement is superseded. No `npm publish` has been performed or authorized.
+
+### First-release readiness review (proposed, not yet started)
+
+This checklist is the brainstormed quality gate for the first npm release. It does not reopen completed implementation phases. "Blocking" items must be closed and revalidated on the exact release commit before `npm publish`; "recommended" items should be closed unless a written exception records why they are deferred. Unchecked items are review gates, not claims that the feature is absent.
+
+Current audit findings:
+
+- The package name `strudel-lsp-server` returned 404 from the npm registry on 2026-11-27; availability must be rechecked at release time.
+- The manifest has no `engines.node` field. CI tests Node 24 and 26 on Ubuntu only; no Windows or macOS job exists.
+- The manifest version is still `0.0.1` and the repository has no Git tags.
+- `docs/LSP_FEATURES.md` lists diagnostic enablement/severity and Strudel version selection as user-facing configuration, while its implementation status says no custom configuration is exposed.
+- Parser validation still has an unchecked real-Strudel-corpus item; committed benchmark fixtures are synthetic and measure layer boundaries rather than an editor process.
+- CI verifies correctness and package contents but has no controlled publish workflow or provenance/trusted-publishing configuration.
+
+#### Blocking before first publication
+
+- [ ] Decide the release identity: initial version, tag format (`vX.Y.Z`) and SemVer policy for a `0.x` package. `0.1.0` is the recommended first public version; `1.0.0` should imply a documented stability commitment.
+- [ ] Obtain explicit authorization naming the exact version to publish and the operator who will run the release.
+- [ ] Reconcile configuration documentation with behaviour: either implement a minimal user-facing diagnostics/Strudel-version option or mark those items clearly as deferred before release notes are written.
+- [ ] Define and declare supported runtimes: add `engines.node`, document the supported Node/npm range, and decide whether Node 24 and 26 are both release-supported or whether Node 24 alone is the initial target.
+- [ ] Recheck npm namespace/ownership immediately before publication, including account access, 2FA or trusted-publisher setup, and the exact unscoped package name.
+- [ ] Perform clean-room installs on every supported OS, Node version and npm version. Test both `npm install` with scripts enabled and the existing `--ignore-scripts` path; confirm native parser prebuilds load without requiring a compiler.
+- [ ] Exercise the installed `strudel-lsp-server` executable's stdio handshake on Linux, macOS and Windows, using the platform-specific bin shim where applicable.
+- [ ] Validate the parser and semantic engine against a small corpus of real Strudel compositions from authoritative documentation or examples, without copying those compositions into the package.
+- [ ] Complete a protocol robustness review for stdout purity, malformed JSON-RPC, unknown methods, invalid parameters, `$/cancelRequest`, rapid edits, no-workspace and multi-root initialization, document closure, shutdown and exit codes.
+- [ ] Complete a licensing/provenance sign-off: AGPL notices in the distributed artifact, pinned dependency licences, generated metadata provenance, no copied grammar/parser/binding source, no secrets, and a public source URL in package metadata and README. This is a release review, not legal advice.
+- [ ] Re-run the final dependency and secret audit on the release commit: `npm audit --omit=dev` as a blocking gate, full `npm audit` reviewed, prototype client audit reviewed, and a runtime check confirming no telemetry or network use by the stdio server.
+- [ ] Add a controlled release workflow: tag or GitHub release trigger, manual approval environment, pinned actions, immutable release commit, npm trusted publishing/OIDC with automatic provenance, no automatic publish from ordinary commits, and no long-lived npm token when trusted publishing is available. Source: <https://docs.npmjs.com/trusted-publishers>.
+- [ ] Run `npm publish --dry-run` from the exact release commit and compare its file list, licence, manifest and executable entry point with `npm pack --dry-run` and `scripts/verify-package.mjs`.
+- [ ] Prepare versioned `CHANGELOG.md` entries and GitHub release notes covering supported Strudel/Node versions, implemented capabilities, explicit limitations, installed-package verification and known issues.
+- [ ] Decide and document rollback policy before publishing: npm versions are immutable, so define whether a correction uses a patch release, deprecation or unpublish request, and how users will be notified.
+- [ ] Define the post-publication smoke plan: verify registry metadata and licence, install from the public registry on a clean machine, run the stdio handshake, confirm the documented launch command, and create the Git/GitHub release record.
+- [ ] Final README and manifest review: installation command, supported versions, known limitations, legacy prototype separation, and accurate `repository`, `homepage` and `bugs` metadata.
+
+#### Recommended hardening before the first release
+
+- [ ] Perform editor-level smoke tests with at least two independent LSP clients using configuration kept outside the server core. Record which client behaviours were checked, not editor-specific implementation details in the server.
+- [ ] Add deterministic stdio error-path tests for malformed input and cancellation; current cancellation coverage is strongest at the semantic-engine layer.
+- [ ] Add a bounded soak test with rapid edits, repeated initialize/shutdown cycles and memory-growth observation to catch live-coding lifecycle leaks.
+- [ ] Review workspace-symbol discovery for symlinks, path traversal, multi-root folders, unreadable files and size/depth limits; add tests where behaviour is currently assumed.
+- [ ] Measure at least one end-to-end request path through JSON-RPC and the installed binary. The committed benchmark is deliberately layer-level and should not be presented as full editor latency.
+- [ ] Decide whether to include `CHANGELOG.md`, TypeScript sources or source maps in the npm `files` allowlist. The current allowlist is intentionally minimal; any change must be reflected in package verification.
+- [ ] Record a dependency-update policy for Strudel, the parser and Node: what triggers compatibility retesting and when the pinned metadata snapshot may be regenerated.
+- [ ] Consider a generated SBOM or release attestation. This is optional for the first release and must not introduce a dependency without separate approval.
+- [ ] Add issue templates or a support section that tells users which diagnostics and server logs to include, while preserving privacy and avoiding secret disclosure.
+- [ ] Verify installation when the consumer does not inherit this repository's `.npmrc`, especially the `legacy-peer-deps=true` setting.
+
+#### Deferred until after the first release
+
+- [ ] Replace synthetic benchmark fixtures with representative real-world workloads once provenance and redistribution terms are confirmed.
+- [ ] Optimise incremental semantic reuse; current large-document updates rebuild the semantic snapshot and are documented in `docs/PERFORMANCE.md`.
+- [ ] Add production-side timing hooks or live-editor telemetry only if a concrete latency question requires them; no telemetry is part of the first release.
+- [ ] Continue evaluating folding, selection ranges, inlay hints, call hierarchy, completion resolution, range formatting, broader refactoring and cross-file navigation under the existing deferred-capability policy.
+
+First-release exit criteria:
+
+- [ ] Every blocking item is checked or has an explicit, approved exception recorded in `docs/DECISIONS.md`.
+- [ ] CI is green on the exact tagged release commit, including package verification and dependency audit.
+- [ ] Explicit release authorization has been received for the exact version.
+- [ ] Publication uses the controlled workflow, provenance is generated, post-publication smoke checks pass, and release notes/tag are present.
 
 ## Deferred / explicitly not planned
 
