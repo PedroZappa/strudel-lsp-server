@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "kind": "pinned-jsdoc-examples",
+    "package": "@strudel/reference",
+    "version": "1.2.2",
+    "tarball": "https://registry.npmjs.org/@strudel/reference/-/reference-1.2.2.tgz",
+    "integrity": "sha512-1zJwv4U2NVWhw/T2fDL6XJjSKi8ltetw9qX79Lum51g7x0CX1naf6imbkdBzS7QKYyKnUYyHCtxsgFIKyGyiDg==",
+    "license": "AGPL-3.0-or-later",
+    "repository": "git+https://codeberg.org/uzu/strudel.git"
+  },
+  "corpus": {
+    "documents": 577,
+    "examples": 484,
+    "characters": 34842,
+    "selection": "all non-empty string examples in @strudel/reference docs, sorted by SHA-256",
+    "corpusHash": "6b18d3a9967c018069ec927b8a65ffd22369e8225453244a7929665b3a5be252"
+  },
+  "layers": {
+    "parser": "2.0.2",
+    "parserIntegrity": "sha512-5pCUygbKamQoRh+d/gqaVsTi4/bJp2ErZw+cdvuHx49J77tAI19VK0DS7V/7geVTa79u9MTDPGOOxNMksv6FmQ==",
+    "catalog": "strudel-1.2.6:b8eed909"
+  },
+  "checks": {
+    "pinnedSource": true,
+    "parseWithoutThrow": true,
+    "syntaxRangesValid": true,
+    "semanticWithoutThrow": true,
+    "semanticRangesValid": true,
+    "incrementalWithoutThrow": true,
+    "incrementalRangesValid": true,
+    "incrementalCleanPreserved": true,
+    "incrementalFactsPreserved": true
+  },
+  "totals": {
+    "characters": 34842,
+    "cleanParses": 477,
+    "parsesWithErrors": 7,
+    "errorNodes": 7,
+    "missingNodes": 2,
+    "symbols": 697,
+    "references": 2044,
+    "unresolvedReferences": 1308,
+    "miniNotationArguments": 347,
+    "miniNotationIssues": {},
+    "incrementalCleanParses": 477
+  },
+  "parserGaps": [
+    {
+      "id": "01b868a70693fcf444f4abe4fe9b4ebf21afa06de3b9a78fcf373328e2e53873",
+      "name": "chop",
+      "longName": "Pattern.chop",
+      "length": 178,
+      "errorNodes": 1,
+      "missingNodes": 0
+    },
+    {
+      "id": "038c9b9af83282c87b2f62280a3ce64f872cc50b9e9bc4d164c327ef659a2564",
+      "name": "samples",
+      "longName": "samples",
+      "length": 163,
+      "errorNodes": 0,
+      "missingNodes": 2
+    },
+    {
+      "id": "230517b48410fbe319fe0f29894a886de094965bbcc73393f5950876bc0ce56c",
+      "name": "register",
+      "longName": "register",
+      "length": 161,
+      "errorNodes": 1,
+      "missingNodes": 0
+    },
+    {
+      "id": "b3ebf91fd049b4dc7c14b0ea3dcbd2ed9ec201dcd629bc3e901de6ff68e07542",
+      "name": "loopAt",
+      "longName": "Pattern.loopAt",
+      "length": 104,
+      "errorNodes": 1,
+      "missingNodes": 0
+    },
+    {
+      "id": "b58688e8094921b21a3b458fe8bf6432174aa62b3e95d28e6bd740b6a385856a",
+      "name": "filterHaps",
+      "longName": "Pattern#filterHaps",
+      "length": 82,
+      "errorNodes": 2,
+      "missingNodes": 0
+    },
+    {
+      "id": "be915a0e56ccaf6b6ca3cd46e5fb4bd9e625024e91bd0f7626e3821d9b17cae2",
+      "name": "loopAtCps",
+      "longName": "Pattern.loopAtCps",
+      "length": 120,
+      "errorNodes": 1,
+      "missingNodes": 0
+    },
+    {
+      "id": "de04bfa002bfc20ad99f17f38685f09b32751e0f664eb8217529c1b303ddec32",
+      "name": "fit",
+      "longName": "fit",
+      "length": 102,
+      "errorNodes": 1,
+      "missingNodes": 0
+    }
+  ]
+}

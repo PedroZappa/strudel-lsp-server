@@ -1,6 +1,6 @@
 # Decisions
 
-Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened or superseded; ADR-021 records the Phase 6 deferred-item completion, ADR-022 records Phase 7 quick fixes, ADR-023 records document-scoped rename, ADR-024 records document symbols, ADR-025 records semantic tokens, ADR-026 records conservative formatting, ADR-027 records prototype client dependency remediation, ADR-028 records inline-constant refactoring, ADR-029 records bounded on-demand workspace symbols, ADR-030 records the Phase 8 performance baseline and advisory check, ADR-031 records Phase 9 local packaging verification, ADR-032 records the AGPL-3.0-only project licence decision, ADR-033 records the `0.1.0` release identity and SemVer policy, ADR-034 records the deferred user configuration boundary, ADR-035 records the `0.1.0` supported runtime and OS matrix, and ADR-036 records the Phase 11 clean-install validation design.
+Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened or superseded; ADR-021 records the Phase 6 deferred-item completion, ADR-022 records Phase 7 quick fixes, ADR-023 records document-scoped rename, ADR-024 records document symbols, ADR-025 records semantic tokens, ADR-026 records conservative formatting, ADR-027 records prototype client dependency remediation, ADR-028 records inline-constant refactoring, ADR-029 records bounded on-demand workspace symbols, ADR-030 records the Phase 8 performance baseline and advisory check, ADR-031 records Phase 9 local packaging verification, ADR-032 records the AGPL-3.0-only project licence decision, ADR-033 records the `0.1.0` release identity and SemVer policy, ADR-034 records the deferred user configuration boundary, ADR-035 records the `0.1.0` supported runtime and OS matrix, and ADR-036 records the Phase 11 clean-install validation design, and ADR-037 records the real documentation corpus validation design.
 
 ## ADR-001 — Clean-slate re-implementation
 
@@ -601,3 +601,24 @@ Consequences:
 - The green matrix run on commit `4c3f6b4` recorded both install modes, parser prebuild loading with no compiled `build` directory, and installed stdio handshakes on all six combinations: <https://github.com/PedroZappa/strudel-lsp-server/actions/runs/45990023185>. Detailed platform, Node and npm results are in `docs/TESTING_STRATEGY.md`.
 - The first matrix run failed only because Windows `npm.cmd` was spawned without a shell; the verifier now uses the platform shell for npm, and the fix was confirmed by the green run.
 - Changes to runner labels, Node majors or npm majors require an update to this ADR and the workflow together.
+
+## ADR-037 — Real documentation corpus validation
+
+Status: accepted on 2026-11-27.
+
+Decision: use the pinned authoritative JSDoc examples in `@strudel/reference@1.2.2` as the Phase 11 real Strudel corpus instead of fetching external `.strudel` files or copying compositions into the repository or npm package. `scripts/validate-corpus.mjs` rechecks the pinned version, tarball, integrity, licence and repository recorded in ADR-014, then feeds all 484 non-empty examples through the production syntax adapter and database-backed semantic engine without rewriting them. For each example it checks parser range and source-text agreement, semantic range bounds, incremental newline append with semantic reuse, and preservation of clean parse state and fact counts. The result is compared with the committed `validation/real-corpus.json`; regeneration is an explicit `npm run validate:corpus:write` operation.
+
+Evidence:
+
+- `@strudel/reference@1.2.2` is generated from the official Strudel repository at `git+https://codeberg.org/uzu/strudel.git`, is pinned by integrity in `package-lock.json`, and exposes 577 documentation records with 484 non-empty examples covering chained patterns, mini notation, user functions, imports, labeled statements and comments.
+- The recorded run parsed 484/484 examples without throwing, with 477 clean parses and 7 parser error/missing-node cases; all syntax and semantic ranges matched source text, all 484 incremental updates and reuses completed without throwing, and 347 mini-notation arguments produced zero structural issues.
+- Minimal reproductions isolate two upstream `tree-sitter-strudel@2.0.2` grammar gaps: `%` in JavaScript expressions and `//` inside string literals such as sample URLs. The seven affected documentation names and SHA-256 identifiers are recorded in the evidence report; no example text is stored.
+
+Rationale: pinned documentation examples are authoritative Strudel source that is already installed as a development dependency, so validation is reproducible and offline without introducing new dependencies, network access at test time or a redistribution question about third-party compositions. Comparing derived facts rather than source text protects the package allowlist while still detecting any parser, corpus or semantic regression.
+
+Consequences:
+
+- `npm run validate:corpus`, `make validate-corpus` and the CI `verify` job on Node 24 and 26 run the deterministic check; report regeneration is deliberate and must be reviewed.
+- Upstream parser gaps are documented in `docs/PARSER_INTEGRATION.md` rather than patched in this repository; the grammar remains an external AGPL dependency under ADR-032.
+- Unresolved references and conservative mini-notation behaviour are recorded as observations, not new diagnostics.
+- This validation decision is not publication authorization; Phase 13 gates still apply.

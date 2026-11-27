@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: re-implementation roadmap updated with completed Phases 0–9 and the completed Phase 10 release identity, configuration boundary, supported runtime matrix and final package review, with Phases 11–13 remaining for validation, release governance and controlled first publication, 2026-11-27. Priorities are proposals and remain subject to approval.
+Status: re-implementation roadmap updated with completed Phases 0–10, completed Phase 11 clean-install, platform handshake and real Strudel corpus validation, and remaining Phase 11 protocol robustness work plus Phases 12–13 for release governance and controlled first publication, 2026-11-27. Priorities are proposals and remain subject to approval.
 
 Authority: `AGENTS.md` sections 2–18 and the other documents in `docs/`.
 
@@ -272,7 +272,7 @@ The following findings define the starting state for Phases 10–13. Each open g
 - Runtime support is now declared as Node 24/26 with npm 11 in ADR-035; CI still tests only those Node majors on Ubuntu, so cross-platform validation remains for Phase 11.
 - The manifest version is now `0.1.0` under ADR-033, but the repository has no Git tags.
 - Diagnostic enablement/severity and Strudel version selection were documented ambiguously; they are now explicitly deferred for `0.1.0` in ADR-034 and the feature documentation.
-- Parser validation still has an unchecked real-Strudel-corpus item; committed benchmark fixtures are synthetic and measure layer boundaries rather than an editor process.
+- Real-Strudel-corpus validation is complete against 484 pinned documentation examples with derived evidence in `validation/real-corpus.json`; committed benchmark fixtures remain synthetic and measure layer boundaries rather than an editor process.
 - CI verifies correctness and package contents but has no controlled publish workflow or provenance/trusted-publishing configuration.
 
 ## Phase 10 — Release identity and compatibility metadata
@@ -299,13 +299,13 @@ Exit criteria:
 
 Dependencies: Phase 10 runtime and OS matrix.
 
-**Status: clean-install and installed-handshake validation is complete on the required matrix; real-corpus validation and protocol robustness work remains.**
+**Status: clean-install, installed-handshake and real-corpus validation are complete; protocol robustness review remains.**
 
 Tasks:
 
 - [x] Perform clean-room installs on every required OS/Node/npm combination from ADR-035. The six-job matrix passed both install modes, native parser prebuild loading and a no-compilation check in run `45990023185`.
 - [x] Exercise the installed `strudel-lsp-server` executable's stdio handshake on Linux, macOS and Windows, using the platform-specific bin shim where applicable. Each matrix job completed the installed handshake.
-- [ ] Validate the parser and semantic engine against a small corpus of real Strudel compositions from authoritative documentation or examples, without copying those compositions into the package.
+- [x] Validate the parser and semantic engine against a small corpus of real Strudel compositions from authoritative documentation or examples, without copying those compositions into the package. All 484 non-empty JSDoc examples in pinned `@strudel/reference@1.2.2` were parsed, analyzed and incrementally updated with zero invariant failures; derived evidence is in `validation/real-corpus.json` and findings are in `docs/PARSER_INTEGRATION.md` and ADR-037.
 - [ ] Complete a protocol robustness review for stdout purity, malformed JSON-RPC, unknown methods, invalid parameters, `$/cancelRequest`, rapid edits, no-workspace and multi-root initialization, document closure, shutdown and exit codes.
 
 Exit criteria:
@@ -313,7 +313,8 @@ Exit criteria:
 - [x] Every required OS/Node/npm combination in ADR-035 passes clean-room installation with and without install scripts where applicable, recorded in run `45990023185`.
 - [x] Native parser prebuilds work without requiring a local compiler; no parser `build` directory was created in any matrix job.
 - [x] Installed executable handshakes pass on every required platform in ADR-035.
-- [ ] Real-corpus validation and protocol robustness evidence are recorded, with no copied compositions in the package.
+- [x] Real-corpus validation evidence is recorded in `validation/real-corpus.json` with no copied compositions in the package.
+- [ ] Protocol robustness evidence is recorded.
 
 ## Phase 12 — Release governance and automation
 

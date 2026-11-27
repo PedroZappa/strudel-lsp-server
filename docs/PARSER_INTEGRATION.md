@@ -1,6 +1,6 @@
 # Parser Integration
 
-Status: **version 2.0.2 adopted; compatibility, adapter integration and AGPL licensing policy resolved.**
+Status: **version 2.0.2 adopted; compatibility, adapter integration, real-corpus validation and AGPL licensing policy resolved.**
 
 Authority: `AGENTS.md` section 3, "Tree-sitter integration".
 
@@ -135,11 +135,35 @@ The syntax adapter lives in `src/syntax/` and implements the parser-independent 
 
 Parser integration tests run independently via `npm run test:parser` or `make test-parser`. They cover stable node kinds/ranges, chained method calls, variable declarations, non-ASCII offsets, incremental edit/reparse, and recovery from malformed input. No semantic engine internals are imported.
 
+## Real documentation corpus validation (2026-11-27)
+
+Phase 11 adds a deterministic offline validation run over authoritative Strudel source. `scripts/validate-corpus.mjs` feeds every non-empty JSDoc example from the pinned `@strudel/reference@1.2.2` development dependency through the syntax adapter and the database-backed semantic engine without modifying the examples. The source package, tarball, integrity, AGPL licence and Codeberg repository are rechecked first. No composition text is copied into this repository or the npm package; only the corpus hash, SHA-256 identifiers for parser-gap examples and aggregate counts are committed in `validation/real-corpus.json`.
+
+Corpus: 577 documentation records, 484 non-empty examples, 34,842 UTF-16 code units, corpus hash `6b18d3a9967c018069ec927b8a65ffd22369e8225453244a7929665b3a5be252`.
+
+| Check                                                            | Result                                                        |
+| ---------------------------------------------------------------- | ------------------------------------------------------------- |
+| Pinned source and pinned parser version                          | Pass; `@strudel/reference@1.2.2`, `tree-sitter-strudel@2.0.2` |
+| Parse without throwing                                           | 484/484                                                       |
+| Clean parses                                                     | 477/484                                                       |
+| Syntax node ranges and exact source text                         | 0 violations                                                  |
+| Semantic analysis without throwing                               | 484/484                                                       |
+| Semantic symbol, reference, mini-notation and issue ranges       | 0 violations                                                  |
+| Incremental newline append plus reuse without throwing           | 484/484                                                       |
+| Incremental ranges, clean state and symbol/reference/mini counts | 0 violations                                                  |
+| Mini-notation structural issues across 347 analyzed arguments    | 0                                                             |
+
+Totals from the run: 697 symbols, 2,044 references (1,308 unresolved), 347 mini-notation arguments, 7 error nodes and 2 missing nodes. Unresolved references are expected because runtime globals and sample names are outside the committed metadata; they are not reported as diagnostics under the live-coding policy.
+
+Seven documentation examples produce parser error or missing nodes. Direct minimal-case checks against `tree-sitter-strudel@2.0.2` isolate two upstream grammar gaps: the `%` modulo operator in a JavaScript expression, and `//` inside a string literal (URL strings in the `samples` documentation). The affected documentation names are `filterHaps`, `register`, `chop`, `loopAt`, `loopAtCps`, `fit` and `samples`; their SHA-256 identifiers are in `validation/real-corpus.json`. The grammar is consumed as an external dependency and is not vendored or patched here. Semantic analysis completes for all seven examples with in-bounds ranges. Any parser or corpus change alters the committed report, so `npm run validate:corpus` fails until the change is reviewed and the report is regenerated deliberately.
+
+The check runs as `npm run validate:corpus` or `make validate-corpus`, with deliberate regeneration through `npm run validate:corpus:write` or `make validate-corpus-write`. CI runs the check on Node 24 and 26; `validation/README.md` describes the evidence format.
+
 ## Integration requirements
 
 - [x] Build a syntax adapter that translates parser-specific nodes into the stable syntax representation described in `docs/ARCHITECTURE.md`.
 - [x] Keep grammar/parser corpus and binding tests in a separate test suite from semantic engine tests.
-- [ ] Expand validation beyond the smoke script to the real Strudel language corpus (Phase 4+).
+- [x] Expand validation beyond the smoke script to the real Strudel language corpus (Phase 11): 484 pinned documentation examples parsed and analyzed with no invariant failures; results and parser gaps recorded in `validation/real-corpus.json`.
 - [x] Do not copy grammar, generated parser or bindings into this repository.
 - [x] Re-run compatibility validation deliberately on every parser upgrade.
 - [x] Resolve AGPL-3.0 licensing implications of `tree-sitter-strudel@2.0.2` before redistributing the parser package. The 2.0.2 package declares AGPL-3.0-only consistently in both metadata and LICENSE, and ADR-032 aligns the published project with that identifier.

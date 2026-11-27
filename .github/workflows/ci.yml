@@ -63,6 +63,9 @@ jobs:
       - name: Run mini-notation suite
         run: npm run test:mini
 
+      - name: Validate real Strudel documentation corpus
+        run: npm run validate:corpus
+
       - name: Build package
         run: npm run build
 

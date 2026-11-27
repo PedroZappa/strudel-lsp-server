@@ -1,6 +1,6 @@
 # Semantic Engine
 
-Status: Phase 4 model, Phase 5 database-backed catalog, Phase 6 provider integration, signature help, mini-notation token analysis and Phase 7 quick-fix inputs implemented on 2026-11-27. The model remains deliberately limited.
+Status: Phase 4 model, Phase 5 database-backed catalog, Phase 6 provider integration, signature help, mini-notation token analysis and Phase 7 quick-fix inputs implemented on 2026-11-27. Real documentation corpus validation also passed on 2026-11-27 with no semantic invariant failures over 484 pinned examples. The model remains deliberately limited.
 
 Authority: `AGENTS.md` sections 3 and 5.
 
@@ -81,6 +81,7 @@ The engine exposes semantic facts only. Feature providers decide which facts bec
 - Incremental reuse is statement-level, not sub-expression-level.
 - Mini-notation tokenization is lexical and conservative, not a recovery parser: it does not attempt a full 1.2.6 AST or haskellish statement analysis.
 - Signature labels use the flat JSDoc parameter list; overloads, optional and rest parameters, and user-defined signatures are not modeled beyond resolved symbol kinds.
+- Real-corpus validation recorded 1,308 unresolved references across 484 documentation examples. They remain unresolved rather than speculative diagnostics because runtime globals and sample names are outside the pinned metadata; see `validation/real-corpus.json`.
 
 ## Open questions
 

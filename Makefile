@@ -51,7 +51,7 @@ _INFO    = [$(BLU)INFO$(D)]
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install install-dev build typecheck lint format format-check test test-parser test-semantic test-metadata test-features test-mini generate-metadata benchmark benchmark-check benchmark-baseline pack-check verify-package check verify verify-all ci check-static audit audit-client clean docs docs-open
+.PHONY: help install install-dev build typecheck lint format format-check test test-parser test-semantic test-metadata test-features test-mini validate-corpus validate-corpus-write generate-metadata benchmark benchmark-check benchmark-baseline pack-check verify-package check verify verify-all ci check-static audit audit-client clean docs docs-open
 
 #==============================================================================#
 #                                  RULES                                       #
@@ -126,6 +126,16 @@ test-mini:	## Build and run mini-notation analysis tests only
 	@$(NPM) run test:mini
 	@echo "$(YEL)* $(_SUCCESS) Mini-notation tests completed$(D)"
 
+validate-corpus:	## Validate syntax and semantics against pinned Strudel documentation examples
+	@echo "$(YEL)Validating real Strudel documentation corpus...$(D)"
+	@$(NPM) run validate:corpus
+	@echo "$(YEL)* $(_SUCCESS) Corpus validation passed$(D)"
+
+validate-corpus-write:	## Deliberately refresh the committed corpus evidence report
+	@echo "$(YEL)Regenerating corpus evidence report...$(D)"
+	@$(NPM) run validate:corpus:write
+	@echo "$(YEL)* $(_SUCCESS) Corpus evidence report regenerated$(D)"
+
 generate-metadata:	## Regenerate the pinned Strudel language database snapshot
 	@echo "$(YEL)Generating language database...$(D)"
 	@$(NPM) run generate:metadata
@@ -171,7 +181,7 @@ verify-all: verify pack-check verify-package benchmark-check	## Core gate plus p
 
 # `.github/workflows/ci.yml` calls the underlying npm scripts directly and
 # additionally runs a runtime dependency audit; this is the local gate.
-ci: verify-all build audit-client	## Run the complete local CI gate
+ci: verify-all validate-corpus build audit-client	## Run the complete local CI gate
 	@echo "$(YEL)* $(_SUCCESS) Local CI gate completed$(D)"
 
 check-static:	## Run ESLint and verify shell script syntax
