@@ -1,6 +1,6 @@
 # Project Specification
 
-Status: specification updated with resolved blocker decisions and the `0.1.0` supported runtime matrix, 2026-11-27
+Status: specification updated with resolved blocker decisions and the supported runtime matrix for published `0.1.0` and `0.2.0`, 2026-11-27
 Authority: `AGENTS.md` sections 1–9.
 
 ## Purpose
@@ -18,7 +18,7 @@ Build an editor-agnostic Language Server Protocol implementation for **Strudel**
 
 ## Supported runtime
 
-Version `0.1.0` supports Node.js 24 and 26 with npm 11.x, recorded in `package.json` `engines` and ADR-035. The required first-release validation matrix is Linux x64 with glibc, macOS arm64 and Windows x64 across both Node majors. Linux arm64, macOS x64 and Windows arm64 have parser prebuilds but remain best-effort until Phase 11 validates them.
+Published `0.1.0` and `0.2.0` support Node.js 24 and 26 with npm 11.x, recorded in `package.json` `engines` and ADR-035. The validated matrix is Linux x64 with glibc, macOS arm64 and Windows x64 across both Node majors (ADR-035 and ADR-061). Linux arm64, macOS x64 and Windows arm64 have parser prebuilds but remain best-effort until separately validated.
 
 ## Target language version
 
@@ -90,18 +90,18 @@ All four packages come from `git+https://codeberg.org/uzu/strudel.git` and decla
 
 ## Decisions and open items
 
-| Topic                                                  | Status                                                                   | Owner document                                    |
-| ------------------------------------------------------ | ------------------------------------------------------------------------ | ------------------------------------------------- |
-| Parser licence policy                                  | Resolved: project uses AGPL-3.0-only to match the pinned parser          | `docs/PARSER_INTEGRATION.md`, `docs/DECISIONS.md` |
-| Upstream parser licence file correction                | Solved for 2.0.2: metadata and LICENSE both declare AGPL-3.0             | `docs/PARSER_INTEGRATION.md`, `docs/DECISIONS.md` |
-| Parser redistribution licence gate                     | Resolved: AGPL-3.0-only project licence; publication needs authorization | `docs/PARSER_INTEGRATION.md`, `docs/DECISIONS.md` |
-| Exact parser npm version, provenance and compatibility | Resolved: `tree-sitter-strudel@2.0.2` with `tree-sitter@0.25.1`          | `docs/PARSER_INTEGRATION.md`, `docs/DECISIONS.md` |
-| Missing `AGENTS.md` section 9                          | Resolved: complete section approved                                      | `docs/DECISIONS.md`, `docs/TESTING_STRATEGY.md`   |
-| Test tooling                                           | Accepted and installed: `node:test` over compiled TypeScript output      | `docs/TESTING_STRATEGY.md`                        |
-| Metadata source packages and pinned versions           | Resolved: reference 1.2.2 and core/mini/transpiler 1.2.6                 | `docs/DECISIONS.md`, `docs/PROJECT_SPEC.md`       |
-| Generated metadata snapshot and offline lookup         | Resolved: Phase 5 generator, committed snapshot and database adapter     | `docs/ARCHITECTURE.md`, `docs/DECISIONS.md`       |
-| Development-only npm audit advisories                  | Resolved: patched transitively; full audit reports zero vulnerabilities  | `docs/DECISIONS.md`, `docs/TESTING_STRATEGY.md`   |
-| Repository licence metadata mismatch                   | Resolved: AGPL-3.0-only, `Copyright (c) 2025-present Zedro`              | `docs/DECISIONS.md`, `LICENSE`                    |
+| Topic                                                  | Status                                                                                                                              | Owner document                                    |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| Parser licence policy                                  | Resolved: project uses AGPL-3.0-only to match the pinned parser                                                                     | `docs/PARSER_INTEGRATION.md`, `docs/DECISIONS.md` |
+| Upstream parser licence file correction                | Solved for 2.0.2: metadata and LICENSE both declare AGPL-3.0                                                                        | `docs/PARSER_INTEGRATION.md`, `docs/DECISIONS.md` |
+| Parser redistribution licence gate                     | Resolved: AGPL-3.0-only project licence; `0.2.0` publication completed under ADR-060/ADR-061; future releases require authorization | `docs/PARSER_INTEGRATION.md`, `docs/DECISIONS.md` |
+| Exact parser npm version, provenance and compatibility | Resolved: `tree-sitter-strudel@2.0.2` with `tree-sitter@0.25.1`                                                                     | `docs/PARSER_INTEGRATION.md`, `docs/DECISIONS.md` |
+| Missing `AGENTS.md` section 9                          | Resolved: complete section approved                                                                                                 | `docs/DECISIONS.md`, `docs/TESTING_STRATEGY.md`   |
+| Test tooling                                           | Accepted and installed: `node:test` over compiled TypeScript output                                                                 | `docs/TESTING_STRATEGY.md`                        |
+| Metadata source packages and pinned versions           | Resolved: reference 1.2.2 and core/mini/transpiler 1.2.6                                                                            | `docs/DECISIONS.md`, `docs/PROJECT_SPEC.md`       |
+| Generated metadata snapshot and offline lookup         | Resolved: Phase 5 generator, committed snapshot and database adapter                                                                | `docs/ARCHITECTURE.md`, `docs/DECISIONS.md`       |
+| Development-only npm audit advisories                  | Resolved: patched transitively; full audit reports zero vulnerabilities                                                             | `docs/DECISIONS.md`, `docs/TESTING_STRATEGY.md`   |
+| Repository licence metadata mismatch                   | Resolved: AGPL-3.0-only, `Copyright (c) 2025-present Zedro`                                                                         | `docs/DECISIONS.md`, `LICENSE`                    |
 
 ## External sources
 

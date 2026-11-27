@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: re-implementation roadmap complete through Phase 15. `strudel-lsp-server@0.2.0` was published on 2026-11-27 from tag `v0.2.0` at commit `7d611a8d61dae2ab2eea21a12ce2ebdec59e4488` through the controlled OIDC workflow with `pedrozappa` as operator; `0.1.0` remains available. ADR-060 records the exact publication authorization and ADR-061 records the registry, signature, provenance and smoke evidence. ADR-051 records the scope and deferred work, ADR-052 records the configuration contract, ADR-053 records the filesystem boundary, ADR-054 records the `.npmrc` removal, ADR-055 records hermetic pack caching, ADR-056 records the advisory soak/lifecycle design, ADR-057 records the separate advisory benchmark report, ADR-058 records the independent editor-client smoke evidence, ADR-059 records the release-preparation authorization, and ADR-062 records publication-state-aware verification. Missing provenance for the operator-managed first publish is recorded in ADR-050. Proposed Phases 16–27 below describe a feature-expanded route to `v1.0.0`, split into `v0.3.0`, `v0.4.0`, `v0.5.0` and `v1.0.0` increments. Phase 16 initial charter is complete; Phases 17–27 remain proposed and subject to approval.
+Status: re-implementation roadmap complete through Phase 15. `strudel-lsp-server@0.2.0` was published on 2026-11-27 from tag `v0.2.0` at commit `7d611a8d61dae2ab2eea21a12ce2ebdec59e4488` through the controlled OIDC workflow with `pedrozappa` as operator; `0.1.0` remains available. ADR-060 records the exact publication authorization and ADR-061 records the registry, signature, provenance and smoke evidence. ADR-051 records the scope and deferred work, ADR-052 records the configuration contract, ADR-053 records the filesystem boundary, ADR-054 records the `.npmrc` removal, ADR-055 records hermetic pack caching, ADR-056 records the advisory soak/lifecycle design, ADR-057 records the separate advisory benchmark report, ADR-058 records the independent editor-client smoke evidence, ADR-059 records the release-preparation authorization, ADR-062 records publication-state-aware verification, ADR-063 records the initial v1 stability charter, and ADR-064 records the Phase 17 package, support and SBOM decisions. Missing provenance for the operator-managed first publish is recorded in ADR-050. Proposed Phases 16–27 below describe a feature-expanded route to `v1.0.0`, split into `v0.3.0`, `v0.4.0`, `v0.5.0` and `v1.0.0` increments. Phases 16 and 17 are complete; Phases 18–27 remain proposed and subject to approval.
 
 Authority: `AGENTS.md` sections 2–18 and the other documents in `docs/`.
 
@@ -23,7 +23,7 @@ Exit criteria:
 
 ## Phase 1 — Resolve blockers
 
-**Status: complete.** All blocker decisions are resolved. The adopted parser is AGPL-3.0-only and ADR-032 aligns the project licence with it; npm publication remains a Phase 13 authorization gate.
+**Status: complete.** All blocker decisions are resolved. The adopted parser is AGPL-3.0-only and ADR-032 aligns the project licence with it. Publication was a Phase 13 authorization gate; the `0.2.0` publication was later authorized and completed under ADR-060 and ADR-061.
 
 Tasks:
 
@@ -262,7 +262,7 @@ Tasks:
 
 Publication was removed from this phase and moved to Phase 13 so the remaining release gates can be implemented and verified as explicit phases.
 
-The pinned `tree-sitter-strudel@2.0.2` declares `AGPL-3.0-only` and bundles a matching AGPL licence, so the earlier MIT-corrected release requirement is superseded. No `npm publish` has been performed or authorized.
+The pinned `tree-sitter-strudel@2.0.2` declares `AGPL-3.0-only` and bundles a matching AGPL licence, so the earlier MIT-corrected release requirement is superseded. At the Phase 9 baseline, no `npm publish` had been performed or authorized; later publications are recorded in ADR-050 and ADR-061.
 
 ## Release baseline and open gaps
 
@@ -270,7 +270,7 @@ The following findings define the starting state for Phases 10–13. Each open g
 
 - The package name `strudel-lsp-server` returned 404 from the npm registry on 2026-11-27; availability must be rechecked at release time.
 - Runtime support is now declared as Node 24/26 with npm 11 in ADR-035; CI still tests only those Node majors on Ubuntu, so cross-platform validation remains for Phase 11.
-- The manifest version is now `0.1.0` under ADR-033, but the repository has no Git tags.
+- At that baseline, the manifest version was `0.1.0` under ADR-033 and the repository had no Git tags.
 - Diagnostic enablement/severity and Strudel version selection were documented ambiguously; they are now explicitly deferred for `0.1.0` in ADR-034 and the feature documentation.
 - Real-Strudel-corpus validation is complete against 484 pinned documentation examples with derived evidence in `validation/real-corpus.json`; committed benchmark fixtures remain synthetic and measure layer boundaries rather than an editor process.
 - CI verifies correctness and package contents but has no controlled publish workflow or provenance/trusted-publishing configuration.
@@ -366,7 +366,7 @@ Exit criteria:
 
 Dependencies: Phase 13 and explicit approval of the v0.2.0 scope recorded in ADR-051. This phase prepares changes; it does not publish a release.
 
-**Status: all Phase 14 tasks are implemented and verified, including the final documentation reconciliation and full validation gate. Nothing in this phase is authorized for release.**
+**Status: all Phase 14 tasks are implemented and verified, including the final documentation reconciliation and full validation gate. Phase 14 itself did not publish a release; the resulting `0.2.0` release was separately authorized and completed in Phase 15.**
 
 Tasks:
 
@@ -412,7 +412,7 @@ Post-release hardening: ADR-062 makes `npm run verify:release` publication-state
 
 ## Proposed feature-expanded route to `v1.0.0`
 
-**Status: Phase 16 is complete; Phases 17–27 are proposed only and are not authorized for implementation or release.** This route includes every optional capability identified after `0.2.0` and splits the work into four independently verifiable increments. Each controlled release requires its own ADR naming the exact version, tag and operator; no release below is approved by the roadmap alone.
+**Status: Phases 16 and 17 are complete; Phases 18–27 are proposed only and are not authorized for implementation or release.** This route includes every optional capability identified after `0.2.0` and splits the work into four independently verifiable increments. Each controlled release requires its own ADR naming the exact version, tag and operator; no release below is approved by the roadmap alone.
 
 | Increment | Phases | Theme                                                  |
 | --------- | ------ | ------------------------------------------------------ |
@@ -448,23 +448,25 @@ Exit criteria:
 - [x] Documentation distinguishes stable contract, known limitation, post-v1 candidate and standing non-goal.
 - [x] A contract-test plan exists for capabilities, configuration, diagnostic codes and deliberately unsupported capabilities.
 
-### Phase 17 — Documentation, packaging and support readiness (proposed, `v0.3.0`)
+### Phase 17 — Documentation, packaging and support readiness (complete, `v0.3.0`)
 
 Dependencies: Phase 16.
 
+**Status: complete. ADR-064 records the retained npm allowlist, support guidance and SBOM decision. It does not authorize a version bump, tag or publication.**
+
 Tasks:
 
-- [ ] Reconcile stale `0.1.0`, “unreleased”, “no publish authorized”, historical tag and point-in-time test-count wording in authoritative docs; preserve historical ADRs as explicitly historical rather than rewriting their meaning.
-- [ ] Decide the npm `files` allowlist: compiled code and licence only, or also changelog, TypeScript sources and source maps. Update package verification to match the decision.
-- [ ] Add support guidance or issue templates describing which diagnostics, server logs and reproduction details users should supply without disclosing secrets.
-- [ ] Decide explicitly whether to generate an SBOM or additional release attestation; do not add a dependency without separate approval.
-- [ ] Add machine-checkable documentation-contract tests where the expected wording is stable.
+- [x] Reconcile stale `0.1.0`, “unreleased”, “no publish authorized”, historical tag and point-in-time test-count wording in authoritative docs; preserve historical ADRs as explicitly historical rather than rewriting their meaning. The decision index labels pre-publication ADR statements as point-in-time records, and current-status documents now name `0.2.0` as published.
+- [x] Decide the npm `files` allowlist: compiled code and licence only, or also changelog, TypeScript sources and source maps. Update package verification to match the decision. ADR-064 retains `['dist/src', 'LICENSE']`; the existing package, release and manifest verifiers are covered by new documentation-contract tests.
+- [x] Add support guidance or issue templates describing which diagnostics, server logs and reproduction details users should supply without disclosing secrets. `README.md` now has a stable `Reporting problems` section.
+- [x] Decide explicitly whether to generate an SBOM or additional release attestation; do not add a dependency without separate approval. ADR-064 defers SBOM generation to the Phase 26 review and adds no dependency.
+- [x] Add machine-checkable documentation-contract tests where the expected wording is stable. `test/releaseWorkflow.test.ts` covers ADR-064, the manifest and verifiers, README support guidance, Phase 17 completion and the immutable release body.
 
 Exit criteria:
 
-- [ ] No authoritative document contradicts the current release state or describes planned Phase 16–27 behaviour as already implemented.
-- [ ] The package allowlist, support policy and SBOM decision are recorded and reflected in validation.
-- [ ] The published `v0.2.0` release body in `.github/RELEASE_TEMPLATE.md` is not rewritten to describe later work.
+- [x] No authoritative document contradicts the current release state or describes planned Phase 16–27 behaviour as already implemented.
+- [x] The package allowlist, support policy and SBOM decision are recorded and reflected in validation.
+- [x] The published `v0.2.0` release body in `.github/RELEASE_TEMPLATE.md` is not rewritten to describe later work.
 
 ### Phase 18 — Parser, metadata and platform compatibility closure (proposed, `v0.3.0`)
 
@@ -650,17 +652,17 @@ Exit criteria:
 
 ## Phase 13 release-quality backlog (post-publication status)
 
-These were the recommended, non-blocking items carried out of first publication. Items assigned to v0.2.0 are complete and recorded in Phase 14. In the proposed feature-expanded route, the remaining items are mapped to Phases 17, 18 or 26 below; they remain unscheduled until the relevant phase is authorized.
+These were the recommended, non-blocking items carried out of first publication. Items assigned to v0.2.0 are complete and recorded in Phase 14. Phase 17 items are complete under ADR-064; remaining items are mapped to Phases 18 or 26 below and stay unscheduled until the relevant phase is authorized.
 
 - [x] **Assigned to Phase 14 and completed.** VS Code and Neovim smoke clients exercise initialization, diagnostics, completion, document symbols, incremental change and shutdown through stdio; client configuration stays in `smoke/` and evidence is in `validation/client-smoke.json`; see ADR-058.
 - [x] Add deterministic stdio error-path tests for malformed input and cancellation; `test/protocolRobustness.test.ts` now covers both at the JSON-RPC transport layer in addition to the semantic-engine suite.
 - [x] **Assigned to Phase 14 and completed.** A bounded soak test exercises rapid edits and repeated initialize/shutdown cycles, reports advisory RSS observations, and adds no production telemetry; see ADR-056 and `npm run test:soak`.
 - [x] **Assigned to Phase 14 and completed.** Workspace-symbol discovery now rejects symlinks, unsafe entry names and paths outside the normalized root, ignores unreadable or oversized files, enforces depth and file-count limits, and uses deterministic ordering; see ADR-053 and `test/lsp/workspaceFiles.test.ts`.
 - [x] **Assigned to Phase 14 and completed.** `npm run benchmark:e2e` measures a rapid edit and document-symbol request through stdio JSON-RPC and the installed bin; `benchmarks/end-to-end.json` reports advisory p50/p95/p99 separately from the layer-level baseline; see ADR-057.
-- [ ] **Proposed Phase 17.** Decide whether to include `CHANGELOG.md`, TypeScript sources or source maps in the npm `files` allowlist. The current allowlist is intentionally minimal; any change must be reflected in package verification.
+- [x] **Assigned to Phase 17 and completed.** The npm `files` allowlist remains intentionally minimal: compiled `dist/src` outputs and `LICENSE`, with mandatory `package.json` and `README.md`. Generated declarations and source maps are existing compiled outputs; see ADR-064.
 - [ ] **Proposed Phase 18.** Record a dependency-update policy for Strudel, the parser and Node: what triggers compatibility retesting and when the pinned metadata snapshot may be regenerated.
-- [ ] **Proposed Phase 17, revisited in Phase 26.** Decide explicitly whether to generate an SBOM or additional release attestation; do not introduce a dependency without separate approval.
-- [ ] **Proposed Phase 17.** Add issue templates or a support section that tells users which diagnostics and server logs to include, while preserving privacy and avoiding secret disclosure.
+- [x] **Assigned to Phase 17 and completed, revisited in Phase 26.** No SBOM or additional attestation tool is added; npm signatures and OIDC SLSA provenance remain the release evidence, and any future tool requires separate dependency approval; see ADR-064.
+- [x] **Assigned to Phase 17 and completed.** `README.md` documents the diagnostic, log and reproduction details to include, with explicit credential and privacy redaction; see ADR-064.
 - [x] **Assigned to Phase 14 and completed.** Clean consumer installs pass with isolated npm configuration and `legacy-peer-deps=false`; the repository `.npmrc` was removed; see ADR-054 and `npm run verify:consumer`.
 
 ## Deferred beyond v0.2.0 (mapped into the proposed v1 route)

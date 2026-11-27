@@ -9,15 +9,20 @@ const workflow = readFileSync(join(repositoryRoot, '.github', 'workflows', 'rele
 const verifier = readFileSync(join(repositoryRoot, 'scripts', 'verify-release.mjs'), 'utf8');
 const makefile = readFileSync(join(repositoryRoot, 'Makefile'), 'utf8');
 const changelog = readFileSync(join(repositoryRoot, 'CHANGELOG.md'), 'utf8');
+const readme = readFileSync(join(repositoryRoot, 'README.md'), 'utf8');
+const roadmap = readFileSync(join(repositoryRoot, 'docs', 'ROADMAP.md'), 'utf8');
 const decisions = readFileSync(join(repositoryRoot, 'docs', 'DECISIONS.md'), 'utf8');
 const testingStrategy = readFileSync(join(repositoryRoot, 'docs', 'TESTING_STRATEGY.md'), 'utf8');
 const releaseTemplate = readFileSync(
   join(repositoryRoot, '.github', 'RELEASE_TEMPLATE.md'),
   'utf8',
 );
+const packageVerifier = readFileSync(join(repositoryRoot, 'scripts', 'verify-package.mjs'), 'utf8');
 const packageJson = JSON.parse(readFileSync(join(repositoryRoot, 'package.json'), 'utf8')) as {
   name: string;
   version: string;
+  files: string[];
+  bin: Record<string, string>;
   scripts: Record<string, string>;
 };
 
@@ -161,4 +166,72 @@ void test('first-publish bootstrap exception is version-limited and blocks workf
   assert.match(section, /provenance attestation for `0\.1\.0` is not assumed/);
   assert.match(workflow, /github\.ref_name != 'v0\.1\.0'/);
   assert.equal(workflow.match(/npm publish --access public/g)?.length, 1);
+});
+
+void test('Phase 17 records the package, support and SBOM readiness decisions', () => {
+  assert.deepEqual(packageJson.files, ['dist/src', 'LICENSE']);
+  assert.equal(packageJson.bin['strudel-lsp-server'], './dist/src/server.js');
+  assert.doesNotMatch(JSON.stringify(packageJson.scripts), /sbom|cyclonedx|spdx/i);
+
+  const marker = '## ADR-064 — Release readiness: package contents, support guidance and SBOM';
+  const start = decisions.indexOf(marker);
+  assert.notEqual(start, -1);
+  const section = decisions.slice(start);
+  assert.match(section, /retain `package\.json` `files` as exactly `\['dist\/src', 'LICENSE'\]`/);
+  assert.match(
+    section,
+    /do not generate an SBOM or add a new release attestation tool in Phase 17/,
+  );
+  assert.match(section, /Phase 26 reviews this decision/);
+
+  assert.match(
+    packageVerifier,
+    /const allowedPrefixes = \['LICENSE', 'README\.md', 'package\.json', 'dist\/src\/'\]/,
+  );
+  assert.match(
+    verifier,
+    /JSON\.stringify\(packageJson\.files\) !== JSON\.stringify\(\['dist\/src', 'LICENSE'\]\)/,
+  );
+});
+
+void test('README support guidance collects safe reproduction evidence', () => {
+  const marker = '## Reporting problems';
+  const start = readme.indexOf(marker);
+  assert.notEqual(start, -1);
+  const section = readme.slice(start, readme.indexOf('## Repository and support'));
+
+  for (const required of [
+    'npm ls strudel-lsp-server',
+    'node --version',
+    'npm --version',
+    'Operating system and architecture',
+    'editor or LSP client',
+    'minimal `.strudel` snippet',
+    'diagnostic code, message and source range',
+    'client LSP trace or server stderr',
+    'Do not paste raw server stdout',
+    'Redact tokens, passwords, OTP or recovery codes, private keys',
+  ]) {
+    assert.ok(section.includes(required), `support guidance omits: ${required}`);
+  }
+});
+
+void test('Phase 17 completion and the historical release body are contractually preserved', () => {
+  assert.match(
+    roadmap,
+    /^### Phase 17 — Documentation, packaging and support readiness \(complete, `v0\.3\.0`\)$/m,
+  );
+  const start = roadmap.indexOf('### Phase 17 — Documentation, packaging and support readiness');
+  assert.notEqual(start, -1);
+  const phase = roadmap.slice(start, roadmap.indexOf('### Phase 18 —', start));
+  assert.doesNotMatch(phase, /^- \[ \]/m);
+  assert.match(phase, /ADR-064/);
+
+  assert.match(releaseTemplate, /^Release notes for `strudel-lsp-server@0\.2\.0`/m);
+  assert.match(releaseTemplate, /138-file tarball/);
+  assert.match(releaseTemplate, /86\/86 tests/);
+  assert.doesNotMatch(
+    releaseTemplate,
+    /Phase 1[6-9]|Phase 2[0-7]|`v0\.3\.0`|`v0\.4\.0`|`v0\.5\.0`|`v1\.0\.0`/,
+  );
 });

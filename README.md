@@ -98,9 +98,9 @@ client/       Legacy VS Code prototype, excluded from the package build
 server/       Legacy TypeScript prototype, excluded from the package build
 ```
 
-## Legacy prototype reference (not part of `0.1.0`)
+## Legacy prototype reference (not part of the published npm package)
 
-The original prototype directories and editor files are retained but are not authoritative for the npm package. They remain excluded from the package build, lint and test scopes until an explicit retirement decision is made. The commands below are historical reference only; use the installation and launch instructions above for `strudel-lsp-server@0.1.0`.
+The original prototype directories and editor files are retained but are not authoritative for the npm package. They remain excluded from the package build, lint and test scopes until an explicit retirement decision is made. The commands below are historical reference only; use the installation and launch instructions above for the latest published release, `strudel-lsp-server@0.2.0`.
 
 ### Historical Neovim prototype test
 
@@ -152,6 +152,18 @@ The prototype TCP mode listens on port `5007`. The packaged server does not prov
   ```bash
   lsof -i :5007
   ```
+
+## Reporting problems
+
+Include the smallest reproduction that shows the problem and the following details:
+
+- Package version from `npm ls strudel-lsp-server`, plus Node and npm versions from `node --version` and `npm --version`.
+- Operating system and architecture, the editor or LSP client, and the exact command used to launch the server.
+- A minimal `.strudel` snippet, the steps taken, expected behaviour and observed behaviour.
+- Any diagnostic code, message and source range shown by the client.
+- The relevant client LSP trace or server stderr captured by the client. Do not paste raw server stdout: it is the LSP protocol stream and can contain complete document contents.
+
+Redact tokens, passwords, OTP or recovery codes, private keys, internal URLs, private workspace paths and any composition text you do not want to disclose. Do not attach credential files or npm configuration containing authentication values.
 
 ## Repository and support
 

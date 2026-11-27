@@ -41,7 +41,7 @@ Historical facts (2026-11-25): the repository named in `AGENTS.md` had an AGPL-3
 
 The user initially decided that **MIT was authoritative** for the 1.1.8-era plan and intended an owner-owned correction to the original `PedroZappa/tree-sitter-strdl` repository. No issue or pull request was opened, and no action was taken against the fork. That plan is retained for provenance in ADR-003 but is superseded.
 
-Current resolution (2026-11-27): the adopted `tree-sitter-strudel@2.0.2` package declares `AGPL-3.0-only` in `package.json` and bundles a matching AGPL-3.0 `LICENSE`. Strudel itself uses AGPL-3.0, while the Tree-sitter runtime is MIT. By explicit user decision in ADR-032, this project is now `AGPL-3.0-only`, so no MIT-corrected parser release is required. Publication still requires separate explicit release authorization.
+Current resolution (2026-11-27): the adopted `tree-sitter-strudel@2.0.2` package declares `AGPL-3.0-only` in `package.json` and bundles a matching AGPL-3.0 `LICENSE`. Strudel itself uses AGPL-3.0, while the Tree-sitter runtime is MIT. By explicit user decision in ADR-032, this project is now `AGPL-3.0-only`, so no MIT-corrected parser release is required. Publication of `0.2.0` was completed under ADR-060 and ADR-061; future releases still require separate explicit authorization.
 
 ## Adopted versions and provenance (updated 2026-11-26)
 

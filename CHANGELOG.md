@@ -9,6 +9,7 @@ Version `0.2.0` was published on 2026-11-27 through the controlled OIDC workflow
 ### Added
 
 - ADR-063 records the initial v1 stability contract: package, transport, runtime and platform support, capability baseline, diagnostics settings and codes, parser/metadata pins, known limitations, additive candidates, standing non-goals and SemVer rules. The roadmap's Phase 16 charter is complete; later phases may extend the contract before Phase 26 freezes it.
+- ADR-064 records the Phase 17 package-content, support-guidance and SBOM decisions: the npm allowlist stays minimal, README documents privacy-preserving problem reports, and SBOM generation is deferred to the Phase 26 review. Documentation-contract tests cover the recorded decisions.
 
 ### Fixed
 
@@ -22,7 +23,7 @@ Version `0.2.0` was published on 2026-11-27 through the controlled OIDC workflow
 - A bounded soak/lifecycle suite covering rapid edits, stale-version suppression, repeated initialize/shutdown cycles and advisory RSS observation, with no production telemetry.
 - A separate advisory installed-binary benchmark that packs and installs the server offline, measures one JSON-RPC document-symbol workload through the installed bin and records p50/p95/p99 in `benchmarks/end-to-end.json` without changing the layer-level baseline.
 - Local VS Code and Neovim LSP smoke clients with all client configuration outside the server core; passing behaviours are recorded in `validation/client-smoke.json` and no editor dependency was added to the published package.
-- The release gate passes 86 tests, including configuration, LSP filesystem, protocol, soak, two-client evidence and Phase 15 publication-evidence contract checks.
+- The `0.2.0` release gate passed 86 tests, including configuration, LSP filesystem, protocol, soak, two-client evidence and Phase 15 publication-evidence contract checks.
 
 ### Changed
 
