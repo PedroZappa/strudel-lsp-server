@@ -1,3 +1,4 @@
+import { miniNotationAstNodes } from '../miniNotation/index.js';
 import { findReferenceAt, findSymbolAt, resolveReference } from '../semantic/index.js';
 
 import { formatStrudelType, metadataRecordForSymbol, recordDocumentation } from './metadata.js';
@@ -36,21 +37,45 @@ function provideMiniNotationHover(
       continue;
     }
 
+    const node = miniNotationAstNodes(analysis.ast.root)
+      .filter(
+        (candidate) =>
+          candidate.kind !== 'sequence' &&
+          offset >= candidate.range.startOffset &&
+          offset < candidate.range.endOffset,
+      )
+      .sort(
+        (left, right) =>
+          left.range.endOffset -
+          left.range.startOffset -
+          (right.range.endOffset - right.range.startOffset),
+      )[0];
     const token = analysis.tokens.find(
       (candidate) =>
         candidate.kind !== 'whitespace' &&
         offset >= candidate.range.startOffset &&
         offset < candidate.range.endOffset,
     );
-    if (token === undefined) {
+    const nodeLength =
+      node === undefined ? Number.POSITIVE_INFINITY : node.range.endOffset - node.range.startOffset;
+    const tokenLength =
+      token === undefined
+        ? Number.POSITIVE_INFINITY
+        : token.range.endOffset - token.range.startOffset;
+    const target = nodeLength <= tokenLength ? node : token;
+    if (target === undefined) {
       continue;
     }
+    const label =
+      token !== undefined && tokenLength < nodeLength
+        ? token.kind
+        : (node?.operator ?? node?.kind ?? token?.kind);
 
     return {
-      range: token.range,
+      range: target.range,
       contents: [
-        `\`${token.text}\` — mini notation ${token.kind}`,
-        token.description,
+        `\`${target.text}\` — mini notation ${label}`,
+        target.description,
         `_Owner: ${argument.ownerName}_`,
       ].join('\n\n'),
     };

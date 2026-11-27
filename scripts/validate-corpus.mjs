@@ -9,6 +9,7 @@ import {
   createCatalogFromLanguageDatabase,
   createDefaultLanguageDatabase,
 } from '../dist/src/languageDatabase/index.js';
+import { miniNotationAstNodes } from '../dist/src/miniNotation/index.js';
 import { createSemanticEngine } from '../dist/src/semantic/index.js';
 import { createSyntaxAdapter } from '../dist/src/syntax/index.js';
 
@@ -220,6 +221,21 @@ function countSemanticFacts(document, text, starts, semanticFacts) {
         semanticFacts.invalidRanges += 1;
       }
     }
+    const astRoot = argument.analysis?.ast.root;
+    if (astRoot !== undefined) {
+      for (const node of miniNotationAstNodes(astRoot)) {
+        semanticFacts.miniNotationAstNodes += 1;
+        if (!rangeWithinDocument(node.range, starts, text.length)) {
+          semanticFacts.invalidRanges += 1;
+        }
+        if (
+          node.targetRange !== undefined &&
+          !rangeWithinDocument(node.targetRange, starts, text.length)
+        ) {
+          semanticFacts.invalidRanges += 1;
+        }
+      }
+    }
   }
 }
 
@@ -233,6 +249,7 @@ function newFacts() {
     references: 0,
     unresolvedReferences: 0,
     miniNotationArguments: 0,
+    miniNotationAstNodes: 0,
     miniNotationIssues: {},
   };
 }
@@ -286,6 +303,7 @@ async function main() {
     references: 0,
     unresolvedReferences: 0,
     miniNotationArguments: 0,
+    miniNotationAstNodes: 0,
     miniNotationIssues: {},
     incrementalCleanParses: 0,
   };
@@ -340,6 +358,7 @@ async function main() {
     totals.references += semanticFacts.references;
     totals.unresolvedReferences += semanticFacts.unresolvedReferences;
     totals.miniNotationArguments += semanticFacts.miniNotationArguments;
+    totals.miniNotationAstNodes += semanticFacts.miniNotationAstNodes;
     for (const [code, count] of Object.entries(semanticFacts.miniNotationIssues)) {
       totals.miniNotationIssues[code] = (totals.miniNotationIssues[code] ?? 0) + count;
     }
@@ -373,7 +392,8 @@ async function main() {
       updatedSemantic.version !== 2 ||
       updatedSemanticFacts.symbols !== semanticFacts.symbols ||
       updatedSemanticFacts.references !== semanticFacts.references ||
-      updatedSemanticFacts.miniNotationArguments !== semanticFacts.miniNotationArguments
+      updatedSemanticFacts.miniNotationArguments !== semanticFacts.miniNotationArguments ||
+      updatedSemanticFacts.miniNotationAstNodes !== semanticFacts.miniNotationAstNodes
     ) {
       checks.incrementalFactsPreserved = false;
     }

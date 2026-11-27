@@ -11,11 +11,13 @@ Version `0.3.0` was published on 2026-11-27 from tag `v0.3.0` at commit `b3451e2
 - Phase 20 semantic depth under ADR-068: unambiguous generated synonyms are resolved as aliases, sample names resolve only from explicit catalog metadata, and conservative receiver usage can infer `Pattern` parameters.
 - Additive `SemanticSignature` data with user-facing curated signatures, an overload-capable model, optional/rest parameters and user-defined function signatures; signature help now returns multiple signatures with an `activeSignature`.
 - Focused parser-independent semantic, metadata alias/signature and multi-signature provider tests, plus compatibility-contract and rename-range checks for the deliberate corpus baseline.
+- Phase 21 adds a Strudel-owned mini-notation recovery AST under ADR-069: nested groups, operator targets and explicit empty/incomplete/error states with absolute ranges that survive incremental reuse. Hover reports structured nodes and exact delimiters; completion offers pinned mini operators on their exact ranges.
 
 ### Changed
 
 - `validation/real-corpus.json` was regenerated deliberately with catalog hash `strudel-1.2.6:0243e023`, 726 symbols, 1,277 unresolved references and 364 mini-notation arguments; parser, invariant and parser-gap totals are unchanged. The remaining unresolved categories are documented in ADR-068.
 - Callable signatures compare structurally during return-type combination, so equivalent user signatures do not collapse inferred return types to `Unknown`.
+- `validation/real-corpus.json` was regenerated again to record 2,034 additive mini-notation AST nodes across the unchanged 364 arguments; all other corpus totals, invariant checks and parser gaps are unchanged. Diagnostics codes and LSP capabilities remain unchanged.
 
 ### Fixed
 

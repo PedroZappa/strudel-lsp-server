@@ -42,6 +42,7 @@
     "references": 2044,
     "unresolvedReferences": 1277,
     "miniNotationArguments": 364,
+    "miniNotationAstNodes": 2034,
     "miniNotationIssues": {},
     "incrementalCleanParses": 477
   },

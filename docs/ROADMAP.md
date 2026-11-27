@@ -525,22 +525,24 @@ Exit criteria:
 
 Evidence: ADR-068 records the decisions and deliberate corpus drift. The Phase 20 gate passed with 103/103 tests, focused semantic/metadata/feature suites of 11/6/33 tests, all 18 advisory benchmarks within thresholds, clean package and consumer verification, and zero invariant failures over 484 corpus examples. No version bump, tag or publication occurred; Phase 22 remains the first release gate for these changes.
 
-### Phase 21 — Mini-notation recovery and structured AST (proposed, `v0.4.0`)
+### Phase 21 — Mini-notation recovery and structured AST (complete, unreleased, `v0.4.0`)
 
 Dependencies: Phase 20.
 
 Tasks:
 
-- [ ] Introduce a Strudel-owned mini-notation AST layer over the pinned lexer, keeping the semantic engine independent of direct Tree-sitter node access.
-- [ ] Add recovery for invalid, partial and rapidly edited mini-notation, with precise ranges for actionable diagnostics and semantic tokens.
-- [ ] Extend hover, completion and signature help for mini-notation constructs only where authoritative language evidence exists.
-- [ ] Keep parser/lexer integration tests separate from semantic AST tests.
+- [x] Introduce a Strudel-owned mini-notation AST layer over the pinned lexer, keeping the semantic engine independent of direct Tree-sitter node access.
+- [x] Add recovery for invalid, partial and rapidly edited mini-notation, with precise ranges for actionable diagnostics and semantic tokens.
+- [x] Extend hover, completion and signature help for mini-notation constructs only where authoritative language evidence exists; signature help is deliberately unchanged because the mini grammar has no call signatures.
+- [x] Keep parser/lexer integration tests separate from semantic AST tests.
 
 Exit criteria:
 
-- [ ] Invalid mini-notation fixtures recover without cascading diagnostics or server errors.
-- [ ] Corpus validation reports no new invariant failures and records the improved mini-notation coverage.
-- [ ] The mini-notation contract is documented as an additive improvement, not a claim of full language compilation.
+- [x] Invalid mini-notation fixtures recover without cascading diagnostics or server errors.
+- [x] Corpus validation reports no new invariant failures and records the improved mini-notation coverage.
+- [x] The mini-notation contract is documented as an additive improvement, not a claim of full language compilation.
+
+Evidence: ADR-069 records the Strudel-owned recovery AST, absolute-range reuse, conservative feature extension and deliberate non-goals. The mini suite has nine parser-independent tests, including four AST tests; the feature suite has 35 tests with structured hover, exact operator completion, unchanged host signature help and repeated incremental-edit regressions. Corpus validation records 2,034 AST nodes across the unchanged 364 mini-notation arguments with zero invariant failures. No version bump, tag or publication occurred; Phase 22 remains the first release gate for Phases 20 and 21.
 
 ### Phase 22 — `v0.4.0` controlled release (proposed)
 

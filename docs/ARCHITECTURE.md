@@ -1,6 +1,6 @@
 # Architecture
 
-Status: transport, syntax adapter, semantic engine, language database, document store, feature providers, signature help, mini-notation token analysis, quick fixes, inline-constant refactoring, document-scoped rename, document and workspace symbols, semantic tokens, conservative formatting and the performance harness implemented on 2026-11-27; remaining extended capabilities are under evaluation.
+Status: transport, syntax adapter, semantic engine, language database, document store, feature providers, signature help, mini-notation token analysis and recovery AST, quick fixes, inline-constant refactoring, document-scoped rename, document and workspace symbols, semantic tokens, conservative formatting and the performance harness implemented on 2026-11-27; remaining extended capabilities are under evaluation.
 
 Authority: `AGENTS.md` sections 3–6.
 
@@ -52,7 +52,7 @@ Side inputs:
   - User configuration (published `0.2.0` diagnostics settings via standard LSP configuration; standard formatting options only)
 ```
 
-The current `src/server.ts` implements LSP lifecycle, incremental text sync, completion, code actions for quick fixes and inline refactoring, hover, signature help, definition, references, document and workspace symbols, semantic tokens, document formatting, prepare rename, rename and push diagnostics. `src/syntax/` implements the pinned Tree-sitter adapter and the parser-independent `SyntaxDocument` contract. `src/semantic/` implements parser-independent snapshots, scopes, symbols, references, limited type inference, incremental reuse and cancellation checks. `src/miniNotation/` implements a lexical token and conservative issue submodel over mini-notation string content. `src/languageDatabase/` implements a reproducible, offline-capable metadata snapshot with a `SemanticCatalog` adapter; Phase 20 adds unambiguous synonym aliases and curated additive signatures behind the same adapter boundary. `src/lsp/` owns the text document store, bounded workspace file discovery and per-version syntax/semantic snapshots. `src/features/` contains transport-independent diagnostics, quick-fix, inline-refactoring, completion, hover, signature help, navigation, document-symbol, workspace-symbol, semantic-token, formatting and rename providers. The `src/configuration/` layer parses and applies only the focused diagnostics settings; it has no LSP or parser dependency. Document updates are analysed outside the request handlers on the next event-loop turn; request handlers await the latest scheduled analysis, and superseded document versions are discarded before publication. Published `0.1.0` had no custom configuration channel; published `0.2.0` adds focused diagnostics settings while language metadata remains pinned. ADR-034 records the first-release boundary, ADR-052 records the published `0.2.0` diagnostics extension, ADR-063 defines its v1 stability boundary, and Strudel version selection remains deferred.
+The current `src/server.ts` implements LSP lifecycle, incremental text sync, completion, code actions for quick fixes and inline refactoring, hover, signature help, definition, references, document and workspace symbols, semantic tokens, document formatting, prepare rename, rename and push diagnostics. `src/syntax/` implements the pinned Tree-sitter adapter and the parser-independent `SyntaxDocument` contract. `src/semantic/` implements parser-independent snapshots, scopes, symbols, references, limited type inference, incremental reuse and cancellation checks. `src/miniNotation/` implements a lexical token and conservative issue submodel over mini-notation string content plus a Strudel-owned recovery AST built from those tokens. `src/languageDatabase/` implements a reproducible, offline-capable metadata snapshot with a `SemanticCatalog` adapter; Phase 20 adds unambiguous synonym aliases and curated additive signatures behind the same adapter boundary. `src/lsp/` owns the text document store, bounded workspace file discovery and per-version syntax/semantic snapshots. `src/features/` contains transport-independent diagnostics, quick-fix, inline-refactoring, completion, hover, signature help, navigation, document-symbol, workspace-symbol, semantic-token, formatting and rename providers. The `src/configuration/` layer parses and applies only the focused diagnostics settings; it has no LSP or parser dependency. Document updates are analysed outside the request handlers on the next event-loop turn; request handlers await the latest scheduled analysis, and superseded document versions are discarded before publication. Published `0.1.0` had no custom configuration channel; published `0.2.0` adds focused diagnostics settings while language metadata remains pinned. ADR-034 records the first-release boundary, ADR-052 records the published `0.2.0` diagnostics extension, ADR-063 defines its v1 stability boundary, and Strudel version selection remains deferred.
 
 ## Responsibilities
 
@@ -90,7 +90,7 @@ The current `src/server.ts` implements LSP lifecycle, incremental text sync, com
 
 - Build a parser-independent representation of scopes, symbols, bindings and references.
 - Resolve Strudel calls, chainable pattern methods, user definitions and mini-notation string contexts.
-- Attach validated token-level mini-notation facts without importing Tree-sitter or the pinned mini parser into this repository.
+- Attach validated token-level and structured mini-notation facts without importing Tree-sitter or the pinned mini parser into this repository.
 - Apply a limited, Strudel-specific type model.
 - Support incremental invalidation and cancellation-aware analysis.
 - Never require Tree-sitter node types at this layer.
@@ -123,7 +123,7 @@ The current `src/server.ts` implements LSP lifecycle, incremental text sync, com
 
 1. LSP transport applies the incremental edit to the document store.
 2. Syntax adapter incrementally updates the syntax representation.
-3. Semantic engine invalidates affected scopes/symbols and recomputes the minimum necessary model.
+3. Semantic engine invalidates affected scopes/symbols, recomputes the minimum necessary model and shifts reusable mini-notation token and AST ranges.
 4. Diagnostics are published from the resulting semantic model, with suppression rules for incomplete context.
 
 ### Feature request
@@ -167,6 +167,7 @@ Implemented document and feature contracts (exported from `src/lsp/index.ts` and
 Implemented mini-notation contracts (exported from `src/miniNotation/index.ts`):
 
 - `MiniNotationToken`, `MiniNotationTokenKind`, `MiniNotationIssue` and `MiniNotationAnalysis` — parser-independent lexical facts, including expected closers for safe fixes, attached to semantic mini-notation arguments.
+- `MiniNotationAst`, `MiniNotationAstNode`, `MiniNotationAstNodeKind`, `buildMiniNotationAst` and `miniNotationAstNodes` — a recovery-oriented structure over the pinned lexer with absolute ranges, nested groups, operator targets and explicit incomplete/error states. It is additive and is not a full mini-notation compiler.
 - `analyzeMiniNotation` and `TOKEN_DESCRIPTIONS` — document-offset scanner and descriptions derived from pinned Strudel sources.
 
 Proposed contracts for later phases:

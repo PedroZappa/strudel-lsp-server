@@ -31,6 +31,7 @@ interface CorpusReport {
     references: number;
     unresolvedReferences: number;
     miniNotationArguments: number;
+    miniNotationAstNodes: number;
   };
   parserGaps: { name: string }[];
 }
@@ -152,6 +153,35 @@ void test('Phase 20 records conservative semantic depth and additive signatures'
   );
   assert.doesNotMatch(phase, /^- \[ \]/m);
   assert.match(phase, /ADR-068/);
+});
+
+void test('Phase 21 records additive mini-notation AST coverage', () => {
+  const adr = adrSection(69);
+  assert.match(adr, /^## ADR-069 — Additive mini-notation recovery AST$/m);
+  assert.match(adr, /Strudel-owned AST/);
+  assert.match(adr, /Absolute ranges and reuse/);
+  assert.match(adr, /Recovery without new diagnostics/);
+  assert.match(adr, /Signature help is deliberately unchanged/);
+  assert.match(adr, /not a claim of full 1\.2\.6 mini-notation compilation/);
+  assert.match(adr, /No package version bump, tag, publication/);
+
+  assert.match(languageSpecification, /additive recovery AST/);
+  assert.match(semanticEngine, /recovery-oriented AST/);
+  assert.match(lspFeatures, /Mini-notation policy/);
+  assert.match(lspFeatures, /recovery-oriented syntax tree/);
+  assert.equal(corpusReport.totals.miniNotationArguments, 364);
+  assert.equal(corpusReport.totals.miniNotationAstNodes, 2034);
+
+  const start = roadmap.indexOf('### Phase 21 — Mini-notation recovery and structured AST');
+  assert.notEqual(start, -1);
+  const phase = roadmap.slice(start, roadmap.indexOf('### Phase 22 —', start));
+  assert.match(
+    phase,
+    /^### Phase 21 — Mini-notation recovery and structured AST \(complete, unreleased, `v0\.4\.0`\)$/m,
+  );
+  assert.doesNotMatch(phase, /^- \[ \]/m);
+  assert.match(phase, /ADR-069/);
+  assert.match(phase, /2,034 AST nodes/);
 });
 
 void test('Phase 18 support matrix matches compatibility CI', () => {

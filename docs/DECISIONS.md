@@ -1330,3 +1330,29 @@ Consequences:
 - Bare identifier arrow parameters remain outside the modeled formal-parameter shapes and are documented as a limitation rather than inferred speculatively.
 - `validation/real-corpus.json`, compatibility documentation and contract tests record the new baseline; the historical Phase 18 baseline remains point-in-time evidence in ADR-065 and the immutable `0.3.0` release notes.
 - No diagnostic code, LSP capability, dependency, package version, tag or registry state changes.
+
+## ADR-069 — Additive mini-notation recovery AST
+
+Status: accepted on 2026-11-27 for Phase 21. This decision adds a Strudel-owned structural view over the existing mini-notation lexer. No package version bump, tag, publication, dependency change or registry mutation is authorized; Phase 22 still requires an exact publication ADR.
+
+Problem: the published lexical submodel reports only token boundaries and four structural faults. It cannot answer group-nesting, operator-target or recovery-state questions, but replacing it with a full Strudel compiler would violate the project boundary and turn incomplete live-coding input into cascading errors. Phase 21 must improve structure and recovery while preserving conservative diagnostics, incremental reuse and offline operation.
+
+Decision:
+
+- **Strudel-owned AST:** `src/miniNotation/ast.ts` builds a `MiniNotationAst` from the pinned lexical tokens. It is fed by `analyzeMiniNotation`, exposed additively as `MiniNotationAnalysis.ast`, and imports neither Tree-sitter nor `@strudel/mini` runtime/parser code. Node kinds are `sequence`, `subsequence`, `alternation`, `polymeter`, `euclid`, `step`, `rest`, `number`, `operator`, `unknown` and `error`; groups own their nested children, operator nodes retain the pinned lexical category and the range of the preceding node in the same group, and `empty`/`incomplete` flags describe recovery state.
+- **Absolute ranges and reuse:** every node and operator target range is an absolute document range. `cloneStatementAnalysis` shifts AST ranges with tokens and issues during unchanged-statement reuse, so prepending, inserting and removing text before a mini argument preserves structure without reanalysis. Semantic AST tests read only the Strudel-owned contracts and never use Tree-sitter APIs.
+- **Recovery without new diagnostics:** mismatched or unmatched closers become `error` nodes carrying the existing `mismatched-close` or `unmatched-close` code and the already-computed expected closer. Unclosed groups and trailing separators or operand-taking operators are marked `incomplete`; unsupported characters remain `unknown`. No new diagnostic code is introduced, and incomplete or unsupported mid-edit states still produce no diagnostic.
+- **Conservative feature extension:** hover selects the smallest AST node or lexical token at the cursor, so operators get authoritative descriptions and delimiters report the exact delimiter text. Completion offers only pinned mini-notation operators when the cursor is on an operator token and replaces that exact range; it does not extend JavaScript identifier completion into strings. Signature help is deliberately unchanged: the pinned mini grammar has no call-signature construct, and the existing host-call signature continues to work inside a mini argument. No sample, pitch, velocity or random-outcome semantics are inferred.
+- **Deliberate corpus evidence:** `scripts/validate-corpus.mjs` counts and range-checks AST nodes and operator target ranges. The regenerated report records 2,034 AST nodes across the same 364 mini-notation arguments, with unchanged catalog hash, parse counts, parser gaps and zero invariant failures. Incremental validation requires the AST-node count to be preserved after an appended-newline edit.
+
+Evidence: `@strudel/mini@1.2.6` `krill.pegjs` defines the grouped, operator and Euclidean constructs modelled here, while `@strudel/core@1.2.6` JSDoc supplies the fast/slow, control-parameter and Euclidean descriptions. The AST suite covers nested structure, mismatched-closer recovery without cascading issues, unclosed/empty groups and operator coverage without pitch or sample claims. Feature regressions cover structured hover, exact mini-operator completion, unchanged host signature help and repeated incremental edits. `npm run validate:corpus` passed only after the report was deliberately regenerated and its single added count reviewed.
+
+Rationale: a token-fed structural layer gives editor features and future semantics a stable seam without duplicating the grammar, bundling the mini parser or forcing valid syntax during live coding. Keeping diagnostics and capabilities unchanged makes the improvement additive and compatible with the published v1 charter.
+
+Consequences:
+
+- The mini-notation contract is a recovery-oriented syntax tree, not a claim of full 1.2.6 mini-notation compilation or pattern evaluation.
+- Note pitch, sample identity, velocity, shuffle, random outcomes and the experimental haskellish statement layer remain outside this model and are recorded as limitations.
+- Template literals and nested substitutions remain outside the lexical attachment seam; only plain double-quoted mini arguments receive an AST.
+- Diagnostics configuration, quick fixes, semantic tokens and the LSP capability matrix are unchanged.
+- `validation/real-corpus.json`, compatibility documentation and contract tests record the new coverage. The compiled AST module adds three files under the existing `dist/src/miniNotation/` allowlist, raising the verified tarball from 138 to 141 files; no dependency, runtime data file or publication state changes.

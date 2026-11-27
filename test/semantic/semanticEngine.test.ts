@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
+import { miniNotationAstNodes } from '../../src/miniNotation/index.js';
 import {
   createSemanticEngine,
   createStaticSemanticCatalog,
@@ -167,6 +168,15 @@ void test('builds parser-independent symbols, scopes, references and pattern typ
   assert.equal(miniNotation.ownerName, 's');
   assert.equal(miniNotation.inferredType, MINI_NOTATION_PATTERN_TYPE);
   assert.equal(miniNotation.range.startOffset, text.indexOf('"bd sd"'));
+  const ast = miniNotation.analysis?.ast;
+  assert.ok(ast !== undefined);
+  assert.equal(ast.root.kind, 'sequence');
+  assert.deepEqual(
+    miniNotationAstNodes(ast.root)
+      .filter((node) => node.kind === 'step')
+      .map((node) => node.text),
+    ['bd', 'sd'],
+  );
 
   assert.equal(findSymbolAt(result, text.indexOf('const pat') + 6)?.name, 'pat');
   assert.equal(findReferenceAt(result, text.indexOf('pat.gain') + 1)?.name, 'pat');

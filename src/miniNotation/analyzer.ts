@@ -1,5 +1,6 @@
 import { offsetsToRange } from '../syntax/textCoordinates.js';
 
+import { buildMiniNotationAst } from './ast.js';
 import { TOKEN_DESCRIPTIONS } from './documentation.js';
 import type {
   MiniNotationAnalysis,
@@ -205,5 +206,9 @@ export function analyzeMiniNotation(
     addToken('step', start, startOffset + index);
   }
 
-  return { tokens, issues };
+  return {
+    tokens,
+    issues,
+    ast: buildMiniNotationAst(documentText, startOffset, endOffset, tokens, issues),
+  };
 }

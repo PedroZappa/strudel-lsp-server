@@ -353,7 +353,7 @@ void test('mini-notation diagnostics report structural faults but not incomplete
   assert.deepEqual(provideDiagnostics(incomplete.context), []);
 });
 
-void test('hover documents mini-notation operators', () => {
+void test('hover documents mini-notation operators and grouped structure', () => {
   const text = 's("bd [hh]*2")';
   const offset = text.indexOf('*');
   const harness = createFeatureHarness(text, offset);
@@ -361,19 +361,76 @@ void test('hover documents mini-notation operators', () => {
   assert.ok(hover !== undefined);
   assert.match(hover.contents, /mini notation repeat/);
   assert.match(hover.contents, /\.fast\(3\)/);
+  assert.deepEqual([hover.range.startOffset, hover.range.endOffset], [offset, offset + 1]);
+
+  const delimiterOffset = text.indexOf('[');
+  const delimiter = createFeatureHarness(text, delimiterOffset);
+  const delimiterHover = provideHover(delimiter.context, delimiterOffset);
+  assert.ok(delimiterHover !== undefined);
+  assert.match(delimiterHover.contents, /^`\[` — mini notation subsequence/m);
+  assert.match(delimiterHover.contents, /Sub-sequence/);
 });
 
-void test('incremental edits keep mini-notation analysis ranges aligned', () => {
+void test('completion suggests pinned mini operators without entering JavaScript completion', () => {
+  const text = 's("bd*")';
+  const offset = text.indexOf('*');
+  const harness = createFeatureHarness(text, offset);
+  const candidates = provideCompletion(harness.context, offset);
+  assert.deepEqual(
+    candidates.map((candidate) => candidate.label),
+    ['*'],
+  );
+  assert.equal(candidates[0]?.detail, 'mini notation operator');
+  assert.match(candidates[0]?.documentation ?? '', /Speed up/);
+  assert.deepEqual(
+    [candidates[0]?.replacementRange.startOffset, candidates[0]?.replacementRange.endOffset],
+    [offset, offset + 1],
+  );
+
+  const onStep = createFeatureHarness(text, text.indexOf('bd'));
+  assert.deepEqual(provideCompletion(onStep.context, text.indexOf('bd')), []);
+});
+
+void test('signature help stays scoped to the host call inside mini notation', () => {
+  const text = 's("bd:0:0.3")';
+  const offset = text.lastIndexOf('bd');
+  const harness = createFeatureHarness(text, offset);
+  const result = provideSignatureHelp(harness.context, offset);
+  assert.ok(result !== undefined);
+  assert.equal(result.signatures[0]?.label, 's(sound: string | Pattern)');
+  assert.equal(result.activeParameter, 0);
+  assert.equal(provideSignatureHelp(harness.context, text.indexOf('0.3'))?.signatures.length, 1);
+});
+
+void test('incremental edits keep mini-notation AST ranges aligned through rapid edits', () => {
   const database = createDefaultLanguageDatabase();
   const engine = createSemanticEngine(createCatalogFromLanguageDatabase(database));
   const documents = new DocumentAnalysisService(createSyntaxAdapter(), engine);
   const uri = 'file:///test/incremental.strudel';
 
+  const assertAligned = (): void => {
+    const analyzed = documents.get(uri);
+    assert.ok(analyzed !== undefined);
+    const analysis = analyzed.semantic.miniNotationArguments[0]?.analysis;
+    const issue = analysis?.issues[0];
+    const root = analysis?.ast.root;
+    const group = root?.children[0];
+    assert.ok(analysis !== undefined && issue !== undefined && root !== undefined);
+    assert.equal(issue.code, 'empty-group');
+    assert.equal(root.kind, 'sequence');
+    assert.equal(root.range.startOffset, issue.range.startOffset);
+    assert.equal(root.range.endOffset, issue.range.endOffset);
+    assert.equal(group?.kind, 'subsequence');
+    assert.equal(group?.empty, true);
+    assert.equal(group?.range.startOffset, issue.range.startOffset);
+    assert.equal(group?.range.endOffset, issue.range.endOffset);
+    assert.equal(issue.range.startOffset, analyzed.document.getText().indexOf('[]'));
+  };
+
   documents.open({
     textDocument: { uri, languageId: 'strudel', version: 1, text: 's("[]")' },
   });
-  const firstIssue = documents.get(uri)?.semantic.miniNotationArguments[0]?.analysis?.issues[0];
-  assert.equal(firstIssue?.code, 'empty-group');
+  assertAligned();
 
   documents.change({
     textDocument: { uri, version: 2 },
@@ -384,11 +441,32 @@ void test('incremental edits keep mini-notation analysis ranges aligned', () => 
       },
     ],
   });
+  assertAligned();
+  const shifted = documents.get(uri);
+  assert.equal(
+    shifted?.semantic.miniNotationArguments[0]?.analysis?.issues[0]?.range.start.line,
+    1,
+  );
 
-  const analyzed = documents.get(uri);
-  assert.ok(analyzed !== undefined);
-  const issue = analyzed.semantic.miniNotationArguments[0]?.analysis?.issues[0];
-  assert.ok(issue !== undefined);
-  assert.equal(issue.range.start.line, 1);
-  assert.equal(issue.range.startOffset, analyzed.document.getText().indexOf('[]'));
+  documents.change({
+    textDocument: { uri, version: 3 },
+    contentChanges: [
+      {
+        range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } },
+        text: '// rapid\n',
+      },
+    ],
+  });
+  assertAligned();
+
+  documents.change({
+    textDocument: { uri, version: 4 },
+    contentChanges: [
+      {
+        range: { start: { line: 0, character: 0 }, end: { line: 1, character: 0 } },
+        text: '',
+      },
+    ],
+  });
+  assertAligned();
 });

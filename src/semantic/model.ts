@@ -1,3 +1,4 @@
+import type { MiniNotationAstNode } from '../miniNotation/index.js';
 import { offsetsToRange } from '../syntax/textCoordinates.js';
 import type { SyntaxNode, SyntaxRange } from '../syntax/index.js';
 import type {
@@ -103,6 +104,19 @@ export function cloneStatementAnalysis(
   const offsetDelta = sourceRange.startOffset - analysis.sourceRange.startOffset;
   const mapRange = (range: SemanticRange): SemanticRange =>
     shiftRange(range, sourceText, offsetDelta);
+  const mapAstNode = (node: MiniNotationAstNode): MiniNotationAstNode => ({
+    kind: node.kind,
+    text: node.text,
+    range: mapRange(node.range),
+    description: node.description,
+    children: node.children.map(mapAstNode),
+    operator: node.operator,
+    targetRange: node.targetRange === undefined ? undefined : mapRange(node.targetRange),
+    issueCode: node.issueCode,
+    expectedClose: node.expectedClose,
+    incomplete: node.incomplete,
+    empty: node.empty,
+  });
 
   return {
     key: analysis.key,
@@ -137,6 +151,7 @@ export function cloneStatementAnalysis(
                 ...issue,
                 range: mapRange(issue.range),
               })),
+              ast: { root: mapAstNode(argument.analysis.ast.root) },
             },
     })),
   };

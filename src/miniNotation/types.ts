@@ -1,5 +1,7 @@
 import type { SemanticRange } from '../semantic/index.js';
 
+import type { MiniNotationAst } from './ast.js';
+
 export type MiniNotationTokenKind =
   | 'step'
   | 'rest'
@@ -43,4 +45,5 @@ export interface MiniNotationIssue {
 export interface MiniNotationAnalysis {
   readonly tokens: readonly MiniNotationToken[];
   readonly issues: readonly MiniNotationIssue[];
+  readonly ast: MiniNotationAst;
 }

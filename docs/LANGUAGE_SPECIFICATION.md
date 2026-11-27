@@ -1,6 +1,6 @@
 # Strudel Language Specification
 
-Status: host-language constructs are preliminary; mini-notation token rules below were verified against the pinned Strudel source on 2026-11-27.
+Status: host-language constructs are preliminary; mini-notation token and additive AST rules below were verified against the pinned Strudel source on 2026-11-27.
 
 Supported Strudel snapshot: `1.2.6`, through `@strudel/core@1.2.6`, `@strudel/mini@1.2.6` and `@strudel/transpiler@1.2.6`. `@strudel/reference@1.2.2` supplies pinned JSDoc metadata and is not a second language target; ADR-065 records the dependency-update policy.
 
@@ -61,7 +61,7 @@ Example from the official documentation:
 note('<[g3,b3,e4] [a3,c3,e4] [b3,d3,f#4]>*2');
 ```
 
-The language server's token submodel is lexical rather than a full mini parser. It intentionally suppresses speculative issues for unclosed delimiters, trailing operators and unsupported characters during live coding.
+The language server's submodel is lexical plus a Strudel-owned recovery AST. The AST nests `[...]`, `<...>`, `{...}` and `(...)` groups, classifies steps, rests and numbers, and records operator nodes with the preceding node's range. It marks empty groups, unclosed groups, trailing operators and separators, and closer errors with precise absolute ranges, but it is not a full mini parser or pattern evaluator. Speculative issues for unclosed delimiters, trailing operators and unsupported characters remain suppressed during live coding; the four existing structural diagnostic codes are unchanged.
 
 ## Semantic information to model
 
@@ -82,6 +82,6 @@ The language server's token submodel is lexical rather than a full mini parser. 
 ## Open questions
 
 - How optional, rest and overloaded parameters should be represented if authoritative metadata gains them.
-- Whether a recovery parser should replace the current lexical mini-notation token model.
+- Whether the additive recovery AST should later become an evaluable mini-notation syntax tree with new, evidence-backed language facts.
 - Exact diagnostic rules for unknown sample names and malformed mini-notation beyond verified structural faults.
 - How much JavaScript expression evaluation is needed for useful constant folding without building a JS type checker.

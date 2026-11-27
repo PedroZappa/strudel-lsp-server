@@ -1,3 +1,5 @@
+import { miniNotationAstNodes, TOKEN_DESCRIPTIONS } from '../miniNotation/index.js';
+import type { MiniNotationTokenKind } from '../miniNotation/index.js';
 import { offsetsToRange } from '../syntax/textCoordinates.js';
 
 import {
@@ -12,6 +14,74 @@ interface Prefix {
   readonly text: string;
   readonly startOffset: number;
   readonly member: boolean;
+}
+
+const MINI_OPERATOR_COMPLETIONS: readonly {
+  readonly kind: MiniNotationTokenKind;
+  readonly label: string;
+}[] = [
+  { kind: 'rest', label: '~' },
+  { kind: 'repeat', label: '*' },
+  { kind: 'slow', label: '/' },
+  { kind: 'weight', label: '@' },
+  { kind: 'replicate', label: '!' },
+  { kind: 'degrade', label: '?' },
+  { kind: 'parallel', label: ',' },
+  { kind: 'choice', label: '|' },
+  { kind: 'slice', label: ':' },
+  { kind: 'range', label: '..' },
+  { kind: 'feet', label: '.' },
+  { kind: 'subsequence', label: '[' },
+  { kind: 'alternation', label: '<' },
+  { kind: 'polymeter', label: '{' },
+  { kind: 'polymeter', label: '%' },
+  { kind: 'euclid', label: '(' },
+  { kind: 'stepMarker', label: '^' },
+];
+
+function provideMiniNotationCompletion(
+  context: FeatureContext,
+  offset: number,
+): readonly CompletionCandidate[] {
+  for (const argument of context.semantic.miniNotationArguments) {
+    const analysis = argument.analysis;
+    if (
+      analysis === undefined ||
+      offset < argument.range.startOffset ||
+      offset > argument.range.endOffset
+    ) {
+      continue;
+    }
+
+    const operator = miniNotationAstNodes(analysis.ast.root)
+      .filter(
+        (node) =>
+          node.kind === 'operator' &&
+          offset >= node.range.startOffset &&
+          offset <= node.range.endOffset,
+      )
+      .sort(
+        (left, right) =>
+          left.range.endOffset -
+          left.range.startOffset -
+          (right.range.endOffset - right.range.startOffset),
+      )[0];
+    if (operator === undefined) {
+      return [];
+    }
+
+    return MINI_OPERATOR_COMPLETIONS.filter((candidate) =>
+      candidate.label.startsWith(operator.text),
+    ).map((candidate) => ({
+      label: candidate.label,
+      kind: 'value',
+      detail: 'mini notation operator',
+      documentation: TOKEN_DESCRIPTIONS[candidate.kind],
+      replacementRange: operator.range,
+    }));
+  }
+
+  return [];
 }
 
 function isIdentifierCharacter(character: string | undefined): boolean {
@@ -69,6 +139,11 @@ export function provideCompletion(
   context: FeatureContext,
   offset: number,
 ): readonly CompletionCandidate[] {
+  const miniNotation = provideMiniNotationCompletion(context, offset);
+  if (miniNotation.length > 0) {
+    return miniNotation;
+  }
+
   if (
     context.node?.kind === 'string' ||
     context.node?.kind === 'comment' ||
