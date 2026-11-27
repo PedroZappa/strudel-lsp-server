@@ -1,33 +1,69 @@
 # Strudel LSP Server
 
-A Language Server Protocol (LSP) implementation for [Strudel](https://strudel.cc/) - a browser-based live coding language for algorithmic music patterns.
+An editor-agnostic Language Server Protocol implementation for [Strudel](https://strudel.cc/), published as the npm package `strudel-lsp-server`. The server core speaks LSP over stdio and does not depend on any editor client.
 
 ## Features
 
-- **Completion**: 85+ Strudel functions and 70+ sample names
-- **Hover**: Function documentation
-- **Diagnostics**: Basic syntax validation (bracket matching)
-- **Supported Editors**: Neovim (0.10+), VS Code
+- Diagnostics that stay quiet on incomplete live-coding input.
+- Completion, hover documentation and signature help backed by pinned Strudel metadata.
+- Definition, references, document symbols and bounded workspace symbols.
+- Rename, quick fixes and a conservative inline-constant refactoring.
+- Semantic tokens and indentation-only formatting.
+- Mini-notation-aware diagnostics, hover and tokens.
 
-## Strudel Functions Included
+## Installation and launch
 
-Pattern functions: `sound`, `note`, `s`, `n`, `fast`, `slow`, `stack`, `cat`, `seq`, `jux`, `rev`, `room`, `delay`, `cutoff`, `gain`, `pan`, `speed`, `shape`, `vowel`, `crush`, `chop`, `sometimes`, `every`, `when`, `layer`, `linger`, `ply`, `repeat`, `arp`, `stride`, `begin`, `end`, and more.
+Configure an LSP client to launch `strudel-lsp-server` over stdio:
 
-Samples: `bd`, `sd`, `hh`, `cp`, `808`, `909`, `kick`, `snare`, `hihat`, and more.
-
-## Installation
-
-```bash
-# Install dependencies
-npm install
-
-# Compile TypeScript
-cd server && npx tsc
+```json
+{
+  "command": "strudel-lsp-server"
+}
 ```
 
-## Testing with Neovim
+For a local source checkout:
 
-### Quick Start
+```bash
+npm ci --ignore-scripts
+npm run build
+node dist/src/server.js
+```
+
+The core server does not provide a TCP mode. Editor-specific clients and configuration remain outside this package.
+
+## Capabilities
+
+The server advertises only capabilities that are implemented and verified: incremental text document sync, diagnostics, completion, hover, signature help, definition, references, document symbols, workspace symbols, rename, formatting, semantic tokens, code actions and document/workspace symbol requests. Workspace symbols use a bounded on-demand scan of `.strudel` files; no persistent workspace index or cross-file module graph is created.
+
+See `docs/LSP_FEATURES.md` in the repository for exact capability details and `docs/PERFORMANCE.md` for measured latency baselines.
+
+## Development
+
+```bash
+npm run check
+npm run benchmark:check
+npm run verify:package
+```
+
+The Makefile provides the same workflows through `make check`, `make benchmark-check`, `make verify-package` and `make verify-all`. `npm run verify:package` packs the built server, performs a clean offline installation from that tarball, and verifies the installed stdio executable with an initialize/shutdown handshake.
+
+## Repository layout
+
+```text
+src/          Server source and feature providers
+test/         Parser, semantic, metadata, feature and stdio suites
+docs/         Authoritative specifications and decisions
+scripts/      Metadata generation, benchmarks and package verification
+benchmarks/   Synthetic fixtures and committed performance baseline
+client/       Legacy VS Code prototype, excluded from the package build
+server/       Legacy TypeScript prototype, excluded from the package build
+```
+
+## Legacy prototype reference
+
+The original prototype directories and editor files are retained but are not authoritative for the npm package. They remain excluded from the package build, lint and test scopes until an explicit retirement decision is made.
+
+### Testing with Neovim
 
 1. **Start the LSP server** (Terminal 1):
    ```bash
@@ -46,23 +82,21 @@ cd server && npx tsc
 
 ### Configuration Options
 
-The server supports two modes:
+The prototype supported two modes:
 
-- **stdio mode** (default, for VS Code):
+- **stdio mode** (default for the current package):
   ```bash
   node server.js
   ```
 
-- **TCP mode** (for Neovim debugging):
+- **TCP mode** (prototype debugging only):
   ```bash
   node server.js --tcp
   ```
 
-### Port
+The prototype TCP mode listens on port `5007`. The packaged server does not provide TCP mode.
 
-TCP mode listens on port `5007`.
-
-### Troubleshooting
+### Troubleshooting the prototype
 
 - Check LSP status in Neovim:
   ```vim
@@ -80,27 +114,6 @@ TCP mode listens on port `5007`.
   lsof -i :5007
   ```
 
-## Development
-
-### Building
-
-```bash
-npm run compile
-```
-
-### Project Structure
-
-```
-strudel-lsp-server/
-├── client/           # VS Code extension (language client)
-├── server/           # LSP server implementation
-│   ├── src/server.ts # Main server code
-│   └── out/          # Compiled JavaScript
-├── neovim-test.lua   # Neovim test configuration
-├── test.strudel      # Test file
-└── package.json      # Root package config
-```
-
 ## License
 
-MIT
+MIT. See `LICENSE`. Parser dependency licensing and the redistribution gate are documented in `docs/PARSER_INTEGRATION.md`.

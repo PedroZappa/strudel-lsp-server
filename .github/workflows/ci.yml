@@ -69,6 +69,9 @@ jobs:
       - name: Check package contents
         run: npm pack --dry-run --ignore-scripts
 
+      - name: Verify offline installation and stdio launch
+        run: npm run verify:package
+
   performance:
     name: Advisory benchmark check
     runs-on: ubuntu-latest

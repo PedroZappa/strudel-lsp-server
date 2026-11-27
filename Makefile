@@ -51,7 +51,7 @@ _INFO    = [$(BLU)INFO$(D)]
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install install-dev build typecheck lint format format-check test test-parser test-semantic test-metadata test-features test-mini generate-metadata benchmark benchmark-check benchmark-baseline pack-check check verify verify-all ci check-static audit audit-client clean docs docs-open
+.PHONY: help install install-dev build typecheck lint format format-check test test-parser test-semantic test-metadata test-features test-mini generate-metadata benchmark benchmark-check benchmark-baseline pack-check verify-package check verify verify-all ci check-static audit audit-client clean docs docs-open
 
 #==============================================================================#
 #                                  RULES                                       #
@@ -151,6 +151,11 @@ pack-check:	## Preview npm package contents
 	@$(NPM) pack --dry-run --ignore-scripts
 	@echo "$(YEL)* $(_SUCCESS) Package contents previewed$(D)"
 
+verify-package:	## Verify offline install and stdio launch from the npm tarball
+	@echo "$(YEL)Verifying packaged server...$(D)"
+	@$(NPM) run verify:package
+	@echo "$(YEL)* $(_SUCCESS) Packaged server verification passed$(D)"
+
 ##@ Verification ✅
 
 check:	## Run typecheck, lint, format-check and test
@@ -161,7 +166,7 @@ check:	## Run typecheck, lint, format-check and test
 verify: check	## Alias for check; the core correctness gate
 	@echo "$(YEL)* $(_INFO) Core verification gate completed$(D)"
 
-verify-all: verify pack-check benchmark-check	## Core gate plus package contents and benchmark regression check
+verify-all: verify pack-check verify-package benchmark-check	## Core gate plus package, offline install and benchmark checks
 	@echo "$(YEL)* $(_INFO) Extended verification gate completed$(D)"
 
 # `.github/workflows/ci.yml` calls the underlying npm scripts directly and

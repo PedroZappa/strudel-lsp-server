@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: re-implementation roadmap updated with resolved blocker decisions, Phase 6 completion, Phase 7 quick fixes, rename, document and workspace symbols, semantic tokens, formatting and inline-constant refactoring, and Phase 8 benchmark harness, 2026-11-27. Priorities are proposals and remain subject to approval.
+Status: re-implementation roadmap updated with resolved blocker decisions, Phase 6 completion, Phase 7 extended capabilities, Phase 8 benchmark harness and Phase 9 local packaging preparation, 2026-11-27. Priorities are proposals and remain subject to approval.
 
 Authority: `AGENTS.md` sections 2–18 and the other documents in `docs/`.
 
@@ -250,12 +250,18 @@ Phase 8 exit criteria:
 
 Dependencies: validated core capabilities and performance baseline.
 
+**Status: local packaging preparation is complete; publication remains blocked by the parser redistribution licence gate and explicit release authorization.**
+
+The package is already ESM with a stdio executable at `dist/src/server.js`, an `MIT` project licence and a controlled `files` allowlist. Phase 9 replaces the stale prototype README with authoritative package documentation and adds `scripts/verify-package.mjs`, exposed as `npm run verify:package` and `make verify-package`. That check packs the built server, verifies the tarball contents, performs a clean runtime-only offline installation from a temporary project with the committed lockfile, and exercises the installed executable with an LSP initialize/shutdown handshake. The same command now runs in CI after the package-contents preview.
+
 Tasks:
 
 - [ ] Publish the server as an npm package with stdio as the primary transport.
-- [ ] Keep editor-specific examples separate.
+- [x] Keep editor-specific examples separate.
 - [ ] Verify that an MIT-corrected parser npm release is available before redistribution.
-- [ ] Verify a clean offline installation.
+- [x] Verify a clean offline installation with `npm run verify:package`.
+
+The pinned `tree-sitter-strudel@2.0.2` declares `AGPL-3.0-only` and bundles an AGPL licence, so the MIT-corrected release requirement is still open. No `npm publish` has been performed or authorized.
 
 ## Deferred / explicitly not planned
 

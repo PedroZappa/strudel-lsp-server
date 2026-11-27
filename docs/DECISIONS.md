@@ -1,6 +1,6 @@
 # Decisions
 
-Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened; ADR-021 records the Phase 6 deferred-item completion, ADR-022 records Phase 7 quick fixes, ADR-023 records document-scoped rename, ADR-024 records document symbols, ADR-025 records semantic tokens, ADR-026 records conservative formatting, ADR-027 records prototype client dependency remediation, ADR-028 records inline-constant refactoring, ADR-029 records bounded on-demand workspace symbols and ADR-030 records the Phase 8 performance baseline and advisory check.
+Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened; ADR-021 records the Phase 6 deferred-item completion, ADR-022 records Phase 7 quick fixes, ADR-023 records document-scoped rename, ADR-024 records document symbols, ADR-025 records semantic tokens, ADR-026 records conservative formatting, ADR-027 records prototype client dependency remediation, ADR-028 records inline-constant refactoring, ADR-029 records bounded on-demand workspace symbols, ADR-030 records the Phase 8 performance baseline and advisory check, and ADR-031 records Phase 9 local packaging verification.
 
 ## ADR-001 — Clean-slate re-implementation
 
@@ -475,3 +475,18 @@ Consequences:
 - Fixtures and results are kept outside `src/` and the published package.
 - Cancellation and superseded-version behaviour remain covered by stdio integration tests rather than latency samples.
 - Incremental semantic updates are measured but not yet optimised; the large fixture currently shows the full snapshot rebuild cost.
+
+## ADR-031 — Phase 9 local packaging verification
+
+Status: accepted for local preparation on 2026-11-27; publication remains blocked.
+
+Decision: keep the package as a single ESM npm package with a stdio executable at `dist/src/server.js`, replace the stale prototype README with authoritative package documentation, and verify the distributable with `scripts/verify-package.mjs`. The script packs the built tarball, checks the `LICENSE`, `README.md` and compiled server are present while tests and benchmarks are absent, performs a runtime-only `npm ci --offline` followed by an offline install of the tarball, and runs an LSP initialize/shutdown handshake against the installed binary. It is exposed as `npm run verify:package`, `make verify-package` and a CI validation step, and is included in `make verify-all`.
+
+Rationale: a package can pass source-level checks while still shipping the wrong files, missing an executable entry point, or depending on registry access at runtime. Exercising the exact tarball in a temporary offline project verifies the published artifact and the offline-usability requirement without adding dependencies or editor-specific tooling. Keeping prototype instructions in a clearly marked legacy section preserves existing user work while no longer presenting it as package documentation.
+
+Consequences:
+
+- No `npm publish` has been performed; explicit release authorization is still required.
+- The parser redistribution gate remains open: `tree-sitter-strudel@2.0.2` declares and bundles AGPL-3.0-only, which conflicts with the MIT parser decision in ADR-003 and the MIT-corrected release requirement in `docs/ROADMAP.md`.
+- The offline verification depends on a populated npm cache from the committed lockfile; it is a packaging check, not a claim that arbitrary machines can install without a cache or registry mirror.
+- If the package is released, the README and roadmap release status must be revisited so they do not describe a blocked local pre-release state.

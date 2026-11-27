@@ -37,6 +37,7 @@
     "benchmark": "npm run build && node scripts/benchmark.mjs",
     "benchmark:check": "npm run build && node scripts/benchmark.mjs --check",
     "benchmark:baseline": "npm run build && node scripts/benchmark.mjs --write-baseline",
+    "verify:package": "npm run build && node scripts/verify-package.mjs",
     "check": "npm run typecheck && npm run lint && npm run format:check && npm test"
   },
   "dependencies": {
