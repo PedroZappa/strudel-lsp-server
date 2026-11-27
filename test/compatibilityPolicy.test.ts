@@ -27,7 +27,10 @@ interface CorpusReport {
     parsesWithErrors: number;
     errorNodes: number;
     missingNodes: number;
+    symbols: number;
+    references: number;
     unresolvedReferences: number;
+    miniNotationArguments: number;
   };
   parserGaps: { name: string }[];
 }
@@ -85,17 +88,20 @@ void test('Phase 18 records the accepted pins and dependency-update policy', () 
   assert.match(readme, /Strudel version selection is not exposed/);
 });
 
-void test('Phase 18 accepts the pinned parser gaps against refreshed corpus evidence', () => {
+void test('Phase 18 pins and Phase 20 record the current corpus baseline', () => {
   assert.equal(corpusReport.source.version, '1.2.2');
   assert.equal(corpusReport.layers.parser, '2.0.2');
-  assert.match(corpusReport.layers.catalog, /^strudel-1\.2\.6:/);
+  assert.match(corpusReport.layers.catalog, /^strudel-1\.2\.6:0243e023$/);
   assert.ok(Object.values(corpusReport.checks).every(Boolean));
   assert.equal(corpusReport.corpus.examples, 484);
   assert.equal(corpusReport.totals.cleanParses, 477);
   assert.equal(corpusReport.totals.parsesWithErrors, 7);
   assert.equal(corpusReport.totals.errorNodes, 7);
   assert.equal(corpusReport.totals.missingNodes, 2);
-  assert.equal(corpusReport.totals.unresolvedReferences, 1308);
+  assert.equal(corpusReport.totals.symbols, 726);
+  assert.equal(corpusReport.totals.references, 2044);
+  assert.equal(corpusReport.totals.unresolvedReferences, 1277);
+  assert.equal(corpusReport.totals.miniNotationArguments, 364);
   assert.equal(corpusReport.parserGaps.length, 7);
   assert.deepEqual(corpusReport.parserGaps.map((gap) => gap.name).sort(), [
     'chop',
@@ -107,11 +113,45 @@ void test('Phase 18 accepts the pinned parser gaps against refreshed corpus evid
     'samples',
   ]);
 
+  const phase18Adr = adrSection(65).split('## ADR-066')[0] ?? '';
+  assert.match(phase18Adr, /1,308 unresolved references are an accepted conservative baseline/);
   assert.match(parserIntegration, /Phase 18 and ADR-065 formally accept both gaps/);
   assert.match(readme, /two accepted upstream gaps/);
-  assert.match(semanticEngine, /accepted Phase 18 baseline of 1,308 unresolved references/);
-  assert.match(validationReadme, /Phase 18 regenerated the report from the final pins/);
+  assert.match(semanticEngine, /Phase 20 baseline of 1,277 unresolved references/);
+  assert.match(validationReadme, /Phase 20 then reduced the unresolved baseline to 1,277/);
   assert.match(lspFeatures, /formally accepted for the pinned parser under ADR-065/);
+});
+
+void test('Phase 20 records conservative semantic depth and additive signatures', () => {
+  const adr = adrSection(68);
+  assert.match(adr, /^## ADR-068 — Conservative semantic depth and additive signatures$/m);
+  assert.match(adr, /Unambiguous generated aliases/);
+  assert.match(adr, /delayt/);
+  assert.match(adr, /dt/);
+  assert.match(adr, /ir/);
+  assert.match(adr, /explicit catalog entry/);
+  assert.match(adr, /Usage-based parameter inference/);
+  assert.match(adr, /Additive signatures/);
+  assert.match(adr, /Signature-help hardening/);
+  assert.match(adr, /`n` and `gain` are control names/);
+  assert.match(adr, /injected method receiver/);
+  assert.match(adr, /913 method-style uses/);
+  assert.match(adr, /No package version bump, tag, publication/);
+
+  assert.match(semanticEngine, /unambiguous generated aliases/);
+  assert.match(semanticEngine, /explicit sample catalog metadata/);
+  assert.match(semanticEngine, /receiver of a known Pattern method/);
+  assert.match(lspFeatures, /overload-capable curated signatures/);
+
+  const start = roadmap.indexOf('### Phase 20 — Semantic depth and reference resolution');
+  assert.notEqual(start, -1);
+  const phase = roadmap.slice(start, roadmap.indexOf('### Phase 21 —', start));
+  assert.match(
+    phase,
+    /^### Phase 20 — Semantic depth and reference resolution \(complete, unreleased\)$/m,
+  );
+  assert.doesNotMatch(phase, /^- \[ \]/m);
+  assert.match(phase, /ADR-068/);
 });
 
 void test('Phase 18 support matrix matches compatibility CI', () => {

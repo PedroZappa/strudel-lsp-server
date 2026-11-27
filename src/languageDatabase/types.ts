@@ -1,4 +1,4 @@
-import type { StrudelTypeKind } from '../semantic/index.js';
+import type { SemanticSignature, StrudelTypeKind } from '../semantic/index.js';
 
 export type MetadataOrigin = 'generated' | 'manual' | 'runtime';
 
@@ -56,6 +56,7 @@ export interface ManualSemanticEntry {
   readonly longName: string;
   readonly returnType: StrudelTypeKind;
   readonly miniNotationArguments?: readonly number[];
+  readonly signatures?: readonly SemanticSignature[];
   readonly evidence: readonly string[];
 }
 
@@ -82,6 +83,8 @@ export interface LanguageMetadataRecord {
   readonly returnType: StrudelTypeKind;
   readonly miniNotationArguments?: readonly number[];
   readonly description?: string;
+  readonly aliasOf?: string;
+  readonly signatures?: readonly SemanticSignature[];
   readonly examples: readonly string[];
   readonly parameters: readonly MetadataParameter[];
   readonly returns: readonly MetadataReturn[];

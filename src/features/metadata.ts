@@ -28,6 +28,11 @@ export function listGlobalRecords(database: LanguageDatabase): readonly Language
     if (symbol.scope === 'global') {
       names.add(symbol.name);
     }
+    for (const alias of symbol.synonyms) {
+      if (database.getGlobalRecord(alias, snapshot.version)?.aliasOf === symbol.longName) {
+        names.add(alias);
+      }
+    }
   }
   for (const entry of snapshot.runtime) {
     if (entry.kind === 'global') {
@@ -47,6 +52,13 @@ export function listPatternMethodRecords(
   for (const symbol of snapshot.generated.symbols) {
     if (symbol.memberOf === 'Pattern' && symbol.scope === 'static') {
       names.add(symbol.name);
+    }
+    if (symbol.memberOf === 'Pattern' && symbol.scope === 'static') {
+      for (const alias of symbol.synonyms) {
+        if (database.getMethodRecord(alias, snapshot.version)?.aliasOf === symbol.longName) {
+          names.add(alias);
+        }
+      }
     }
   }
   for (const entry of snapshot.runtime) {

@@ -11,7 +11,18 @@ export const manualSemanticSnapshot = {
       longName: 's',
       returnType: 'Pattern',
       miniNotationArguments: [0],
-      evidence: ['s("bd hh")', 's("bd:0 bd:1 bd:0:0.3 bd:1:1.4")'],
+      signatures: [
+        {
+          label: 's(sound: string | Pattern)',
+          parameters: [{ label: 'sound: string | Pattern' }],
+          source: 'catalog',
+        },
+      ],
+      evidence: [
+        's("bd hh")',
+        's("bd:0 bd:1 bd:0:0.3 bd:1:1.4")',
+        '@strudel/core@1.2.6 controls.mjs:98-110 JSDoc @param sound; n/gain are control names, not positional arguments',
+      ],
     },
     {
       longName: 'note',
@@ -88,12 +99,47 @@ export const manualSemanticSnapshot = {
     {
       longName: 'cat',
       returnType: 'Pattern',
-      evidence: ['cat("e5", "b4", ["d5", "c5"]).note()'],
+      signatures: [
+        {
+          label: 'cat(...pats: Pattern)',
+          parameters: [{ label: '...pats: Pattern', rest: true }],
+          source: 'catalog',
+        },
+      ],
+      evidence: [
+        'cat("e5", "b4", ["d5", "c5"]).note()',
+        '@strudel/core@1.2.6 pattern.mjs:1454 export function cat(...pats)',
+      ],
     },
     {
       longName: 'stack',
       returnType: 'Pattern',
-      evidence: ['stack("g3", "b3", ["e4", "d4"]).note()'],
+      signatures: [
+        {
+          label: 'stack(...pats: Pattern)',
+          parameters: [{ label: '...pats: Pattern', rest: true }],
+          source: 'catalog',
+        },
+      ],
+      evidence: [
+        'stack("g3", "b3", ["e4", "d4"]).note()',
+        '@strudel/core@1.2.6 pattern.mjs:1321 export function stack(...pats)',
+      ],
+    },
+    {
+      longName: 'Pattern.euclid',
+      returnType: 'Pattern',
+      signatures: [
+        {
+          label: 'euclid(pulses: number, steps: number)',
+          parameters: [{ label: 'pulses: number' }, { label: 'steps: number' }],
+          source: 'catalog',
+        },
+      ],
+      evidence: [
+        '@strudel/core@1.2.6 euclid.mjs:138 registers pulses and steps; pat is the injected method receiver',
+        '@strudel/core@1.2.6 pattern.mjs:1669 method wrapper checks arity === args.length + 1',
+      ],
     },
   ],
 } satisfies ManualSemanticSnapshot;

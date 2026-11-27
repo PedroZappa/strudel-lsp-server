@@ -47,6 +47,7 @@ function generatedRecord(
     memberOf: symbol.memberOf,
     returnType: override?.returnType ?? symbol.returnType,
     miniNotationArguments: override?.miniNotationArguments,
+    signatures: override?.signatures,
     description: symbol.description,
     examples: symbol.examples,
     parameters: symbol.parameters,
@@ -73,6 +74,30 @@ function runtimeRecord(entry: RuntimeSymbolMetadata): LanguageMetadataRecord {
   };
 }
 
+function unambiguousAliases(
+  symbols: readonly GeneratedSymbolMetadata[],
+  accepts: (symbol: GeneratedSymbolMetadata) => boolean,
+): ReadonlyMap<string, string> {
+  const owners = new Map<string, Set<string>>();
+  for (const symbol of symbols) {
+    if (!accepts(symbol)) {
+      continue;
+    }
+    for (const alias of symbol.synonyms) {
+      const candidates = owners.get(alias) ?? new Set<string>();
+      candidates.add(symbol.longName);
+      owners.set(alias, candidates);
+    }
+  }
+  const resolved = new Map<string, string>();
+  for (const [alias, candidates] of owners) {
+    if (candidates.size === 1) {
+      resolved.set(alias, [...candidates][0] ?? '');
+    }
+  }
+  return resolved;
+}
+
 function buildIndex(data: LanguageVersionData): SnapshotIndex {
   const generatedSchemaVersion: number = data.generated.schemaVersion;
   const manualSchemaVersion: number = data.manual.schemaVersion;
@@ -85,7 +110,16 @@ function buildIndex(data: LanguageVersionData): SnapshotIndex {
 
   const version = data.generated.id;
   const runtime = [...(data.runtime ?? [])];
-  const catalogVersion = `${version}:${hashText(JSON.stringify({ manual: data.manual, runtime }))}`;
+  const aliasInputs = data.generated.symbols.map((symbol) => ({
+    name: symbol.name,
+    longName: symbol.longName,
+    scope: symbol.scope,
+    memberOf: symbol.memberOf,
+    synonyms: symbol.synonyms,
+  }));
+  const catalogVersion = `${version}:${hashText(
+    JSON.stringify({ manual: data.manual, runtime, aliasInputs }),
+  )}`;
   const snapshot: LanguageDatabaseSnapshot = {
     version,
     catalogVersion,
@@ -98,8 +132,10 @@ function buildIndex(data: LanguageVersionData): SnapshotIndex {
   const methods = new Map<string, LanguageMetadataRecord>();
   const samples = new Map<string, LanguageMetadataRecord>();
 
+  const recordsByLongName = new Map<string, LanguageMetadataRecord>();
   for (const symbol of data.generated.symbols) {
     const record = generatedRecord(symbol, overrideFor(data.manual.entries, symbol.longName));
+    recordsByLongName.set(symbol.longName, record);
     if (symbol.scope === 'global' && !globals.has(symbol.name)) {
       globals.set(symbol.name, record);
     }
@@ -107,6 +143,30 @@ function buildIndex(data: LanguageVersionData): SnapshotIndex {
       methods.set(symbol.name, record);
     }
   }
+
+  const addAliases = (
+    aliases: ReadonlyMap<string, string>,
+    target: Map<string, LanguageMetadataRecord>,
+  ): void => {
+    for (const [alias, longName] of aliases) {
+      const record = recordsByLongName.get(longName);
+      if (record === undefined || target.has(alias)) {
+        continue;
+      }
+      target.set(alias, { ...record, name: alias, aliasOf: longName });
+    }
+  };
+  addAliases(
+    unambiguousAliases(data.generated.symbols, (symbol) => symbol.scope === 'global'),
+    globals,
+  );
+  addAliases(
+    unambiguousAliases(
+      data.generated.symbols,
+      (symbol) => symbol.memberOf === 'Pattern' && symbol.scope === 'static',
+    ),
+    methods,
+  );
 
   for (const entry of runtime) {
     const record = runtimeRecord(entry);

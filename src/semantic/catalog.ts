@@ -1,4 +1,4 @@
-import type { StrudelType } from './types.js';
+import type { SemanticSignature, StrudelType } from './types.js';
 
 export type SemanticCatalogEntryKind = 'function' | 'method' | 'value' | 'sample';
 
@@ -7,6 +7,8 @@ export interface SemanticCatalogEntry {
   readonly type: StrudelType;
   /** Zero-based argument positions where mini-notation strings are expected. */
   readonly miniNotationArguments?: readonly number[];
+  /** Explicit overloads or richer labels supplied by authoritative metadata. */
+  readonly signatures?: readonly SemanticSignature[];
 }
 
 /**

@@ -20,6 +20,7 @@ function globalEntry(record: LanguageMetadataRecord): SemanticCatalogEntry {
     kind: 'function',
     type: functionType(returnTypeOf(record.returnType)),
     miniNotationArguments: record.miniNotationArguments,
+    signatures: record.signatures,
   };
 }
 
@@ -28,6 +29,7 @@ function methodEntry(record: LanguageMetadataRecord): SemanticCatalogEntry {
     kind: 'method',
     type: patternMethodType(returnTypeOf(record.returnType)),
     miniNotationArguments: record.miniNotationArguments,
+    signatures: record.signatures,
   };
 }
 

@@ -4,8 +4,9 @@ import type { FeatureContext } from '../../src/features/index.js';
 import {
   createCatalogFromLanguageDatabase,
   createDefaultLanguageDatabase,
+  type LanguageDatabase,
 } from '../../src/languageDatabase/index.js';
-import { createSemanticEngine } from '../../src/semantic/index.js';
+import { createSemanticEngine, type SemanticCatalog } from '../../src/semantic/index.js';
 import { createSyntaxAdapter } from '../../src/syntax/index.js';
 
 export interface FeatureTestHarness {
@@ -13,11 +14,27 @@ export interface FeatureTestHarness {
   readonly document: TextDocument;
 }
 
-const database = createDefaultLanguageDatabase();
-const engine = createSemanticEngine(createCatalogFromLanguageDatabase(database));
+export interface FeatureHarnessOptions {
+  readonly database?: LanguageDatabase;
+  readonly catalog?: SemanticCatalog;
+}
+
+const defaultDatabase = createDefaultLanguageDatabase();
+const defaultCatalog = createCatalogFromLanguageDatabase(defaultDatabase);
+const defaultEngine = createSemanticEngine(defaultCatalog);
 const adapter = createSyntaxAdapter();
 
-export function createFeatureHarness(text: string, offset?: number): FeatureTestHarness {
+export function createFeatureHarness(
+  text: string,
+  offset?: number,
+  options: FeatureHarnessOptions = {},
+): FeatureTestHarness {
+  const database = options.database ?? defaultDatabase;
+  const catalog = options.catalog ?? createCatalogFromLanguageDatabase(database);
+  const engine =
+    options.catalog === undefined && database === defaultDatabase
+      ? defaultEngine
+      : createSemanticEngine(catalog);
   const document = TextDocument.create('file:///test/features.strudel', 'strudel', 1, text);
   const syntax = adapter.parse({
     uri: document.uri,

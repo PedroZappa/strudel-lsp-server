@@ -225,6 +225,7 @@ function finalizeDocument(
       type: symbol.type,
       declaration: symbol.declaration,
       scopeId: symbol.scopeId,
+      signature: symbol.signature,
     });
   }
 

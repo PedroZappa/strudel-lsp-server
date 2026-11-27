@@ -6,6 +6,23 @@ Version `0.3.0` was published on 2026-11-27 from tag `v0.3.0` at commit `b3451e2
 
 ## [Unreleased]
 
+### Added
+
+- Phase 20 semantic depth under ADR-068: unambiguous generated synonyms are resolved as aliases, sample names resolve only from explicit catalog metadata, and conservative receiver usage can infer `Pattern` parameters.
+- Additive `SemanticSignature` data with user-facing curated signatures, an overload-capable model, optional/rest parameters and user-defined function signatures; signature help now returns multiple signatures with an `activeSignature`.
+- Focused parser-independent semantic, metadata alias/signature and multi-signature provider tests, plus compatibility-contract and rename-range checks for the deliberate corpus baseline.
+
+### Changed
+
+- `validation/real-corpus.json` was regenerated deliberately with catalog hash `strudel-1.2.6:0243e023`, 726 symbols, 1,277 unresolved references and 364 mini-notation arguments; parser, invariant and parser-gap totals are unchanged. The remaining unresolved categories are documented in ADR-068.
+- Callable signatures compare structurally during return-type combination, so equivalent user signatures do not collapse inferred return types to `Unknown`.
+
+### Fixed
+
+- Corrected curated `s` and `Pattern.euclid` signatures to their user-facing arity: `n`/`gain` are control names and the registered `pat` parameter is the injected method receiver.
+- Signature help now uses alias names in labels, suppresses catalog fallback for shadowed builtins, clamps the active parameter for rest signatures, preserves generated documentation in curated signatures, falls back on empty curated signature arrays and reads user rest parameters from the pinned grammar's `error`-node shape.
+- Definition and rename ranges for default and rest parameters cover only the identifier; ambiguous or conflicting receiver methods no longer infer `Pattern` parameters.
+
 ## [0.3.0] - 2026-11-27
 
 ### Added

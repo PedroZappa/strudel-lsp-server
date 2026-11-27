@@ -5,6 +5,7 @@ import type {
   SemanticRange,
   SemanticReferenceKind,
   SemanticScopeKind,
+  SemanticSignature,
   SemanticSymbolKind,
   StrudelType,
 } from './types.js';
@@ -18,6 +19,7 @@ export interface MutableSymbol {
   type: StrudelType;
   declaration?: SemanticRange;
   scopeId: string;
+  signature?: SemanticSignature;
 }
 
 export interface MutableScope {
@@ -140,8 +142,35 @@ export function cloneStatementAnalysis(
   };
 }
 
+function sameSignature(
+  left: SemanticSignature | undefined,
+  right: SemanticSignature | undefined,
+): boolean {
+  if (left === right) {
+    return true;
+  }
+  if (left === undefined || right === undefined) {
+    return false;
+  }
+  return (
+    left.label === right.label &&
+    left.documentation === right.documentation &&
+    left.source === right.source &&
+    left.parameters.length === right.parameters.length &&
+    left.parameters.every((parameter, index) => {
+      const other = right.parameters[index];
+      return (
+        other?.label === parameter.label &&
+        other.documentation === parameter.documentation &&
+        other.optional === parameter.optional &&
+        other.rest === parameter.rest
+      );
+    })
+  );
+}
+
 export function sameType(left: StrudelType, right: StrudelType): boolean {
-  if (left.kind !== right.kind) {
+  if (left.kind !== right.kind || !sameSignature(left.signature, right.signature)) {
     return false;
   }
   if (left.returnType === undefined || right.returnType === undefined) {

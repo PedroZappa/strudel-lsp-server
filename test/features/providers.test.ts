@@ -6,6 +6,9 @@ import { parseDiagnosticsConfiguration } from '../../src/configuration/index.js'
 import {
   createCatalogFromLanguageDatabase,
   createDefaultLanguageDatabase,
+  createLanguageDatabase,
+  type GeneratedMetadataSnapshot,
+  type ManualSemanticSnapshot,
 } from '../../src/languageDatabase/index.js';
 import { DocumentAnalysisService } from '../../src/lsp/index.js';
 import { createSemanticEngine } from '../../src/semantic/index.js';
@@ -68,6 +71,15 @@ void test('completion is position-aware for globals, locals and pattern methods'
   const globalCandidates = provideCompletion(globals.context, globalText.length);
   assert.equal(
     globalCandidates.some((candidate) => candidate.label === 'speed'),
+    true,
+  );
+  const aliasText = 'const loop = 1\nsou';
+  const aliasCandidates = provideCompletion(
+    createFeatureHarness(aliasText, aliasText.length).context,
+    aliasText.length,
+  );
+  assert.equal(
+    aliasCandidates.some((candidate) => candidate.label === 'sound'),
     true,
   );
   assert.equal(
@@ -150,23 +162,46 @@ void test('signature help uses database parameters and tracks the active argumen
   const fast = createFeatureHarness(fastText, fastOffset);
   const fastResult = provideSignatureHelp(fast.context, fastOffset);
   assert.ok(fastResult !== undefined);
-  assert.equal(fastResult.label, 'fast(factor: number | Pattern)');
+  assert.equal(fastResult.signatures[0]?.label, 'fast(factor: number | Pattern)');
   assert.equal(fastResult.activeParameter, 0);
-  assert.equal(fastResult.parameters[0]?.documentation, 'speed up factor');
+  assert.equal(fastResult.signatures[0]?.parameters[0]?.documentation, 'speed up factor');
+
+  const soundText = 's("bd")';
+  const soundOffset = soundText.lastIndexOf('bd');
+  const sound = createFeatureHarness(soundText, soundOffset);
+  const soundResult = provideSignatureHelp(sound.context, soundOffset);
+  assert.ok(soundResult !== undefined);
+  assert.match(soundResult.signatures[0]?.documentation ?? '', /Select a sound/);
+  assert.equal(
+    soundResult.signatures[0]?.parameters[0]?.documentation,
+    'The sound / pattern of sounds to pick',
+  );
 
   const euclidText = 's("bd").euclid(3, 8)';
   const euclidOffset = euclidText.indexOf('8');
   const euclid = createFeatureHarness(euclidText, euclidOffset);
   const euclidResult = provideSignatureHelp(euclid.context, euclidOffset);
   assert.ok(euclidResult !== undefined);
-  assert.equal(euclidResult.label, 'euclid(pulses: number, steps: number)');
+  assert.equal(euclidResult.signatures[0]?.label, 'euclid(pulses: number, steps: number)');
   assert.equal(euclidResult.activeParameter, 1);
-  assert.deepEqual(euclidResult.parameters[1]?.labelRange, [23, 36]);
+  assert.deepEqual(euclidResult.signatures[0]?.parameters[1]?.labelRange, [23, 36]);
+  assert.match(euclidResult.signatures[0]?.documentation ?? '', /Euclidean rhythms/);
+  assert.equal(
+    euclidResult.signatures[0]?.parameters[0]?.documentation,
+    'the number of onsets/beats',
+  );
+  assert.equal(
+    euclidResult.signatures[0]?.parameters[1]?.documentation,
+    'the number of steps to fill',
+  );
 
   const nestedText = 's("bd").fast(s("hh").euclid(3, 8))';
   const nestedOffset = nestedText.lastIndexOf('8');
   const nested = createFeatureHarness(nestedText, nestedOffset);
-  assert.equal(provideSignatureHelp(nested.context, nestedOffset)?.label, euclidResult.label);
+  assert.equal(
+    provideSignatureHelp(nested.context, nestedOffset)?.signatures[0]?.label,
+    euclidResult.signatures[0]?.label,
+  );
 
   const outsideArgs = createFeatureHarness(fastText, fastText.indexOf('fast'));
   assert.equal(provideSignatureHelp(outsideArgs.context, fastText.indexOf('fast')), undefined);
@@ -174,18 +209,136 @@ void test('signature help uses database parameters and tracks the active argumen
   const partialText = 's("bd").euclid(3, ';
   const partial = createFeatureHarness(partialText, partialText.length);
   assert.equal(
-    provideSignatureHelp(partial.context, partialText.length)?.label,
-    euclidResult.label,
+    provideSignatureHelp(partial.context, partialText.length)?.signatures[0]?.label,
+    euclidResult.signatures[0]?.label,
   );
 
   const userText = 'function mix(a) {}\nmix(1)';
   const userOffset = userText.lastIndexOf('1');
   const user = createFeatureHarness(userText, userOffset);
-  assert.equal(provideSignatureHelp(user.context, userOffset), undefined);
+  assert.equal(
+    provideSignatureHelp(user.context, userOffset)?.signatures[0]?.label,
+    'mix(a: Unknown)',
+  );
 
   const unknownText = 'notAFunction(1)';
   const unknown = createFeatureHarness(unknownText, unknownText.indexOf('1'));
   assert.equal(provideSignatureHelp(unknown.context, unknownText.indexOf('1')), undefined);
+});
+
+void test('signature help selects overloads, rest parameters and user signatures', () => {
+  const generated: GeneratedMetadataSnapshot = {
+    schemaVersion: 1,
+    id: 'fixture-overloads',
+    strudelVersion: '1.2.6',
+    sources: [],
+    symbols: [
+      {
+        name: 'pick',
+        longName: 'pick',
+        kind: 'function',
+        scope: 'global',
+        returnType: 'Unknown',
+        examples: [],
+        parameters: [],
+        returns: [],
+        synonyms: [],
+      },
+      {
+        name: 'empty',
+        longName: 'empty',
+        kind: 'function',
+        scope: 'global',
+        returnType: 'Unknown',
+        examples: [],
+        parameters: [{ name: 'value', types: [], description: 'a value' }],
+        returns: [],
+        synonyms: [],
+      },
+    ],
+  };
+  const manual: ManualSemanticSnapshot = {
+    schemaVersion: 1,
+    entries: [
+      {
+        longName: 'pick',
+        returnType: 'Unknown',
+        signatures: [
+          {
+            label: 'pick(value: number, gain?: number)',
+            parameters: [{ label: 'value: number' }, { label: 'gain?: number', optional: true }],
+            source: 'catalog',
+          },
+          {
+            label: 'pick(value: string, mode: string)',
+            parameters: [{ label: 'value: string' }, { label: 'mode: string' }],
+            source: 'catalog',
+          },
+        ],
+        evidence: [],
+      },
+      {
+        longName: 'empty',
+        returnType: 'Unknown',
+        signatures: [],
+        evidence: [],
+      },
+    ],
+  };
+  const database = createLanguageDatabase({ versions: [{ generated, manual }] });
+  const overloadText = 'pick("a", "b")';
+  const overloadOffset = overloadText.lastIndexOf('b');
+  const overload = createFeatureHarness(overloadText, overloadOffset, { database });
+  const overloadResult = provideSignatureHelp(overload.context, overloadOffset);
+  assert.ok(overloadResult !== undefined);
+  assert.equal(overloadResult.signatures.length, 2);
+  assert.equal(overloadResult.activeSignature, 1);
+  assert.equal(overloadResult.activeParameter, 1);
+  assert.equal(overloadResult.signatures[0]?.parameters[1]?.optional, true);
+
+  const emptyText = 'empty(1)';
+  const emptyOffset = emptyText.lastIndexOf('1');
+  const empty = createFeatureHarness(emptyText, emptyOffset, { database });
+  assert.equal(
+    provideSignatureHelp(empty.context, emptyOffset)?.signatures[0]?.label,
+    'empty(value)',
+  );
+
+  const restText = 'cat(s("bd"), s("hh"), s("hh"))';
+  const restOffset = restText.lastIndexOf('s("hh")');
+  const rest = createFeatureHarness(restText, restOffset);
+  const restResult = provideSignatureHelp(rest.context, restOffset);
+  assert.equal(restResult?.signatures[0]?.label, 'cat(...pats: Pattern)');
+  assert.equal(restResult?.signatures[0]?.parameters[0]?.rest, true);
+  assert.equal(restResult?.activeParameter, 0);
+
+  const aliasText = 'sound("bd")';
+  const aliasOffset = aliasText.lastIndexOf('bd');
+  const alias = createFeatureHarness(aliasText, aliasOffset);
+  assert.equal(
+    provideSignatureHelp(alias.context, aliasOffset)?.signatures[0]?.label,
+    'sound(sound: string | Pattern)',
+  );
+
+  const shadowedText = 'const s = 5\ns(1)';
+  const shadowedOffset = shadowedText.lastIndexOf('1');
+  const shadowed = createFeatureHarness(shadowedText, shadowedOffset);
+  assert.equal(provideSignatureHelp(shadowed.context, shadowedOffset), undefined);
+
+  const inferredUserText = 'function slower(p){ return p.slow(2) }\nslower(s("bd"))';
+  const inferredUserOffset = inferredUserText.lastIndexOf('s("bd")');
+  const inferredUser = createFeatureHarness(inferredUserText, inferredUserOffset);
+  assert.equal(
+    provideSignatureHelp(inferredUser.context, inferredUserOffset)?.signatures[0]?.label,
+    'slower(p: Pattern)',
+  );
+
+  const userRestText = 'function collect(...xs) { return xs }\ncollect(1, 2)';
+  const userRestOffset = userRestText.lastIndexOf('2');
+  const userRest = createFeatureHarness(userRestText, userRestOffset);
+  const userRestResult = provideSignatureHelp(userRest.context, userRestOffset);
+  assert.equal(userRestResult?.signatures[0]?.label, 'collect(...xs: Unknown)');
+  assert.equal(userRestResult?.activeParameter, 0);
 });
 
 void test('mini-notation diagnostics report structural faults but not incomplete input', () => {

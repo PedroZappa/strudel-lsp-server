@@ -349,10 +349,28 @@ void test('stdio server advertises and serves implemented language capabilities'
   const signatureHelp = (await client.request('textDocument/signatureHelp', {
     textDocument: { uri },
     position: { line: 0, character: text.indexOf('2') },
-  })) as { signatures: { label: string }[]; activeParameter: number } | null;
+  })) as {
+    signatures: { label: string }[];
+    activeSignature: number;
+    activeParameter: number;
+  } | null;
   assert.ok(signatureHelp !== null);
   assert.equal(signatureHelp.signatures[0]?.label, 'fast(factor: number | Pattern)');
+  assert.equal(signatureHelp.activeSignature, 0);
   assert.equal(signatureHelp.activeParameter, 0);
+
+  const aliasUri = 'file:///test/alias.strudel';
+  const aliasText = 'sound("bd")';
+  client.notify('textDocument/didOpen', {
+    textDocument: { uri: aliasUri, languageId: 'strudel', version: 1, text: aliasText },
+  });
+  const aliasHelp = (await client.request('textDocument/signatureHelp', {
+    textDocument: { uri: aliasUri },
+    position: { line: 0, character: aliasText.lastIndexOf('bd') },
+  })) as { signatures: { label: string }[]; activeSignature: number } | null;
+  assert.ok(aliasHelp !== null);
+  assert.equal(aliasHelp.signatures[0]?.label, 'sound(sound: string | Pattern)');
+  assert.equal(aliasHelp.activeSignature, 0);
 
   const definition = (await client.request('textDocument/definition', {
     textDocument: { uri },

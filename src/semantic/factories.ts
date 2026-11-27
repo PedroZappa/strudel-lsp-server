@@ -1,4 +1,4 @@
-import type { StrudelType, StrudelTypeKind } from './types.js';
+import type { SemanticSignature, StrudelType, StrudelTypeKind } from './types.js';
 
 export const PATTERN_TYPE: StrudelType = { kind: 'Pattern' };
 export const MINI_NOTATION_PATTERN_TYPE: StrudelType = { kind: 'MiniNotationPattern' };
@@ -10,8 +10,10 @@ export const ARRAY_TYPE: StrudelType = { kind: 'Array' };
 export const OBJECT_TYPE: StrudelType = { kind: 'Object' };
 export const UNKNOWN_TYPE: StrudelType = { kind: 'Unknown' };
 
-export function functionType(returnType: StrudelType): StrudelType {
-  return { kind: 'Function', returnType };
+export function functionType(returnType: StrudelType, signature?: SemanticSignature): StrudelType {
+  return signature === undefined
+    ? { kind: 'Function', returnType }
+    : { kind: 'Function', returnType, signature };
 }
 
 export function patternMethodType(returnType: StrudelType): StrudelType {

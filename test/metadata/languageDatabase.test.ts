@@ -198,3 +198,22 @@ void test('semantic engine consumes the generated language database', () => {
   assert.equal(result.miniNotationArguments.length, 1);
   assert.equal(result.miniNotationArguments[0]?.ownerName, 's');
 });
+
+void test('indexes unambiguous generated synonyms and curated signatures', () => {
+  const database = createDefaultLanguageDatabase();
+  const sound = database.getGlobalRecord('sound');
+  assert.ok(sound !== undefined);
+  assert.equal(sound.aliasOf, 's');
+  assert.equal(sound.name, 'sound');
+
+  const density = database.getMethodRecord('density');
+  assert.ok(density !== undefined);
+  assert.equal(density.aliasOf, 'Pattern.fast');
+
+  assert.equal(database.getGlobalRecord('ir'), undefined);
+  assert.equal(database.getGlobalRecord('dt'), undefined);
+
+  assert.equal(database.getGlobalRecord('s')?.signatures?.[0]?.label, 's(sound: string | Pattern)');
+  assert.equal(database.getMethodRecord('euclid')?.signatures?.[0]?.parameters.length, 2);
+  assert.equal(database.getGlobalRecord('stack')?.signatures?.[0]?.parameters[0]?.rest, true);
+});

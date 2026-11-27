@@ -79,12 +79,19 @@ export interface SignatureParameter {
   /** UTF-16 offsets into the signature label, as required by LSP. */
   readonly labelRange: readonly [number, number];
   readonly documentation?: string;
+  readonly optional?: boolean;
+  readonly rest?: boolean;
 }
 
-export interface SignatureHelpResult {
+export interface SignatureHelpSignature {
   readonly label: string;
   readonly documentation?: string;
   readonly parameters: readonly SignatureParameter[];
+}
+
+export interface SignatureHelpResult {
+  readonly signatures: readonly SignatureHelpSignature[];
+  readonly activeSignature: number;
   readonly activeParameter: number;
   readonly range: SemanticRange;
 }

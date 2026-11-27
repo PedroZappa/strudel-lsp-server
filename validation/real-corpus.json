@@ -19,7 +19,7 @@
   "layers": {
     "parser": "2.0.2",
     "parserIntegrity": "sha512-5pCUygbKamQoRh+d/gqaVsTi4/bJp2ErZw+cdvuHx49J77tAI19VK0DS7V/7geVTa79u9MTDPGOOxNMksv6FmQ==",
-    "catalog": "strudel-1.2.6:b8eed909"
+    "catalog": "strudel-1.2.6:0243e023"
   },
   "checks": {
     "pinnedSource": true,
@@ -38,10 +38,10 @@
     "parsesWithErrors": 7,
     "errorNodes": 7,
     "missingNodes": 2,
-    "symbols": 697,
+    "symbols": 726,
     "references": 2044,
-    "unresolvedReferences": 1308,
-    "miniNotationArguments": 347,
+    "unresolvedReferences": 1277,
+    "miniNotationArguments": 364,
     "miniNotationIssues": {},
     "incrementalCleanParses": 477
   },

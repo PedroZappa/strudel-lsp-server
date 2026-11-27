@@ -24,6 +24,23 @@ export type StrudelTypeKind =
 export interface StrudelType {
   readonly kind: StrudelTypeKind;
   readonly returnType?: StrudelType;
+  /** Additive callable detail used by signature help for user functions. */
+  readonly signature?: SemanticSignature;
+}
+
+export interface SemanticSignatureParameter {
+  /** Parameter label, including `?` or `...` markers where supported. */
+  readonly label: string;
+  readonly documentation?: string;
+  readonly optional?: boolean;
+  readonly rest?: boolean;
+}
+
+export interface SemanticSignature {
+  readonly label: string;
+  readonly documentation?: string;
+  readonly parameters: readonly SemanticSignatureParameter[];
+  readonly source: 'catalog' | 'user';
 }
 
 export type SemanticSymbolKind =
@@ -36,6 +53,7 @@ export interface SemanticSymbol {
   readonly type: StrudelType;
   readonly declaration?: SemanticRange;
   readonly scopeId: string;
+  readonly signature?: SemanticSignature;
 }
 
 export type SemanticScopeKind = 'global' | 'function' | 'block';

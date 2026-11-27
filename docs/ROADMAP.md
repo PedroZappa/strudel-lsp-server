@@ -505,23 +505,25 @@ Exit criteria:
 - [x] Post-publication evidence is recorded in ADR-067, `CHANGELOG.md`, `.github/RELEASE_NOTES_v0.3.0.md` and the published GitHub release.
 - [x] No deprecation, manual dist-tag change, unpublish, retag or other unapproved registry mutation occurred.
 
-### Phase 20 — Semantic depth and reference resolution (proposed, `v0.4.0`)
+### Phase 20 — Semantic depth and reference resolution (complete, unreleased)
 
-Dependencies: Phase 19.
+Dependencies: Phase 19. ADR-068 records the evidence-backed alias, sample, inference and signature decisions.
 
 Tasks:
 
-- [ ] Add deterministic sample-name resolution where metadata supports an unambiguous match, without guessing unresolved names.
-- [ ] Add usage-based inference for common pattern parameters and preserve conservative suppression when evidence is insufficient.
-- [ ] Extend signature models with richer labels, overloads, rest parameters and user-defined function signatures where the syntax tree provides reliable evidence.
-- [ ] Reduce the unresolved-reference baseline in `validation/real-corpus.json` and document every remaining category.
-- [ ] Add semantic-engine tests that do not depend on Tree-sitter APIs.
+- [x] Add deterministic sample-name resolution where metadata supports an unambiguous match, without guessing unresolved names.
+- [x] Add usage-based inference for common pattern parameters and preserve conservative suppression when evidence is insufficient.
+- [x] Extend signature models with richer labels, overloads, rest parameters and user-defined function signatures where the syntax tree provides reliable evidence.
+- [x] Reduce the unresolved-reference baseline in `validation/real-corpus.json` and document every remaining category.
+- [x] Add semantic-engine tests that do not depend on Tree-sitter APIs.
 
 Exit criteria:
 
-- [ ] New semantic behaviour is covered by focused tests and corpus evidence.
-- [ ] No new false-positive diagnostics appear in live-coding fixtures with incomplete or malformed input.
-- [ ] Documentation distinguishes resolved, conservatively suppressed and unresolved cases.
+- [x] New semantic behaviour is covered by focused tests and corpus evidence.
+- [x] No new false-positive diagnostics appear in live-coding fixtures with incomplete or malformed input.
+- [x] Documentation distinguishes resolved, conservatively suppressed and unresolved cases.
+
+Evidence: ADR-068 records the decisions and deliberate corpus drift. The Phase 20 gate passed with 103/103 tests, focused semantic/metadata/feature suites of 11/6/33 tests, all 18 advisory benchmarks within thresholds, clean package and consumer verification, and zero invariant failures over 484 corpus examples. No version bump, tag or publication occurred; Phase 22 remains the first release gate for these changes.
 
 ### Phase 21 — Mini-notation recovery and structured AST (proposed, `v0.4.0`)
 

@@ -1,9 +1,19 @@
 import type { LanguageMetadataRecord, MetadataParameter } from '../languageDatabase/index.js';
-import { findReferenceAt, resolveReference } from '../semantic/index.js';
+import {
+  findReferenceAt,
+  resolveReference,
+  type SemanticSignature,
+  type SemanticSymbol,
+} from '../semantic/index.js';
 import type { SyntaxNode } from '../syntax/index.js';
 
 import { recordDocumentation } from './metadata.js';
-import type { FeatureContext, SignatureHelpResult, SignatureParameter } from './types.js';
+import type {
+  FeatureContext,
+  SignatureHelpResult,
+  SignatureHelpSignature,
+  SignatureParameter,
+} from './types.js';
 
 function namedChildren(node: SyntaxNode): readonly SyntaxNode[] {
   return node.children.filter((child) => child.named);
@@ -41,6 +51,24 @@ function calleeName(call: SyntaxNode): string | undefined {
   return undefined;
 }
 
+function calleeNode(call: SyntaxNode): SyntaxNode | undefined {
+  return namedChildren(call).find((child) => child.kind !== 'arguments');
+}
+
+function calleeTarget(call: SyntaxNode): SyntaxNode | undefined {
+  const callee = calleeNode(call);
+  if (callee === undefined) {
+    return undefined;
+  }
+  if (callee.kind === 'identifier') {
+    return callee;
+  }
+  if (callee.kind === 'memberExpression') {
+    return namedChildren(callee).find((child, index) => child.kind === 'identifier' && index > 0);
+  }
+  return undefined;
+}
+
 function activeArgumentIndex(args: SyntaxNode, offset: number): number {
   const arguments_ = namedChildren(args);
   for (const [index, argument] of arguments_.entries()) {
@@ -51,25 +79,28 @@ function activeArgumentIndex(args: SyntaxNode, offset: number): number {
   return arguments_.length;
 }
 
-function hasUserDefinition(context: FeatureContext, callee: SyntaxNode): boolean {
-  if (callee.kind !== 'identifier' && callee.kind !== 'memberExpression') {
-    return false;
-  }
-  const target =
-    callee.kind === 'identifier'
-      ? callee
-      : namedChildren(callee).find((child, index) => child.kind === 'identifier' && index > 0);
+function symbolForCallee(context: FeatureContext, call: SyntaxNode): SemanticSymbol | undefined {
+  const target = calleeTarget(call);
   if (target === undefined) {
-    return false;
+    return undefined;
   }
-
   const reference = findReferenceAt(context.semantic, target.range.startOffset);
-  const symbol =
-    reference === undefined ? undefined : resolveReference(context.semantic, reference);
-  if (symbol === undefined) {
-    return false;
+  return reference === undefined ? undefined : resolveReference(context.semantic, reference);
+}
+
+function isCatalogSymbol(symbol: SemanticSymbol): boolean {
+  return ['builtin', 'method', 'sample'].includes(symbol.kind);
+}
+
+function userSignature(symbol: SemanticSymbol | undefined): SemanticSignature | undefined {
+  if (
+    symbol === undefined ||
+    isCatalogSymbol(symbol) ||
+    !['function', 'variable'].includes(symbol.kind)
+  ) {
+    return undefined;
   }
-  return !['builtin', 'method', 'sample'].includes(symbol.kind);
+  return symbol.signature ?? symbol.type.signature;
 }
 
 function formatParameter(parameter: MetadataParameter): string {
@@ -77,33 +108,101 @@ function formatParameter(parameter: MetadataParameter): string {
   return parameter.types.length === 0 ? name : `${name}: ${parameter.types.join(' | ')}`;
 }
 
-function signatureFromRecord(
-  name: string,
-  record: LanguageMetadataRecord,
-  activeParameter: number,
-  range: SignatureHelpResult['range'],
-): SignatureHelpResult {
-  const parameters: SignatureParameter[] = [];
-  let cursor = name.length + 1;
+function toSignature(
+  label: string,
+  documentation: string | undefined,
+  parameters: readonly {
+    readonly label: string;
+    readonly documentation?: string;
+    readonly optional?: boolean;
+    readonly rest?: boolean;
+  }[],
+): SignatureHelpSignature {
+  const mapped: SignatureParameter[] = [];
+  let cursor = label.indexOf('(') + 1;
 
-  for (const parameter of record.parameters) {
-    const label = formatParameter(parameter);
-    parameters.push({
-      label,
-      labelRange: [cursor, cursor + label.length],
-      documentation: parameter.description,
+  for (const parameter of parameters) {
+    mapped.push({
+      label: parameter.label,
+      labelRange: [cursor, cursor + parameter.label.length],
+      documentation: parameter.documentation,
+      optional: parameter.optional,
+      rest: parameter.rest,
     });
-    cursor += label.length + 2;
+    cursor += parameter.label.length + 2;
   }
 
-  const label = `${name}(${parameters.map((parameter) => parameter.label).join(', ')})`;
-  return {
-    label,
-    documentation: recordDocumentation(record),
+  return { label, documentation, parameters: mapped };
+}
+
+function signatureFromSemantic(signature: SemanticSignature): SignatureHelpSignature {
+  return toSignature(signature.label, signature.documentation, signature.parameters);
+}
+
+function signatureFromCatalog(
+  name: string,
+  signature: SemanticSignature,
+  record: LanguageMetadataRecord,
+): SignatureHelpSignature {
+  const label = signature.label.replace(/^[^(\s]+/, name);
+  const parameters = signature.parameters.map((parameter, index) => ({
+    ...parameter,
+    documentation: parameter.documentation ?? record.parameters[index]?.description,
+  }));
+  return toSignature(label, signature.documentation ?? recordDocumentation(record), parameters);
+}
+
+function signatureFromRecord(name: string, record: LanguageMetadataRecord): SignatureHelpSignature {
+  const parameters = record.parameters.map((parameter) => ({
+    label: formatParameter(parameter),
+    documentation: parameter.description,
+  }));
+  return toSignature(
+    `${name}(${parameters.map((parameter) => parameter.label).join(', ')})`,
+    recordDocumentation(record),
     parameters,
-    activeParameter: parameters.length === 0 ? 0 : Math.min(activeParameter, parameters.length - 1),
-    range,
-  };
+  );
+}
+
+function acceptsArgumentCount(signature: SignatureHelpSignature, count: number): boolean {
+  const total = signature.parameters.length;
+  if (signature.parameters[total - 1]?.rest === true) {
+    return count >= total - 1;
+  }
+  const required = signature.parameters.filter((parameter) => parameter.optional !== true).length;
+  return count >= required && count <= total;
+}
+
+function signatureScore(signature: SignatureHelpSignature, count: number): number {
+  if (!acceptsArgumentCount(signature, count)) {
+    return -1;
+  }
+  const total = signature.parameters.length;
+  if (signature.parameters[total - 1]?.rest === true) {
+    return 0;
+  }
+  const required = signature.parameters.filter((parameter) => parameter.optional !== true).length;
+  return required * 10 + (total === count ? 5 : 0);
+}
+
+function selectSignature(signatures: readonly SignatureHelpSignature[], count: number): number {
+  let best = 0;
+  let bestScore = -1;
+  signatures.forEach((signature, index) => {
+    const score = signatureScore(signature, count);
+    if (score > bestScore) {
+      best = index;
+      bestScore = score;
+    }
+  });
+  return best;
+}
+
+function resolveActiveParameter(
+  activeParameter: number,
+  signature: SignatureHelpSignature,
+): number {
+  return Math.min(activeParameter, Math.max(0, signature.parameters.length - 1));
 }
 
 export function provideSignatureHelp(
@@ -131,25 +230,54 @@ export function provideSignatureHelp(
       continue;
     }
 
-    const callee = namedChildren(call).find((child) => child.kind !== 'arguments');
-    if (callee === undefined || hasUserDefinition(context, callee)) {
-      continue;
-    }
-
     const name = calleeName(call);
     if (name === undefined) {
       continue;
     }
 
+    const activeParameter = activeArgumentIndex(args, offset);
+    const argumentCount = namedChildren(args).length;
+    const calleeSymbol = symbolForCallee(context, call);
+    const user = userSignature(calleeSymbol);
+    if (calleeSymbol !== undefined && !isCatalogSymbol(calleeSymbol) && user === undefined) {
+      continue;
+    }
+    if (user !== undefined) {
+      const signatures = [signatureFromSemantic(user)];
+      return {
+        signatures,
+        activeSignature: 0,
+        activeParameter: resolveActiveParameter(activeParameter, signatures[0]),
+        range: call.range,
+      };
+    }
+
     const record =
-      callee.kind === 'identifier'
+      calleeNode(call)?.kind === 'identifier'
         ? context.database.getGlobalRecord(name)
         : context.database.getMethodRecord(name);
-    if (record === undefined || record.parameters.length === 0) {
+    if (record === undefined) {
       continue;
     }
 
-    return signatureFromRecord(name, record, activeArgumentIndex(args, offset), call.range);
+    const signatures =
+      record.signatures === undefined || record.signatures.length === 0
+        ? [signatureFromRecord(name, record)]
+        : record.signatures.map((signature) => signatureFromCatalog(name, signature, record));
+    if (
+      signatures.length === 0 ||
+      signatures.every((signature) => signature.parameters.length === 0)
+    ) {
+      continue;
+    }
+    const activeSignature = selectSignature(signatures, argumentCount);
+    const selected = signatures[activeSignature];
+    return {
+      signatures,
+      activeSignature,
+      activeParameter: resolveActiveParameter(activeParameter, selected),
+      range: call.range,
+    };
   }
 
   return undefined;

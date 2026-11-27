@@ -43,6 +43,28 @@ void test('rename updates declarations and references for resolved user symbols'
   );
 });
 
+void test('rename uses the identifier range for parameters with default values', () => {
+  const text = 'function f(p = 1) { return p }\nf(2)';
+  const declarationOffset = text.indexOf('p =');
+  const usageOffset = text.lastIndexOf('p');
+  const usage = createFeatureHarness(text, usageOffset);
+
+  const prepared = prepareRename(usage.context, usageOffset);
+  assert.ok(prepared !== undefined);
+  assert.equal(prepared.range.startOffset, usageOffset);
+  assert.equal(prepared.range.endOffset, usageOffset + 1);
+  assert.equal(prepared.placeholder, 'p');
+
+  const edits = provideRename(usage.context, usageOffset, 'value')?.edits.map((edit) => [
+    edit.range.startOffset,
+    edit.newText,
+  ]);
+  assert.deepEqual(edits, [
+    [declarationOffset, 'value'],
+    [usageOffset, 'value'],
+  ]);
+});
+
 void test('prepare rename exposes renamable ranges and rejects non-user symbols', () => {
   const text = 'const pat = s("bd sd").fast(2)\npat';
   const offset = text.lastIndexOf('pat') + 1;

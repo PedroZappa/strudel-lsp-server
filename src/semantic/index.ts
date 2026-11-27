@@ -39,6 +39,8 @@ export type {
   SemanticReferenceKind,
   SemanticScope,
   SemanticScopeKind,
+  SemanticSignature,
+  SemanticSignatureParameter,
   SemanticSymbol,
   SemanticSymbolKind,
   StrudelType,

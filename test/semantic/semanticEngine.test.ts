@@ -13,9 +13,13 @@ import {
   PATTERN_TYPE,
   resolveReference,
   SemanticAnalysisCancelledError,
+  strudelType,
+  UNKNOWN_TYPE,
   type SemanticDocument,
+  type SemanticSignature,
   type SemanticSymbol,
 } from '../../src/semantic/index.js';
+import { sameType } from '../../src/semantic/model.js';
 import type { FixtureNodeSpec } from './fixtures.js';
 import { createFixtureDocument } from './fixtures.js';
 
@@ -574,5 +578,228 @@ void test('supports cancellation before and during analysis', () => {
   assert.throws(
     () => engine.analyze(document, { token: lateToken }),
     SemanticAnalysisCancelledError,
+  );
+});
+
+void test('resolves exact sample names only from explicit catalog metadata', () => {
+  const sampleCatalog = createStaticSemanticCatalog({
+    version: 'fixture-samples',
+    globals: {
+      s: {
+        kind: 'function',
+        type: functionType(PATTERN_TYPE),
+        miniNotationArguments: [0],
+      },
+    },
+    samples: {
+      bd: { kind: 'sample', type: strudelType('SampleName') },
+    },
+  });
+  const text = 's("bd")\ns("bd sd")\ns("zz")';
+  const callSpec = (argument: string, sOccurrence: number): FixtureNodeSpec => ({
+    kind: 'expressionStatement',
+    text: `s("${argument}")`,
+    children: [
+      {
+        kind: 'callExpression',
+        text: `s("${argument}")`,
+        children: [
+          { kind: 'identifier', text: 's', occurrence: sOccurrence },
+          {
+            kind: 'arguments',
+            text: `("${argument}")`,
+            children: [{ kind: 'string', text: `"${argument}"` }],
+          },
+        ],
+      },
+    ],
+  });
+  const { document } = createFixtureDocument(text, [
+    callSpec('bd', 0),
+    callSpec('bd sd', 1),
+    callSpec('zz', 2),
+  ]);
+
+  const result = createSemanticEngine(sampleCatalog).analyze(document);
+  const sampleReferences = result.references.filter((reference) =>
+    ['bd', 'zz'].includes(reference.name),
+  );
+  assert.equal(sampleReferences.length, 1);
+  assert.equal(sampleReferences[0]?.name, 'bd');
+  assert.deepEqual(
+    [sampleReferences[0]?.range.startOffset, sampleReferences[0]?.range.endOffset],
+    [text.indexOf('bd'), text.indexOf('bd') + 2],
+  );
+  assert.ok(sampleReferences[0]?.resolvedSymbolId !== undefined);
+  const resolvedSample =
+    sampleReferences[0] === undefined ? undefined : resolveReference(result, sampleReferences[0]);
+  assert.equal(resolvedSample?.kind, 'sample');
+  assert.equal(
+    result.references.some((reference) => ['zz', 'bd sd'].includes(reference.name)),
+    false,
+  );
+});
+
+void test('infers pattern parameter types from conservative receiver usage', () => {
+  const usageCatalog = createStaticSemanticCatalog({
+    version: 'fixture-usage',
+    methods: {
+      slow: { kind: 'method', type: patternMethodType(PATTERN_TYPE) },
+    },
+  });
+  const text = 'function slower(p){ return p.slow(2) }';
+  const parameter: FixtureNodeSpec = { kind: 'identifier', text: 'p', occurrence: 0 };
+  const receiver: FixtureNodeSpec = { kind: 'identifier', text: 'p', occurrence: 1 };
+  const { document } = createFixtureDocument(text, [
+    {
+      kind: 'functionDeclaration',
+      text,
+      children: [
+        { kind: 'token', text: 'function' },
+        { kind: 'identifier', text: 'slower' },
+        {
+          kind: 'formalParameters',
+          text: '(p)',
+          children: [parameter],
+        },
+        {
+          kind: 'block',
+          text: '{ return p.slow(2) }',
+          children: [
+            {
+              kind: 'returnStatement',
+              text: 'return p.slow(2)',
+              children: [
+                { kind: 'token', text: 'return' },
+                {
+                  kind: 'callExpression',
+                  text: 'p.slow(2)',
+                  children: [
+                    {
+                      kind: 'memberExpression',
+                      text: 'p.slow',
+                      children: [
+                        receiver,
+                        { kind: 'token', text: '.' },
+                        { kind: 'identifier', text: 'slow' },
+                      ],
+                    },
+                    { kind: 'arguments', text: '(2)', children: [{ kind: 'number', text: '2' }] },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ]);
+
+  const result = createSemanticEngine(usageCatalog).analyze(document);
+  const parameterSymbol = symbolsNamed(result, 'p').find((symbol) => symbol.kind === 'parameter');
+  assert.ok(parameterSymbol !== undefined);
+  assert.equal(parameterSymbol.type.kind, 'Pattern');
+
+  const slower = firstSymbol(result, 'slower');
+  assert.equal(slower.signature?.label, 'slower(p: Pattern)');
+  assert.equal(slower.signature?.source, 'user');
+
+  const methodReference = result.references.find((reference) => reference.name === 'slow');
+  assert.ok(methodReference !== undefined);
+  assert.ok(methodReference.resolvedSymbolId !== undefined);
+});
+
+void test('suppresses pattern inference for ambiguous or conflicting receiver methods', () => {
+  const usageCatalog = createStaticSemanticCatalog({
+    version: 'fixture-usage-conflict',
+    methods: {
+      slow: { kind: 'method', type: patternMethodType(PATTERN_TYPE) },
+      slice: { kind: 'method', type: patternMethodType(PATTERN_TYPE) },
+    },
+  });
+  const parameter: FixtureNodeSpec = { kind: 'identifier', text: 'p', occurrence: 0 };
+  const receiver: FixtureNodeSpec = { kind: 'identifier', text: 'p', occurrence: 1 };
+  const secondReceiver: FixtureNodeSpec = { kind: 'identifier', text: 'p', occurrence: 2 };
+  const callSpec = (
+    method: string,
+    args: string,
+    receiverNode: FixtureNodeSpec,
+  ): FixtureNodeSpec => ({
+    kind: 'callExpression',
+    text: `p.${method}${args}`,
+    children: [
+      {
+        kind: 'memberExpression',
+        text: `p.${method}`,
+        children: [
+          receiverNode,
+          { kind: 'token', text: '.' },
+          { kind: 'identifier', text: method },
+        ],
+      },
+      { kind: 'arguments', text: args, children: [{ kind: 'number', text: args.slice(1, -1) }] },
+    ],
+  });
+  const text = 'function mixed(p){ p.slow(2); return p.slice(0) }';
+  const { document } = createFixtureDocument(text, [
+    {
+      kind: 'functionDeclaration',
+      text,
+      children: [
+        { kind: 'token', text: 'function' },
+        { kind: 'identifier', text: 'mixed' },
+        { kind: 'formalParameters', text: '(p)', children: [parameter] },
+        {
+          kind: 'block',
+          text: '{ p.slow(2); return p.slice(0) }',
+          children: [
+            {
+              kind: 'expressionStatement',
+              text: 'p.slow(2)',
+              children: [callSpec('slow', '(2)', receiver)],
+            },
+            {
+              kind: 'returnStatement',
+              text: 'return p.slice(0)',
+              children: [
+                { kind: 'token', text: 'return' },
+                callSpec('slice', '(0)', secondReceiver),
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ]);
+
+  const result = createSemanticEngine(usageCatalog).analyze(document);
+  const parameterSymbol = symbolsNamed(result, 'p').find((symbol) => symbol.kind === 'parameter');
+  assert.ok(parameterSymbol !== undefined);
+  assert.equal(parameterSymbol.type.kind, 'Unknown');
+});
+
+void test('compares structurally equivalent callable signatures by value', () => {
+  const left: SemanticSignature = {
+    label: 'id(value: Unknown)',
+    parameters: [{ label: 'value: Unknown' }],
+    source: 'user',
+  };
+  const right: SemanticSignature = {
+    label: 'id(value: Unknown)',
+    parameters: [{ label: 'value: Unknown' }],
+    source: 'user',
+  };
+
+  assert.equal(sameType(functionType(UNKNOWN_TYPE, left), functionType(UNKNOWN_TYPE, right)), true);
+  assert.equal(
+    sameType(functionType(UNKNOWN_TYPE, left), functionType(PATTERN_TYPE, right)),
+    false,
+  );
+  assert.equal(
+    sameType(
+      functionType(UNKNOWN_TYPE, left),
+      functionType(UNKNOWN_TYPE, { ...right, source: 'catalog' }),
+    ),
+    false,
   );
 });

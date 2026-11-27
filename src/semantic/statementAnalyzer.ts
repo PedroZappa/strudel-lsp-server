@@ -1,5 +1,5 @@
 import { analyzeMiniNotation, type MiniNotationAnalysis } from '../miniNotation/index.js';
-import type { SyntaxNode } from '../syntax/index.js';
+import type { SyntaxNode, SyntaxRange } from '../syntax/index.js';
 
 import type { SemanticCatalog, SemanticCatalogEntry } from './catalog.js';
 import { throwIfCancelled } from './cancellation.js';
@@ -9,6 +9,7 @@ import {
   MINI_NOTATION_PATTERN_TYPE,
   NUMBER_TYPE,
   OBJECT_TYPE,
+  PATTERN_TYPE,
   STRING_TYPE,
   UNKNOWN_TYPE,
 } from './factories.js';
@@ -27,6 +28,8 @@ import type {
   SemanticRange,
   SemanticReferenceKind,
   SemanticScopeKind,
+  SemanticSignature,
+  SemanticSignatureParameter,
   SemanticSymbolKind,
   StrudelType,
 } from './types.js';
@@ -57,6 +60,58 @@ interface MemberInfo {
   readonly propertyName?: string;
 }
 
+interface ParameterDescriptor {
+  readonly node: SyntaxNode;
+  readonly nameNode: SyntaxNode;
+  readonly name: string;
+  readonly optional: boolean;
+  readonly rest: boolean;
+}
+
+const AMBIGUOUS_JS_METHOD_NAMES = new Set([
+  'at',
+  'catch',
+  'charAt',
+  'concat',
+  'constructor',
+  'endsWith',
+  'entries',
+  'every',
+  'fill',
+  'filter',
+  'find',
+  'findIndex',
+  'flat',
+  'flatMap',
+  'forEach',
+  'has',
+  'includes',
+  'indexOf',
+  'join',
+  'keys',
+  'lastIndexOf',
+  'map',
+  'pop',
+  'push',
+  'reduce',
+  'reduceRight',
+  'reverse',
+  'shift',
+  'slice',
+  'some',
+  'sort',
+  'split',
+  'startsWith',
+  'then',
+  'toLocaleString',
+  'toLowerCase',
+  'toString',
+  'toUpperCase',
+  'trim',
+  'valueOf',
+  'values',
+]);
+
 function namedChildren(node: SyntaxNode): readonly SyntaxNode[] {
   return node.children.filter((child) => child.named);
 }
@@ -85,6 +140,81 @@ function isMiniNotationString(node: SyntaxNode): boolean {
 
 function sameTypeKind(left: StrudelType, right: StrudelType): boolean {
   return left.kind === right.kind;
+}
+
+function parameterDescriptors(node: SyntaxNode): readonly ParameterDescriptor[] {
+  const descriptors: ParameterDescriptor[] = [];
+  for (const parameter of namedChildren(node)) {
+    if (parameter.kind === 'identifier') {
+      descriptors.push({
+        node: parameter,
+        nameNode: parameter,
+        name: parameter.text,
+        optional: false,
+        rest: false,
+      });
+      continue;
+    }
+    if (parameter.kind === 'assignmentPattern') {
+      const nameNode = namedChildren(parameter).find((child) => child.kind === 'identifier');
+      if (nameNode !== undefined) {
+        descriptors.push({
+          node: parameter,
+          nameNode,
+          name: nameNode.text,
+          optional: true,
+          rest: false,
+        });
+      }
+      continue;
+    }
+    if (parameter.kind === 'spreadElement') {
+      const nameNode = namedChildren(parameter).find((child) => child.kind === 'identifier');
+      if (nameNode !== undefined) {
+        descriptors.push({
+          node: parameter,
+          nameNode,
+          name: nameNode.text,
+          optional: false,
+          rest: true,
+        });
+      }
+      continue;
+    }
+    if (parameter.kind === 'error' && parameter.text.startsWith('...')) {
+      const nameNode = namedChildren(parameter).at(-1);
+      if (nameNode !== undefined && /^[A-Za-z_$][\w$]*$/.test(nameNode.text)) {
+        descriptors.push({
+          node: parameter,
+          nameNode,
+          name: nameNode.text,
+          optional: false,
+          rest: true,
+        });
+      }
+    }
+  }
+  return descriptors;
+}
+
+function signatureForParameters(
+  name: string,
+  descriptors: readonly ParameterDescriptor[],
+  types: readonly StrudelType[],
+  source: SemanticSignature['source'],
+): SemanticSignature {
+  const parameters: SemanticSignatureParameter[] = descriptors.map((descriptor, index) => {
+    const prefix = descriptor.rest ? '...' : '';
+    const suffix = descriptor.optional ? '?' : '';
+    const label = `${prefix}${descriptor.name}${suffix}: ${types[index]?.kind ?? 'Unknown'}`;
+    return { label, optional: descriptor.optional, rest: descriptor.rest };
+  });
+  const prefix = name === '' ? '' : `${name}`;
+  return {
+    label: `${prefix}(${parameters.map((parameter) => parameter.label).join(', ')})`,
+    parameters,
+    source,
+  };
 }
 
 export class StatementAnalyzer {
@@ -203,32 +333,22 @@ export class StatementAnalyzer {
     );
 
     const parameters = namedChildren(node).find((child) => child.kind === 'formalParameters');
-    if (parameters !== undefined) {
-      for (const parameter of namedChildren(parameters)) {
-        if (parameter.kind === 'identifier') {
-          this.declare(
-            parameter.text,
-            'parameter',
-            UNKNOWN_TYPE,
-            toSemanticRange(this.text, parameter.range),
-            scope.id,
-          );
-        } else if (parameter.kind === 'assignmentPattern') {
-          const name = namedChildren(parameter).find((child) => child.kind === 'identifier');
-          if (name !== undefined) {
-            this.declare(
-              name.text,
-              'parameter',
-              UNKNOWN_TYPE,
-              toSemanticRange(this.text, name.range),
-              scope.id,
-            );
-          }
-        }
-      }
-    }
-
     const body = namedChildren(node).find((child) => child.kind === 'block');
+    const descriptors = parameters === undefined ? [] : parameterDescriptors(parameters);
+    const inferredTypes = this.inferParameterTypesFromUsage(
+      body,
+      descriptors.map((descriptor) => descriptor.name),
+    );
+    const parameterSymbols = descriptors.map((descriptor) =>
+      this.declare(
+        descriptor.name,
+        'parameter',
+        inferredTypes.get(descriptor.name) ?? UNKNOWN_TYPE,
+        toSemanticRange(this.text, descriptor.nameNode.range),
+        scope.id,
+      ),
+    );
+
     const returnTypes: StrudelType[] = [];
     if (body !== undefined) {
       for (const child of namedChildren(body)) {
@@ -239,8 +359,57 @@ export class StatementAnalyzer {
       }
     }
 
-    symbol.type = functionType(combineReturnTypes(returnTypes));
+    const signature = signatureForParameters(
+      symbol.name,
+      descriptors,
+      parameterSymbols.map((parameterSymbol) => parameterSymbol.type),
+      'user',
+    );
+    symbol.type = functionType(combineReturnTypes(returnTypes), signature);
+    symbol.signature = signature;
     return symbol.type;
+  }
+
+  private inferParameterTypesFromUsage(
+    body: SyntaxNode | undefined,
+    parameterNames: readonly string[],
+  ): ReadonlyMap<string, StrudelType> {
+    const evidence = new Map<string, Set<string>>();
+    const names = new Set(parameterNames);
+    if (body === undefined || names.size === 0) {
+      return new Map<string, StrudelType>();
+    }
+
+    const visit = (node: SyntaxNode): void => {
+      if (node.kind === 'functionDeclaration' || node.kind === 'arrowFunction') {
+        return;
+      }
+      if (node.kind === 'memberExpression') {
+        const named = namedChildren(node);
+        const receiver = named[0];
+        const property = named.find((child, index) => child.kind === 'identifier' && index > 0);
+        if (receiver?.kind === 'identifier' && names.has(receiver.text) && property !== undefined) {
+          const isPatternEvidence =
+            !AMBIGUOUS_JS_METHOD_NAMES.has(property.text) &&
+            this.catalog.getMethod(property.text, PATTERN_TYPE) !== undefined;
+          const kinds = evidence.get(receiver.text) ?? new Set<string>();
+          kinds.add(isPatternEvidence ? 'Pattern' : 'Conflicting');
+          evidence.set(receiver.text, kinds);
+        }
+      }
+      for (const child of node.children) {
+        visit(child);
+      }
+    };
+    visit(body);
+
+    const inferred = new Map<string, StrudelType>();
+    for (const [name, kinds] of evidence) {
+      if (kinds.size === 1 && kinds.has('Pattern')) {
+        inferred.set(name, PATTERN_TYPE);
+      }
+    }
+    return inferred;
   }
 
   private analyzeBodyNode(node: SyntaxNode, scopeId: string): StrudelType | undefined {
@@ -395,6 +564,7 @@ export class StatementAnalyzer {
       kind,
       type: entry.type,
       scopeId: GLOBAL_SCOPE_ID,
+      signature: entry.signatures?.[0],
     };
     this.symbolsById.set(id, symbol);
     this.analysis.symbols.push(symbol);
@@ -408,6 +578,7 @@ export class StatementAnalyzer {
     node: SyntaxNode,
     scopeId: string,
     symbol?: MutableSymbol,
+    range: SyntaxRange = node.range,
   ): void {
     this.localCounter += 1;
     if (symbol?.scopeId === GLOBAL_SCOPE_ID) {
@@ -421,7 +592,7 @@ export class StatementAnalyzer {
       id: `${this.key}:ref:${this.localCounter}`,
       name,
       kind,
-      range: toSemanticRange(this.text, node.range),
+      range: toSemanticRange(this.text, range),
       scopeId,
       resolvedSymbolId: symbol?.id,
     });
@@ -630,9 +801,12 @@ export class StatementAnalyzer {
     let argumentIndex = 0;
 
     for (const argument of namedChildren(node)) {
-      const isMiniNotation =
-        miniNotationPositions.has(argumentIndex) && isMiniNotationString(argument);
+      const acceptsMiniNotation = miniNotationPositions.has(argumentIndex);
+      const isMiniNotation = acceptsMiniNotation && isMiniNotationString(argument);
       this.inferExpression(argument, scopeId);
+      if (acceptsMiniNotation) {
+        this.tryInferSampleName(argument, scopeId);
+      }
       if (isMiniNotation) {
         this.analysis.miniNotationArguments.push({
           range: toSemanticRange(this.text, argument.range),
@@ -643,6 +817,28 @@ export class StatementAnalyzer {
       }
       argumentIndex += 1;
     }
+  }
+
+  private tryInferSampleName(node: SyntaxNode, scopeId: string): StrudelType | undefined {
+    if (node.kind !== 'string' || !node.text.startsWith('"') || node.text.length < 3) {
+      return undefined;
+    }
+    const name = node.text.slice(1, -1);
+    if (!/^[A-Za-z0-9_-]+$/.test(name)) {
+      return undefined;
+    }
+    const entry = this.catalog.getSample(name);
+    if (entry?.kind !== 'sample') {
+      return undefined;
+    }
+    const symbol = this.ensureBuiltin(name, 'sample', entry);
+    this.createReference(name, 'value', node, scopeId, symbol, {
+      start: { line: node.range.start.line, character: node.range.start.character + 1 },
+      end: { line: node.range.end.line, character: node.range.end.character - 1 },
+      startOffset: node.range.startOffset + 1,
+      endOffset: node.range.endOffset - 1,
+    });
+    return entry.type;
   }
 
   private miniNotationAnalysis(node: SyntaxNode): MiniNotationAnalysis | undefined {
@@ -669,28 +865,45 @@ export class StatementAnalyzer {
     );
 
     const parameters = namedChildren(node).find((child) => child.kind === 'formalParameters');
-    if (parameters !== undefined) {
-      for (const parameter of namedChildren(parameters)) {
-        if (parameter.kind === 'identifier') {
-          this.declare(
-            parameter.text,
-            'parameter',
-            UNKNOWN_TYPE,
-            toSemanticRange(this.text, parameter.range),
-            scope.id,
-          );
-        }
-      }
-    }
-
     const body = namedChildren(node).find((child) => child.kind !== 'formalParameters');
+    const descriptors = parameters === undefined ? [] : parameterDescriptors(parameters);
+    const inferredTypes = this.inferParameterTypesFromUsage(
+      body,
+      descriptors.map((descriptor) => descriptor.name),
+    );
+    const parameterSymbols = descriptors.map((descriptor) =>
+      this.declare(
+        descriptor.name,
+        'parameter',
+        inferredTypes.get(descriptor.name) ?? UNKNOWN_TYPE,
+        toSemanticRange(this.text, descriptor.nameNode.range),
+        scope.id,
+      ),
+    );
+
     if (body === undefined) {
-      return functionType(UNKNOWN_TYPE);
+      return functionType(
+        UNKNOWN_TYPE,
+        signatureForParameters(
+          '',
+          descriptors,
+          parameterSymbols.map((parameterSymbol) => parameterSymbol.type),
+          'user',
+        ),
+      );
     }
     const returnType =
       body.kind === 'block'
         ? (this.analyzeBodyNode(body, scope.id) ?? UNKNOWN_TYPE)
         : this.inferExpression(body, scope.id);
-    return functionType(returnType);
+    return functionType(
+      returnType,
+      signatureForParameters(
+        '',
+        descriptors,
+        parameterSymbols.map((parameterSymbol) => parameterSymbol.type),
+        'user',
+      ),
+    );
   }
 }

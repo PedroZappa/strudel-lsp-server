@@ -656,20 +656,18 @@ connection.onSignatureHelp((params: SignatureHelpParams): Promise<SignatureHelp 
       return null;
     }
     return {
-      signatures: [
-        {
-          label: result.label,
-          documentation:
-            result.documentation === undefined
-              ? undefined
-              : { kind: MarkupKind.Markdown, value: result.documentation },
-          parameters: result.parameters.map((parameter) => ({
-            label: [...parameter.labelRange],
-            documentation: parameter.documentation,
-          })),
-        },
-      ],
-      activeSignature: 0,
+      signatures: result.signatures.map((signature) => ({
+        label: signature.label,
+        documentation:
+          signature.documentation === undefined
+            ? undefined
+            : { kind: MarkupKind.Markdown, value: signature.documentation },
+        parameters: signature.parameters.map((parameter) => ({
+          label: [...parameter.labelRange],
+          documentation: parameter.documentation,
+        })),
+      })),
+      activeSignature: result.activeSignature,
       activeParameter: result.activeParameter,
     };
   }),
