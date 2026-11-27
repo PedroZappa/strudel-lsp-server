@@ -46,9 +46,11 @@ import {
   provideHover,
   provideQuickFixes,
   provideReferences,
+  provideRefactorings,
   provideRename,
   provideSemanticTokens,
   provideSignatureHelp,
+  type CodeActionKindName,
   type CompletionCandidateKind,
   type DiagnosticSeverityName,
   type DocumentSymbolKind,
@@ -173,6 +175,15 @@ function toLspSeverity(severity: DiagnosticSeverityName): DiagnosticSeverity {
   }
 }
 
+function toLspCodeActionKind(kind: CodeActionKindName): CodeActionKind {
+  switch (kind) {
+    case 'quickfix':
+      return CodeActionKind.QuickFix;
+    case 'refactor.inline':
+      return CodeActionKind.RefactorInline;
+  }
+}
+
 function toLspDiagnostic(diagnostic: LanguageDiagnostic): Diagnostic {
   return {
     range: toLspRange(diagnostic.range),
@@ -277,7 +288,10 @@ connection.onInitialize((): InitializeResult => ({
   capabilities: {
     textDocumentSync: TextDocumentSyncKind.Incremental,
     completionProvider: { triggerCharacters: ['.'] },
-    codeActionProvider: { codeActionKinds: [CodeActionKind.QuickFix], resolveProvider: false },
+    codeActionProvider: {
+      codeActionKinds: [CodeActionKind.QuickFix, CodeActionKind.RefactorInline],
+      resolveProvider: false,
+    },
     hoverProvider: true,
     signatureHelpProvider: { triggerCharacters: ['(', ','] },
     definitionProvider: true,
@@ -349,19 +363,21 @@ connection.onCodeAction((params: CodeActionParams): Promise<CodeAction[]> =>
     const offset = analyzed.document.offsetAt(params.range.start);
     const context = contextFor(analyzed, offset);
     const range = semanticRangeFromLsp(analyzed.document, params.range);
-    return provideQuickFixes(context, range).map((action): CodeAction => ({
-      title: action.title,
-      kind: CodeActionKind.QuickFix,
-      diagnostics: action.diagnostics.map(toLspDiagnostic),
-      edit: {
-        changes: {
-          [analyzed.document.uri]: action.edits.map((edit): TextEdit => ({
-            range: toLspRange(edit.range),
-            newText: edit.newText,
-          })),
+    return [...provideQuickFixes(context, range), ...provideRefactorings(context, range)].map(
+      (action): CodeAction => ({
+        title: action.title,
+        kind: toLspCodeActionKind(action.kind),
+        diagnostics: action.diagnostics.map(toLspDiagnostic),
+        edit: {
+          changes: {
+            [analyzed.document.uri]: action.edits.map((edit): TextEdit => ({
+              range: toLspRange(edit.range),
+              newText: edit.newText,
+            })),
+          },
         },
-      },
-    }));
+      }),
+    );
   }),
 );
 

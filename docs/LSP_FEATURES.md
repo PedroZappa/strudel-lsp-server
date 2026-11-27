@@ -1,6 +1,6 @@
 # LSP Features
 
-Status: Phase 6 capabilities, signature help, conservative token-level mini-notation analysis, Phase 7 quick fixes, rename, document symbols, semantic tokens and formatting implemented and verified; remaining candidates are tracked below.
+Status: Phase 6 capabilities, signature help, conservative token-level mini-notation analysis, Phase 7 quick fixes, rename, document symbols, semantic tokens, formatting and inline-constant refactoring implemented and verified; remaining candidates are tracked below.
 
 Authority: `AGENTS.md` sections 4 and 5.
 
@@ -21,27 +21,27 @@ None of this behaviour is treated as a specification.
 
 ## Capability matrix
 
-| Capability                         | Status          | Proposed phase  | Notes                                                                                 |
-| ---------------------------------- | --------------- | --------------- | ------------------------------------------------------------------------------------- |
-| Diagnostics                        | Implemented     | Early           | Conservative syntax warnings and unknown-call/method information; see policy.         |
-| Quick fixes                        | Implemented     | Extended        | Safe mini-notation edits only; no fixes for speculative or unknown-name issues.       |
-| Completion                         | Implemented     | Early           | Position-aware globals, locals and Pattern methods; `.` trigger.                      |
-| Completion resolution              | Not implemented | With completion | Only if additional lazy metadata adds real value.                                     |
-| Hover documentation                | Implemented     | Early           | Database descriptions, examples and inferred types.                                   |
-| Signature help                     | Implemented     | Early           | Database-backed globals and methods; `(`, `,` triggers and active parameter.          |
-| Go to definition                   | Implemented     | Early           | Resolved user and local symbols; builtins have no source declaration.                 |
-| References                         | Implemented     | Early           | Resolved references plus optional declarations.                                       |
-| Rename                             | Implemented     | Extended        | Document-scoped user symbols only; prepare and invalid-name checks are implemented.   |
-| Document symbols                   | Implemented     | Extended        | Declared user symbols from the current semantic snapshot with exact selection ranges. |
-| Workspace symbols                  | Deferred        | Deferred        | No workspace index exists; open-document-only search would be incomplete.             |
-| Semantic tokens                    | Implemented     | Extended        | Verified symbols and mini-notation tokens only; no unresolved-name guessing.          |
-| Formatting                         | Implemented     | Extended        | Conservative indentation only; preferences come from standard LSP formatting options. |
-| Refactoring and other code actions | Not implemented | Later           | Quick fixes tracked separately; broader actions need a usefulness and safety case.    |
-| Folding ranges                     | Deferred        | Deferred        | Evaluate after core language intelligence is reliable.                                |
-| Selection ranges                   | Deferred        | Deferred        | Evaluate editor benefit against implementation cost.                                  |
-| Inlay hints                        | Deferred        | Deferred        | Evaluate only with concrete, non-noisy use cases.                                     |
-| Call hierarchy                     | Deferred        | Deferred        | Depends on robust cross-reference semantics.                                          |
-| Mini-notation-aware analysis       | Implemented     | Early           | Parser-independent tokens; conservative structural warnings and operator hover.       |
+| Capability                         | Status          | Proposed phase  | Notes                                                                                    |
+| ---------------------------------- | --------------- | --------------- | ---------------------------------------------------------------------------------------- |
+| Diagnostics                        | Implemented     | Early           | Conservative syntax warnings and unknown-call/method information; see policy.            |
+| Quick fixes                        | Implemented     | Extended        | Safe mini-notation edits only; no fixes for speculative or unknown-name issues.          |
+| Completion                         | Implemented     | Early           | Position-aware globals, locals and Pattern methods; `.` trigger.                         |
+| Completion resolution              | Not implemented | With completion | Only if additional lazy metadata adds real value.                                        |
+| Hover documentation                | Implemented     | Early           | Database descriptions, examples and inferred types.                                      |
+| Signature help                     | Implemented     | Early           | Database-backed globals and methods; `(`, `,` triggers and active parameter.             |
+| Go to definition                   | Implemented     | Early           | Resolved user and local symbols; builtins have no source declaration.                    |
+| References                         | Implemented     | Early           | Resolved references plus optional declarations.                                          |
+| Rename                             | Implemented     | Extended        | Document-scoped user symbols only; prepare and invalid-name checks are implemented.      |
+| Document symbols                   | Implemented     | Extended        | Declared user symbols from the current semantic snapshot with exact selection ranges.    |
+| Workspace symbols                  | Deferred        | Deferred        | No workspace index exists; open-document-only search would be incomplete.                |
+| Semantic tokens                    | Implemented     | Extended        | Verified symbols and mini-notation tokens only; no unresolved-name guessing.             |
+| Formatting                         | Implemented     | Extended        | Conservative indentation only; preferences come from standard LSP formatting options.    |
+| Refactoring and other code actions | Implemented     | Extended        | Narrow `refactor.inline` for single-use literal constants; broader actions are deferred. |
+| Folding ranges                     | Deferred        | Deferred        | Evaluate after core language intelligence is reliable.                                   |
+| Selection ranges                   | Deferred        | Deferred        | Evaluate editor benefit against implementation cost.                                     |
+| Inlay hints                        | Deferred        | Deferred        | Evaluate only with concrete, non-noisy use cases.                                        |
+| Call hierarchy                     | Deferred        | Deferred        | Depends on robust cross-reference semantics.                                             |
+| Mini-notation-aware analysis       | Implemented     | Early           | Parser-independent tokens; conservative structural warnings and operator hover.          |
 
 Priorities are proposed by phase in `docs/ROADMAP.md` and remain subject to approval once licensing and metadata sources are resolved.
 
@@ -65,6 +65,15 @@ Current implementation: outermost non-empty syntax error nodes produce warnings;
 - An empty group is removed, an unmatched closer is removed, a mismatched closer is replaced with the expected closer, and a redundant separator is removed.
 - Syntax errors, unknown names and incomplete live-coding states have no fixes.
 - Edits are deterministic single-document text replacements and are never applied automatically by the server.
+
+## Refactoring policy
+
+- `refactor.inline` applies only to a `const` variable with one declaration and exactly one resolved value reference.
+- Initializers are limited to strings, numbers, substitution-free templates and the literal identifiers `true`, `false`, `null` and `undefined`.
+- Calls, assignments, imports, parameters, functions, exported declarations, multiple declarators and multiple uses are skipped.
+- The declaration statement and the verified reference must still match their recorded source text; malformed documents produce no action.
+- Edits remove the declaration statement and replace the single reference with the exact initializer text, without reflowing other code.
+- Broader refactorings remain deferred until they have a concrete usefulness and safety case.
 
 ## Rename policy
 
@@ -115,7 +124,7 @@ Implemented and advertised in `initialize`:
 
 - `textDocumentSync: Incremental` with an incremental text document store.
 - `completionProvider` with the `.` trigger character.
-- `codeActionProvider` with only the `quickfix` kind and `resolveProvider: false`.
+- `codeActionProvider` with the `quickfix` and `refactor.inline` kinds and `resolveProvider: false`.
 - `hoverProvider`, `definitionProvider` and `referencesProvider`.
 - `documentSymbolProvider` for `textDocument/documentSymbol`; no workspace-symbol capability is claimed.
 - `documentFormattingProvider` for `textDocument/formatting`; no range or on-type formatting is claimed.
@@ -126,8 +135,8 @@ Implemented and advertised in `initialize`:
 
 Verification evidence:
 
-- `npm run test:features`: twenty-three provider tests cover conservative diagnostics, malformed input, quick-fix edits and range filtering, position-aware completion, hover content, resolved-symbol navigation, document-symbol ranges and hierarchy, formatting indentation and preferences, rename preparation and edits, semantic-token classification, signature help, mini-notation diagnostics and hover, and incremental range shifting.
+- `npm run test:features`: twenty-six provider tests cover conservative diagnostics, malformed input, quick-fix edits and range filtering, inline-constant refactoring and unsafe-binding rejection, position-aware completion, hover content, resolved-symbol navigation, document-symbol ranges and hierarchy, formatting indentation and preferences, rename preparation and edits, semantic-token classification, signature help, mini-notation diagnostics and hover, and incremental range shifting.
 - `npm run test:mini`: five isolated token-model tests cover documented operators, token descriptions, structural faults, expected-closer metadata, live-coding suppression and unsupported-character progress.
-- `npm test`: 47 tests include a stdio integration test that verifies capability advertisement, all eleven implemented request types, diagnostic publication, code-action, document-symbol, formatting, semantic-token and rename mapping, document closure and rapid-edit version suppression, plus one test-script discovery regression check.
+- `npm test`: 50 tests include a stdio integration test that verifies capability advertisement, all eleven implemented request types, diagnostic publication, quick-fix and inline-refactor code-action mapping, document-symbol, formatting, semantic-token and rename mapping, document closure and rapid-edit version suppression, plus one test-script discovery regression check.
 
 Deferred: completion resolution, workspace symbols, range formatting, broader refactoring and remaining extended capabilities. Custom user-facing configuration for diagnostics and Strudel version selection is not exposed yet.

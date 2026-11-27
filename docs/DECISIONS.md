@@ -1,6 +1,6 @@
 # Decisions
 
-Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened; ADR-021 records the Phase 6 deferred-item completion, ADR-022 records Phase 7 quick fixes, ADR-023 records document-scoped rename, ADR-024 records document symbols with workspace symbols deferred, ADR-025 records semantic tokens, ADR-026 records conservative formatting and ADR-027 records prototype client dependency remediation.
+Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened; ADR-021 records the Phase 6 deferred-item completion, ADR-022 records Phase 7 quick fixes, ADR-023 records document-scoped rename, ADR-024 records document symbols with workspace symbols deferred, ADR-025 records semantic tokens, ADR-026 records conservative formatting, ADR-027 records prototype client dependency remediation and ADR-028 records inline-constant refactoring.
 
 ## ADR-001 — Clean-slate re-implementation
 
@@ -426,3 +426,20 @@ Consequences:
 - CI audits the client lockfile in addition to the root package, and `make audit-client` exposes the same check locally.
 - The client manifest has one intentional breaking major version change; retiring the prototype client would remove it entirely.
 - GitHub Dependabot alerts are expected to close after the lockfile change is pushed.
+
+## ADR-028 — Inline-constant refactoring
+
+Status: accepted on 2026-11-27.
+
+Decision: implement the first broader code action as `refactor.inline` for a narrow, verifiable case: a `const` variable with one declaration, exactly one resolved value reference and a literal initializer. All other refactorings remain deferred. No new dependency, workspace index or general JavaScript rewrite engine is introduced.
+
+`src/features/refactorings.ts` derives the action from the current syntax and semantic snapshots. Eligible initializers are strings, numbers, substitution-free templates and the identifiers `true`, `false`, `null` and `undefined`. The provider rejects calls, assignments, imports, parameters, functions, exported declarations, multiple declarators, multiple uses, stale source text and documents with syntax errors. Edits remove the declaration statement and replace the one verified reference with the initializer's exact source text. `src/server.ts` advertises `quickfix` and `refactor.inline` only, with `resolveProvider: false`.
+
+Rationale: broad refactoring in a live-coding language would require a complete JavaScript transformer and reliable mutation analysis. Those are outside the project's semantic scope and would risk disrupting partial patterns. A single-use literal binding is common when prototyping Strudel patterns, and its safety can be established from existing semantic resolution and syntax ranges.
+
+Consequences:
+
+- Clients see one additional deterministic code action kind; no action is applied automatically.
+- Inlining preserves expression text and does not reflow or rewrite unrelated code.
+- Feature tests cover literal inlining, range filtering, numbers, multi-use, assignment, exported, multi-declarator, call, template-substitution and malformed cases; the stdio test verifies advertisement and response mapping.
+- Refactoring computation uses the cached semantic snapshot and has no measured latency figure; Phase 8 must include it in representative code-action workloads.

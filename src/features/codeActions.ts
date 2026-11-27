@@ -25,6 +25,7 @@ export function provideQuickFixes(
     }
     actions.push({
       title: fix.title,
+      kind: 'quickfix',
       diagnostics: [diagnostic],
       edits: [{ range: fix.range, newText: fix.newText }],
     });

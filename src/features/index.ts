@@ -6,9 +6,12 @@ export { provideFormatting } from './formatting.js';
 export { provideHover } from './hover.js';
 export { provideDefinition, provideReferences } from './navigation.js';
 export { prepareRename, provideRename } from './rename.js';
+export { provideRefactorings } from './refactorings.js';
 export { provideSemanticTokens } from './semanticTokens.js';
 export { provideSignatureHelp } from './signatureHelp.js';
 export type {
+  CodeActionKindName,
+  CodeActionResult,
   CompletionCandidate,
   CompletionCandidateKind,
   DefinitionResult,
@@ -23,6 +26,7 @@ export type {
   LanguageDiagnostic,
   PrepareRenameResult,
   QuickFixResult,
+  RefactoringResult,
   ReferenceResult,
   RenameResult,
   SemanticTokenModifier,

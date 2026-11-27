@@ -261,7 +261,10 @@ void test('stdio server advertises and serves implemented language capabilities'
 
   assert.equal(initializeResult.capabilities.textDocumentSync, 2);
   assert.deepEqual(initializeResult.capabilities.completionProvider.triggerCharacters, ['.']);
-  assert.deepEqual(initializeResult.capabilities.codeActionProvider?.codeActionKinds, ['quickfix']);
+  assert.deepEqual(initializeResult.capabilities.codeActionProvider?.codeActionKinds, [
+    'quickfix',
+    'refactor.inline',
+  ]);
   assert.equal(initializeResult.capabilities.codeActionProvider?.resolveProvider, false);
   assert.equal(initializeResult.capabilities.hoverProvider, true);
   assert.deepEqual(initializeResult.capabilities.signatureHelpProvider.triggerCharacters, [
@@ -468,6 +471,28 @@ void test('stdio server advertises and serves implemented language capabilities'
   assert.equal(codeActions[0]?.kind, 'quickfix');
   assert.equal(codeActions[0]?.diagnostics[0]?.code, 'empty-group');
   assert.equal(codeActions[0]?.edit.changes[miniUri]?.[0]?.newText, '');
+
+  const refactorUri = 'file:///test/refactor.strudel';
+  const refactorText = 'const kick = "bd sd";\ns(kick);';
+  client.notify('textDocument/didOpen', {
+    textDocument: { uri: refactorUri, languageId: 'strudel', version: 1, text: refactorText },
+  });
+  const refactorActions = (await client.request('textDocument/codeAction', {
+    textDocument: { uri: refactorUri },
+    range: { start: { line: 1, character: 4 }, end: { line: 1, character: 8 } },
+    context: { diagnostics: [] },
+  })) as {
+    title: string;
+    kind: string;
+    edit: { changes: Record<string, { newText: string }[]> };
+  }[];
+  assert.equal(refactorActions.length, 1);
+  assert.equal(refactorActions[0]?.title, "Inline constant 'kick'");
+  assert.equal(refactorActions[0]?.kind, 'refactor.inline');
+  assert.deepEqual(
+    refactorActions[0]?.edit.changes[refactorUri]?.map((edit) => edit.newText),
+    ['', '"bd sd"'],
+  );
 
   const unknownDiagnostics = client.waitForNotification('textDocument/publishDiagnostics');
   client.notify('textDocument/didChange', {

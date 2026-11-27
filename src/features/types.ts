@@ -35,11 +35,23 @@ export interface TextEditResult {
   readonly newText: string;
 }
 
+export type CodeActionKindName = 'quickfix' | 'refactor.inline';
+
 export interface QuickFixResult {
   readonly title: string;
+  readonly kind: 'quickfix';
   readonly diagnostics: readonly LanguageDiagnostic[];
   readonly edits: readonly TextEditResult[];
 }
+
+export interface RefactoringResult {
+  readonly title: string;
+  readonly kind: 'refactor.inline';
+  readonly diagnostics: readonly LanguageDiagnostic[];
+  readonly edits: readonly TextEditResult[];
+}
+
+export type CodeActionResult = QuickFixResult | RefactoringResult;
 
 export interface CompletionCandidate {
   readonly label: string;

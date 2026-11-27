@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: re-implementation roadmap updated with resolved blocker decisions, Phase 6 completion, Phase 7 quick fixes, rename, document symbols, semantic tokens and formatting, 2026-11-27. Priorities are proposals and remain subject to approval.
+Status: re-implementation roadmap updated with resolved blocker decisions, Phase 6 completion, Phase 7 quick fixes, rename, document symbols, semantic tokens, formatting and inline-constant refactoring, 2026-11-27. Priorities are proposals and remain subject to approval.
 
 Authority: `AGENTS.md` sections 2–18 and the other documents in `docs/`.
 
@@ -159,7 +159,7 @@ Phase 6 exit criteria:
 
 ## Phase 7 — Extended capabilities
 
-**Status: quick fixes, rename, document symbols, semantic tokens and formatting implemented and verified; workspace symbols and the other candidates remain under evaluation.**
+**Status: quick fixes, rename, document symbols, semantic tokens, formatting and inline-constant refactoring implemented and verified; workspace symbols and the other candidates remain under evaluation.**
 
 Dependencies: Phase 6.
 
@@ -171,7 +171,7 @@ Candidate extended capabilities, evaluate and implement only where justified:
 - [ ] Workspace symbols (deferred; no workspace index exists).
 - [x] Semantic tokens.
 - [x] Formatting.
-- [ ] Code actions and refactoring.
+- [x] Code actions and refactoring (narrow inline-constant refactor; broader refactorings remain deferred).
 
 Quick fixes are limited to validated mini-notation structural diagnostics and produce single-document text edits. Syntax errors, unknown names and incomplete live-coding states do not produce fixes. The LSP adapter advertises only the quick-fix kind and recomputes actions from the current semantic snapshot rather than trusting client-supplied stale diagnostics.
 
@@ -212,6 +212,15 @@ Formatting exit criteria:
 - [x] `documentFormattingProvider` is advertised and `textDocument/formatting` returns deterministic UTF-16 edits.
 - [x] Feature and stdio tests cover statement and nested-block indentation, tab and space preferences, protected string/template/comment content, clean documents, unchanged documents and syntax errors.
 - [x] Formatting changes no code tokens and makes no edits when the existing indentation is already correct.
+
+Code actions remain conservative. Quick fixes continue to cover only validated mini-notation diagnostics. The first refactoring is `refactor.inline`: a single-use `const` binding with a literal initializer is removed, and its one resolved value reference is replaced with the exact initializer source text. Calls, imported or parameter bindings, multiple or assignment references, exported or multi-declarator statements, template substitutions, malformed documents and stale ranges produce no action. The LSP adapter advertises only `quickfix` and `refactor.inline`, with no resolve support.
+
+Code action and refactoring exit criteria:
+
+- [x] `codeActionProvider` advertises only the two implemented kinds and `resolveProvider: false`.
+- [x] Inline edits remove the declaration statement and replace exactly one verified literal use.
+- [x] Feature and stdio tests cover successful inlining, range filtering, unsafe bindings and malformed input.
+- [x] Broader refactorings remain deferred until a usefulness and safety case is recorded.
 
 ## Phase 8 — Performance harness and targets
 
