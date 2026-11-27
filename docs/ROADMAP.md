@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: re-implementation roadmap complete through Phase 25; the proposed route continues with Phases 26–29. `strudel-lsp-server@0.4.0` was published on 2026-11-27 from tag `v0.4.0` at commit `1d39c14cba2152116ce1c2c5d5b827bf6af5c144` through the controlled OIDC workflow with `pedrozappa` as operator and remains available. `strudel-lsp-server@0.5.0` was published on 2026-11-27 from tag `v0.5.0` at commit `51f2aa511028a970a92c62e43efdabf141d0b0e9` through the controlled OIDC workflow with `pedrozappa` as operator and is the latest release; `0.3.0`, `0.2.0` and `0.1.0` remain available. ADR-060 records the exact publication authorization and ADR-061 records the registry, signature, provenance and smoke evidence for `0.2.0`. ADR-051 records the scope and deferred work, ADR-052 records the configuration contract, ADR-053 records the filesystem boundary, ADR-054 records the `.npmrc` removal, ADR-055 records hermetic pack caching, ADR-056 records the advisory soak/lifecycle design, ADR-057 records the separate advisory benchmark report, ADR-058 records the independent editor-client smoke evidence, ADR-059 records the release-preparation authorization, ADR-062 records publication-state-aware verification, ADR-063 records the initial v1 stability charter, ADR-064 records the Phase 17 package, support and SBOM decisions, and ADR-065 records the Phase 18 parser, metadata and platform compatibility closure, ADR-066 authorizes the exact Phase 19 publication, ADR-067 records its publication and smoke evidence, ADR-070 records the registry-visibility wait, ADR-071 authorizes the exact Phase 22 publication and ADR-072 records its publication and smoke evidence. ADR-075 authorizes the exact Phase 25 publication, ADR-076 records its publication and smoke evidence, and ADR-077 records the v1 scope amendment and post-v1 roadmap. Missing provenance for the operator-managed first publish is recorded in ADR-050. The route below describes proposed work through post-v1, split into `v0.3.0`, `v0.4.0`, `v0.5.0`, `v1.0.0`, `v1.1` and `v1.x` increments. Phases 16–25 are complete; Phase 24 was committed as `0f30fe5` and pushed; the Phase 25 release was published from `51f2aa5` and verified under ADR-076; Phases 26–29 remain proposed and subject to phase-specific approval.
+Status: re-implementation roadmap complete through Phase 25; the proposed route continues with Phases 26–29. `strudel-lsp-server@0.4.0` was published on 2026-11-27 from tag `v0.4.0` at commit `1d39c14cba2152116ce1c2c5d5b827bf6af5c144` through the controlled OIDC workflow with `pedrozappa` as operator and remains available. `strudel-lsp-server@0.5.0` was published on 2026-11-27 from tag `v0.5.0` at commit `51f2aa511028a970a92c62e43efdabf141d0b0e9` through the controlled OIDC workflow with `pedrozappa` as operator and is the latest release; `0.3.0`, `0.2.0` and `0.1.0` remain available. ADR-060 records the exact publication authorization and ADR-061 records the registry, signature, provenance and smoke evidence for `0.2.0`. ADR-051 records the scope and deferred work, ADR-052 records the configuration contract, ADR-053 records the filesystem boundary, ADR-054 records the `.npmrc` removal, ADR-055 records hermetic pack caching, ADR-056 records the advisory soak/lifecycle design, ADR-057 records the separate advisory benchmark report, ADR-058 records the independent editor-client smoke evidence, ADR-059 records the release-preparation authorization, ADR-062 records publication-state-aware verification, ADR-063 records the initial v1 stability charter and its Phase 26 frozen-baseline amendment, ADR-064 records the Phase 17 package, support and SBOM decisions, and ADR-065 records the Phase 18 parser, metadata and platform compatibility closure, ADR-066 authorizes the exact Phase 19 publication, ADR-067 records its publication and smoke evidence, ADR-070 records the registry-visibility wait, ADR-071 authorizes the exact Phase 22 publication and ADR-072 records its publication and smoke evidence. ADR-075 authorizes the exact Phase 25 publication, ADR-076 records its publication and smoke evidence, and ADR-077 records the v1 scope amendment and post-v1 roadmap. Missing provenance for the operator-managed first publish is recorded in ADR-050. The route below describes proposed work through post-v1, split into `v0.3.0`, `v0.4.0`, `v0.5.0`, `v1.0.0`, `v1.1` and `v1.x` increments. Phases 16–25 are complete; Phase 24 was committed as `0f30fe5` and pushed; the Phase 25 release was published from `51f2aa5` and verified under ADR-076; Phases 26–29 remain proposed and subject to phase-specific approval.
 
 Authority: `AGENTS.md` sections 2–18 and the other documents in `docs/`.
 
@@ -435,7 +435,7 @@ Dependency chain:
 
 Dependencies: Phase 15 and ADR-033, which reserves `1.0.0` for a separate stability decision.
 
-**Status: complete for the initial charter. It is a baseline that Phases 20–24 may extend and Phase 26 freezes; it does not authorize feature implementation or publication.**
+**Status: complete. Phase 26 froze the published `0.5.0` baseline in ADR-063; pending ADR-077 additions require their own gate and an explicit re-freeze before `v1.0.0`.**
 
 Tasks:
 
@@ -632,7 +632,7 @@ Dependencies: Phases 19, 22 and 25.
 
 Tasks:
 
-- [ ] Update the Phase 16 stability ADR to include every capability added in Phases 20–24 and freeze the v1 capability matrix.
+- [x] Update the Phase 16 stability ADR to include every capability added in Phases 20–24 and freeze the published `0.5.0` baseline. ADR-077 additions remain pending and require an explicit re-freeze before the final `v1.0.0` matrix.
 - [ ] Implement context-aware mini-notation step completion and hover sourced first from literal `samples({...})` keys, with note-name candidates only where pinned metadata supports them and no new unknown-sample diagnostic.
 - [ ] Implement relative `.strudel` import-path completion using the bounded workspace scan and its existing symlink, traversal, size, depth and unreadable-file guards.
 - [ ] Surface pinned deprecation metadata in completion and hover without adding a diagnostic code.
@@ -644,6 +644,8 @@ Tasks:
 - [ ] Repeat dependency, licence, provenance and secret audits on the exact v1 candidate.
 - [ ] Confirm the package allowlist, SBOM decision, support guidance and performance policy are implemented and documented.
 - [ ] Prepare versioned changelog and GitHub release notes from the exact candidate, without reusing point-in-time `0.2.0` evidence as if it were v1 evidence.
+
+Baseline freeze evidence: ADR-063's Phase 26 amendment records the complete Phases 20–24 mapping and freezes the published `0.5.0` surface. It does not pre-approve or advertise the ADR-077 additions.
 
 Exit criteria:
 
@@ -752,7 +754,7 @@ These items were deferred after the first release and are not selected for `0.2.
 - Persistent workspace index or file watcher as a prerequisite for navigation.
 - Vendored grammar or generated parser source, and TCP transport.
 
-The earlier deferral of folding, selection ranges, inlay hints and call hierarchy was superseded and implemented in Phase 23; those capabilities are included in `0.5.0` and await the Phase 26 freeze. ADR-077 adds four further v1 goals; all remain unimplemented and unadvertised until their phase is separately authorized and passes the full gate.
+The earlier deferral of folding, selection ranges, inlay hints and call hierarchy was superseded and implemented in Phase 23; those capabilities are included in `0.5.0` and in the Phase 26 frozen baseline. ADR-077 adds four further v1 goals; all remain unimplemented and unadvertised until their phase is separately authorized, passes the full gate and is recorded in an explicit re-freeze.
 
 ## Transition constraint
 
