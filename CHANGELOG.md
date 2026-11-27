@@ -2,9 +2,13 @@
 
 All notable changes to the `strudel-lsp-server` npm package are documented in this file. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-The `0.1.0` section is prepared for the first authorized publication; confirm the release date and exact tagged commit before publishing. Full user-facing notes are in `.github/RELEASE_TEMPLATE.md`.
+Version `0.1.0` was published on 2026-11-27 from tag `v0.1.0`; full user-facing notes are in `.github/RELEASE_TEMPLATE.md`.
 
 ## [Unreleased]
+
+### Added
+
+- Focused, unreleased diagnostics configuration through standard `workspace/configuration` and `workspace/didChangeConfiguration`: a global enable flag, per-code severity overrides including `off`, and unchanged defaults when no settings are supplied. Quick fixes follow the resulting diagnostics.
 
 ## [0.1.0] - 2026-11-27
 

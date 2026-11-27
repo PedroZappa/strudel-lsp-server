@@ -49,10 +49,10 @@ Editor (any LSP client)
 
 Side inputs:
   - Reproducible language database (generated, manual and runtime-derived metadata)
-  - User configuration (no custom channel in `0.1.0`; standard LSP formatting options only)
+  - User configuration (unreleased Phase 14 diagnostics settings via standard LSP configuration; standard formatting options only)
 ```
 
-The current `src/server.ts` implements LSP lifecycle, incremental text sync, completion, code actions for quick fixes and inline refactoring, hover, signature help, definition, references, document and workspace symbols, semantic tokens, document formatting, prepare rename, rename and push diagnostics. `src/syntax/` implements the pinned Tree-sitter adapter and the parser-independent `SyntaxDocument` contract. `src/semantic/` implements parser-independent snapshots, scopes, symbols, references, limited type inference, incremental reuse and cancellation checks. `src/miniNotation/` implements a lexical token and conservative issue submodel over mini-notation string content. `src/languageDatabase/` implements a reproducible, offline-capable metadata snapshot with a `SemanticCatalog` adapter. `src/lsp/` owns the text document store, bounded workspace file discovery and per-version syntax/semantic snapshots. `src/features/` contains transport-independent diagnostics, quick-fix, inline-refactoring, completion, hover, signature help, navigation, document-symbol, workspace-symbol, semantic-token, formatting and rename providers. Document updates are analysed outside the request handlers on the next event-loop turn; request handlers await the latest scheduled analysis, and superseded document versions are discarded before publication. Version `0.1.0` has no custom configuration channel: diagnostics use provider defaults and language metadata is pinned. ADR-034 records why diagnostic overrides and Strudel version selection are deferred.
+The current `src/server.ts` implements LSP lifecycle, incremental text sync, completion, code actions for quick fixes and inline refactoring, hover, signature help, definition, references, document and workspace symbols, semantic tokens, document formatting, prepare rename, rename and push diagnostics. `src/syntax/` implements the pinned Tree-sitter adapter and the parser-independent `SyntaxDocument` contract. `src/semantic/` implements parser-independent snapshots, scopes, symbols, references, limited type inference, incremental reuse and cancellation checks. `src/miniNotation/` implements a lexical token and conservative issue submodel over mini-notation string content. `src/languageDatabase/` implements a reproducible, offline-capable metadata snapshot with a `SemanticCatalog` adapter. `src/lsp/` owns the text document store, bounded workspace file discovery and per-version syntax/semantic snapshots. `src/features/` contains transport-independent diagnostics, quick-fix, inline-refactoring, completion, hover, signature help, navigation, document-symbol, workspace-symbol, semantic-token, formatting and rename providers. The unreleased `src/configuration/` layer parses and applies only the focused diagnostics settings; it has no LSP or parser dependency. Document updates are analysed outside the request handlers on the next event-loop turn; request handlers await the latest scheduled analysis, and superseded document versions are discarded before publication. Version `0.1.0` has no custom configuration channel: diagnostics use provider defaults and language metadata is pinned. ADR-034 records the first-release boundary, ADR-052 records the unreleased diagnostics extension, and Strudel version selection remains deferred.
 
 ## Responsibilities
 
@@ -72,6 +72,13 @@ The current `src/server.ts` implements LSP lifecycle, incremental text sync, com
 - Use accurate document ranges and return actionable diagnostics.
 - Avoid cascading diagnostics when context is incomplete.
 - Treat language database lookups as explicit dependencies rather than hidden globals.
+
+### Configuration
+
+- Parse only user-facing diagnostics settings through a transport-independent boundary.
+- Keep provider defaults authoritative for missing, invalid or unknown values.
+- Apply valid overrides to published diagnostics and derived quick fixes without exposing engine internals.
+- Request configuration only from clients that advertise the LSP capability, while accepting standard settings notifications.
 
 ### Performance harness
 

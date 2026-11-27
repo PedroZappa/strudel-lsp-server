@@ -30,7 +30,7 @@ The committed harness is `scripts/benchmark.mjs`. It imports the compiled ESM mo
 | `parse-analyze-large`    | `large-pattern-set.strudel`  | Full parse and semantic analysis of many declarations and mini-notation calls. |
 | `incremental-edit-small` | `small-live-edit.strudel`    | Incremental syntax update plus semantic update for a one-character edit.       |
 | `incremental-edit-large` | `large-pattern-set.strudel`  | The same update on the large fixture.                                          |
-| `diagnostics-small`      | `small-live-edit.strudel`    | Diagnostic derivation for a valid buffer.                                      |
+| `diagnostics-small`      | `small-live-edit.strudel`    | Diagnostic derivation with default configuration applied to a valid buffer.    |
 | `diagnostics-incomplete` | `incomplete-live.strudel`    | Resilient diagnostics for partially typed input.                               |
 | `completion-medium`      | `medium-composition.strudel` | Pattern-method completion after a dot.                                         |
 | `hover-large`            | `large-pattern-set.strudel`  | Hover for a resolved declaration.                                              |
@@ -40,7 +40,7 @@ The committed harness is `scripts/benchmark.mjs`. It imports the compiled ESM mo
 | `workspace-symbols-scan` | `workspace/`                 | Bounded file discovery, parsing, analysis and workspace-symbol query.          |
 | `formatting-medium`      | `medium-composition.strudel` | Indentation-only formatting of an unformatted copy.                            |
 | `semantic-tokens-large`  | `large-pattern-set.strudel`  | Full-document semantic-token classification.                                   |
-| `quick-fixes-small`      | `small-live-edit.strudel`    | Quick-fix derivation from fresh diagnostics.                                   |
+| `quick-fixes-small`      | `small-live-edit.strudel`    | Quick-fix derivation from fresh configured diagnostics.                        |
 | `refactor-inline-small`  | `small-live-edit.strudel`    | Inline-constant eligibility scan.                                              |
 | `rename-large`           | `large-pattern-set.strudel`  | Rename preparation and edit computation.                                       |
 
@@ -103,7 +103,7 @@ The large incremental edit is currently slower than a full parse and analysis of
 
 ## Instrumentation plan
 
-- Layer-boundary timing lives only in `scripts/benchmark.mjs`; no production timing hooks or user-facing configuration were added.
+- Layer-boundary timing lives only in `scripts/benchmark.mjs`; the harness adds no production timing hooks or user-facing configuration.
 - The runner keeps fixtures, baseline data and results separate from `src/` and the published package.
 - Cancellation and superseded-version behaviour are covered by the stdio integration tests rather than by latency samples.
 - Future instrumentation should capture request cancellation counts only when a concrete latency investigation requires them.
@@ -111,3 +111,5 @@ The large incremental edit is currently slower than a full parse and analysis of
 ## Current status
 
 Phase 8 is implemented. The harness records 18 workloads, the committed baseline contains measured p50/p95/p99 values and numeric warning thresholds, and CI reports advisory regressions. No performance target is a blocking correctness gate. Phase 6 and Phase 7 providers still lack production-side timing instrumentation; their latencies are measured through the harness rather than from live editor sessions.
+
+The unreleased Phase 14 diagnostics settings apply a pure default configuration to each diagnostics and quick-fix derivation. After that change, `npm run benchmark:check` on darwin-arm64 with Node 26.8.2 reported all 18 workloads within the committed thresholds; `diagnostics-small` p50/p95/p99 were 0.003/0.003/0.003 ms and `quick-fixes-small` were 0.001/0.003/0.003 ms. The committed baseline was not rewritten because these remain layer-level advisory measurements rather than editor latency.

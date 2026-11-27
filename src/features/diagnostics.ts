@@ -1,3 +1,8 @@
+import {
+  applyDiagnosticsConfiguration,
+  DEFAULT_DIAGNOSTICS_CONFIGURATION,
+  type DiagnosticsConfiguration,
+} from '../configuration/index.js';
 import type { MiniNotationIssue } from '../miniNotation/index.js';
 import type { SemanticReference } from '../semantic/index.js';
 import type { SyntaxNode } from '../syntax/index.js';
@@ -78,7 +83,10 @@ function miniNotationFix(issue: MiniNotationIssue): DiagnosticFix | undefined {
   }
 }
 
-export function provideDiagnostics(context: FeatureContext): readonly LanguageDiagnostic[] {
+export function provideDiagnostics(
+  context: FeatureContext,
+  configuration: DiagnosticsConfiguration = DEFAULT_DIAGNOSTICS_CONFIGURATION,
+): readonly LanguageDiagnostic[] {
   const diagnostics: LanguageDiagnostic[] = [];
   const errorNodes: SyntaxNode[] = [];
   collectOutermostErrorNodes(context.syntax.root, errorNodes);
@@ -97,7 +105,7 @@ export function provideDiagnostics(context: FeatureContext): readonly LanguageDi
   // diagnostics would be speculative there, so they are suppressed until the
   // syntax tree is clean again.
   if (context.syntax.hasErrors) {
-    return diagnostics;
+    return applyDiagnosticsConfiguration(diagnostics, configuration);
   }
 
   for (const reference of context.semantic.references) {
@@ -122,5 +130,5 @@ export function provideDiagnostics(context: FeatureContext): readonly LanguageDi
     }
   }
 
-  return diagnostics;
+  return applyDiagnosticsConfiguration(diagnostics, configuration);
 }

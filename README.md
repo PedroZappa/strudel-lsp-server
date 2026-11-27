@@ -49,9 +49,9 @@ See [LSP_FEATURES.md](https://github.com/PedroZappa/strudel-lsp-server/blob/main
 
 ## Known limitations
 
-Version `0.1.0` deliberately limits scope:
+Published version `0.1.0` deliberately limits scope:
 
-- There is no custom configuration channel; diagnostic enablement/severity overrides and Strudel version selection are deferred.
+- It has no custom configuration channel; diagnostic enablement/severity overrides and Strudel version selection are deferred. The current development tree adds an unreleased, focused diagnostics configuration described below and in ADR-052.
 - Diagnostics stay conservative on incomplete live-coding input rather than reporting unreliable cascading errors.
 - Formatting is indentation-only. Range formatting is deferred.
 - Workspace symbols use a bounded on-demand scan of `.strudel` files rather than a persistent workspace index or cross-file module graph.
@@ -60,7 +60,9 @@ Version `0.1.0` deliberately limits scope:
 
 ## Configuration
 
-The `0.1.0` server has no custom settings. Diagnostics are enabled by default with conservative provider-defined severities. Formatting follows the client's standard LSP `tabSize` and `insertSpaces` options, falling back to two spaces when omitted. Language metadata uses the pinned Strudel snapshot; diagnostic enablement/severity overrides and Strudel version selection are deferred. Client-specific configuration remains outside this package.
+The published `0.1.0` package has no custom settings: diagnostics are enabled by default with conservative provider-defined severities, formatting follows the client's standard LSP `tabSize` and `insertSpaces` options, and language metadata uses the pinned Strudel snapshot.
+
+The unreleased development tree adds focused diagnostics settings under the standard LSP `strudelLsp` section: `diagnostics.enabled` plus optional per-code severities (`error`, `warning`, `information`, `hint` or `off`). Clients that advertise `workspace.configuration` are queried for this section; `workspace/didChangeConfiguration` also applies settings and republishes diagnostics. Defaults remain unchanged when no configuration is supplied. Formatting preferences and Strudel metadata selection remain outside this narrow surface, and client-specific configuration stays outside the package. See [LSP_FEATURES.md](https://github.com/PedroZappa/strudel-lsp-server/blob/main/docs/LSP_FEATURES.md#configuration) for the exact settings shape and ADR-052 for the decision.
 
 ## Development
 

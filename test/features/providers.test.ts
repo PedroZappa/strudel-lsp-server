@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 
 import { test } from 'node:test';
 
+import { parseDiagnosticsConfiguration } from '../../src/configuration/index.js';
 import {
   createCatalogFromLanguageDatabase,
   createDefaultLanguageDatabase,
@@ -43,6 +44,22 @@ void test('incomplete live-coding input never produces error diagnostics', () =>
     diagnostics.some((diagnostic) => diagnostic.severity === 'error'),
     false,
   );
+});
+
+void test('diagnostics configuration remaps severity and supports suppression', () => {
+  const unknown = createFeatureHarness('unknownFn()');
+  const remapped = parseDiagnosticsConfiguration({
+    diagnostics: { severity: { 'unknown-global': 'warning' } },
+  });
+  assert.equal(provideDiagnostics(unknown.context, remapped)[0]?.severity, 'warning');
+
+  const suppressed = parseDiagnosticsConfiguration({
+    diagnostics: { severity: { 'unknown-global': 'off' } },
+  });
+  assert.deepEqual(provideDiagnostics(unknown.context, suppressed), []);
+
+  const disabled = parseDiagnosticsConfiguration({ diagnostics: { enabled: false } });
+  assert.deepEqual(provideDiagnostics(unknown.context, disabled), []);
 });
 
 void test('completion is position-aware for globals, locals and pattern methods', () => {

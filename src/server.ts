@@ -17,6 +17,7 @@ import {
   type CompletionParams,
   type DefinitionParams,
   type Diagnostic,
+  type DidChangeConfigurationParams,
   type DocumentFormattingParams,
   type DocumentSymbol as LspDocumentSymbol,
   type DocumentSymbolParams,
@@ -41,6 +42,10 @@ import {
   type WorkspaceSymbolParams,
 } from 'vscode-languageserver/node';
 
+import {
+  DEFAULT_DIAGNOSTICS_CONFIGURATION,
+  parseDiagnosticsConfiguration,
+} from './configuration/index.js';
 import {
   provideCompletion,
   provideDefinition,
@@ -86,6 +91,8 @@ const pendingAnalyses = new Map<string, Promise<void>>();
 const latestVersions = new Map<string, number>();
 let workspaceRootUris: readonly string[] = [];
 let workspaceFoldersSupported = false;
+let configurationSupported = false;
+let diagnosticsConfiguration = DEFAULT_DIAGNOSTICS_CONFIGURATION;
 
 const SEMANTIC_TOKEN_TYPES: readonly SemanticTokenType[] = [
   'function',
@@ -170,6 +177,21 @@ function cancelDocumentAnalysis(uri: string): void {
   pendingAnalyses.delete(uri);
 }
 
+async function refreshDiagnosticsConfiguration(
+  params?: DidChangeConfigurationParams,
+): Promise<void> {
+  const value: unknown = configurationSupported
+    ? await connection.workspace.getConfiguration('strudelLsp')
+    : params?.settings;
+  diagnosticsConfiguration = await guardAsync(diagnosticsConfiguration, () =>
+    Promise.resolve(parseDiagnosticsConfiguration(value)),
+  );
+  await Promise.all([...pendingAnalyses.values()]);
+  for (const analyzed of documents.all()) {
+    publishDiagnostics(analyzed);
+  }
+}
+
 function toLspRange(range: SemanticRange): LspRange {
   return {
     start: { line: range.start.line, character: range.start.character },
@@ -185,6 +207,8 @@ function toLspSeverity(severity: DiagnosticSeverityName): DiagnosticSeverity {
       return DiagnosticSeverity.Warning;
     case 'information':
       return DiagnosticSeverity.Information;
+    case 'hint':
+      return DiagnosticSeverity.Hint;
   }
 }
 
@@ -330,13 +354,16 @@ function contextFor(analyzed: AnalyzedDocument, offset: number): FeatureContext 
 function publishDiagnostics(analyzed: AnalyzedDocument): void {
   guard(undefined, () => {
     const context = contextFor(analyzed, 0);
-    const diagnostics: Diagnostic[] = provideDiagnostics(context).map(toLspDiagnostic);
+    const diagnostics: Diagnostic[] = provideDiagnostics(context, diagnosticsConfiguration).map(
+      toLspDiagnostic,
+    );
     void connection.sendDiagnostics({ uri: analyzed.document.uri, diagnostics });
   });
 }
 
 connection.onInitialize((params: InitializeParams): InitializeResult => {
   rememberWorkspaceRoots(params);
+  configurationSupported = params?.capabilities?.workspace?.configuration === true;
   return {
     capabilities: {
       textDocumentSync: TextDocumentSyncKind.Incremental,
@@ -362,7 +389,15 @@ connection.onInitialize((params: InitializeParams): InitializeResult => {
   };
 });
 
-connection.onInitialized(() => undefined);
+connection.onInitialized(() => {
+  if (configurationSupported) {
+    void refreshDiagnosticsConfiguration();
+  }
+});
+
+connection.onDidChangeConfiguration((params) => {
+  void refreshDiagnosticsConfiguration(params);
+});
 
 connection.onDidOpenTextDocument((params) => {
   scheduleDocumentUpdate(params.textDocument.uri, params.textDocument.version, () => {
@@ -418,21 +453,22 @@ connection.onCodeAction((params: CodeActionParams): Promise<CodeAction[]> =>
     const offset = analyzed.document.offsetAt(params.range.start);
     const context = contextFor(analyzed, offset);
     const range = semanticRangeFromLsp(analyzed.document, params.range);
-    return [...provideQuickFixes(context, range), ...provideRefactorings(context, range)].map(
-      (action): CodeAction => ({
-        title: action.title,
-        kind: toLspCodeActionKind(action.kind),
-        diagnostics: action.diagnostics.map(toLspDiagnostic),
-        edit: {
-          changes: {
-            [analyzed.document.uri]: action.edits.map((edit): TextEdit => ({
-              range: toLspRange(edit.range),
-              newText: edit.newText,
-            })),
-          },
+    return [
+      ...provideQuickFixes(context, range, diagnosticsConfiguration),
+      ...provideRefactorings(context, range),
+    ].map((action): CodeAction => ({
+      title: action.title,
+      kind: toLspCodeActionKind(action.kind),
+      diagnostics: action.diagnostics.map(toLspDiagnostic),
+      edit: {
+        changes: {
+          [analyzed.document.uri]: action.edits.map((edit): TextEdit => ({
+            range: toLspRange(edit.range),
+            newText: edit.newText,
+          })),
         },
-      }),
-    );
+      },
+    }));
   }),
 );
 

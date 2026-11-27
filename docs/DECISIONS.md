@@ -1,6 +1,6 @@
 # Decisions
 
-Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened or superseded; ADR-021 records the Phase 6 deferred-item completion, ADR-022 records Phase 7 quick fixes, ADR-023 records document-scoped rename, ADR-024 records document symbols, ADR-025 records semantic tokens, ADR-026 records conservative formatting, ADR-027 records prototype client dependency remediation, ADR-028 records inline-constant refactoring, ADR-029 records bounded on-demand workspace symbols, ADR-030 records the Phase 8 performance baseline and advisory check, ADR-031 records Phase 9 local packaging verification, ADR-032 records the AGPL-3.0-only project licence decision, ADR-033 records the `0.1.0` release identity and SemVer policy, ADR-034 records the deferred user configuration boundary, ADR-035 records the `0.1.0` supported runtime and OS matrix, ADR-036 records the Phase 11 clean-install validation design, ADR-037 records the real documentation corpus validation design, ADR-038 records the Phase 11 protocol robustness review and transport behaviour, ADR-039 records the npm namespace and publication access review, ADR-040 records the Phase 12 licensing and provenance sign-off, ADR-041 records the Phase 12 dependency and secret audit, ADR-042 records the controlled release workflow design, ADR-043 records the publish/pack dry-run comparison, ADR-044 records the changelog and GitHub release notes preparation, ADR-045 records the rollback and correction policy, ADR-046 records the post-publication smoke plan, ADR-047 records the Phase 13 release authorization, ADR-048 records the Phase 13 gate confirmation, ADR-049 records the first-publish bootstrap exception, ADR-050 records the Phase 13 publication evidence and provenance limitation, and ADR-051 records the proposed `0.2.0` scope and deferred work.
+Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened or superseded; ADR-021 records the Phase 6 deferred-item completion, ADR-022 records Phase 7 quick fixes, ADR-023 records document-scoped rename, ADR-024 records document symbols, ADR-025 records semantic tokens, ADR-026 records conservative formatting, ADR-027 records prototype client dependency remediation, ADR-028 records inline-constant refactoring, ADR-029 records bounded on-demand workspace symbols, ADR-030 records the Phase 8 performance baseline and advisory check, ADR-031 records Phase 9 local packaging verification, ADR-032 records the AGPL-3.0-only project licence decision, ADR-033 records the `0.1.0` release identity and SemVer policy, ADR-034 records the deferred user configuration boundary, ADR-035 records the `0.1.0` supported runtime and OS matrix, ADR-036 records the Phase 11 clean-install validation design, ADR-037 records the real documentation corpus validation design, ADR-038 records the Phase 11 protocol robustness review and transport behaviour, ADR-039 records the npm namespace and publication access review, ADR-040 records the Phase 12 licensing and provenance sign-off, ADR-041 records the Phase 12 dependency and secret audit, ADR-042 records the controlled release workflow design, ADR-043 records the publish/pack dry-run comparison, ADR-044 records the changelog and GitHub release notes preparation, ADR-045 records the rollback and correction policy, ADR-046 records the post-publication smoke plan, ADR-047 records the Phase 13 release authorization, ADR-048 records the Phase 13 gate confirmation, ADR-049 records the first-publish bootstrap exception, ADR-050 records the Phase 13 publication evidence and provenance limitation, ADR-051 records the proposed `0.2.0` scope and deferred work, and ADR-052 records the focused diagnostics configuration contract.
 
 ## ADR-001 — Clean-slate re-implementation
 
@@ -541,7 +541,7 @@ Consequences:
 
 ## ADR-034 — Deferred user configuration for `0.1.0`
 
-Status: accepted on 2026-11-27 for the first release.
+Status: accepted on 2026-11-27 for the first release. The Strudel-version portion remains authoritative; the diagnostics portion is superseded for the unreleased `0.2.0` work by ADR-052.
 
 Decision: do not add a custom configuration channel in `0.1.0`. Diagnostics remain enabled with their provider-defined severities; formatting uses only standard LSP `tabSize` and `insertSpaces` options; language metadata remains pinned to the committed Strudel snapshot. Diagnostic enablement/severity overrides and Strudel compatibility/version selection are deferred.
 
@@ -976,3 +976,27 @@ Consequences:
 - No source, manifest, lockfile, test, benchmark, release note or registry state was changed by this decision.
 - Phase 14 implementation requires its own task authorization; Phase 15 publication requires a separate authorization naming `0.2.0` and the operator.
 - `0.1.0` remains the only published version, and its provenance limitation remains recorded in ADR-050.
+
+## ADR-052 — Focused diagnostics configuration
+
+Status: accepted on 2026-11-27 for the unreleased `0.2.0` work. This decision implements the selected Phase 14 task; it does not authorize a version bump, tag or publication.
+
+Decision: add a narrow settings surface using standard LSP configuration, without exposing internal engine settings. Clients that advertise `workspace.configuration` receive a `workspace/configuration` request for the `strudelLsp` section. A client may also send `workspace/didChangeConfiguration` with settings under `strudelLsp.diagnostics`.
+
+Accepted settings:
+
+- `diagnostics.enabled`: boolean, default `true`.
+- `diagnostics.severity`: optional map from `syntax-error`, `unknown-global`, `unknown-pattern-method`, `empty-group`, `unmatched-close`, `mismatched-close` and `empty-step` to `error`, `warning`, `information`, `hint` or `off`.
+- Omitted or invalid values retain provider defaults. `off` suppresses the diagnostic. Enabled quick fixes are derived from the resulting diagnostics, so suppression also suppresses the corresponding fix.
+- A global `enabled: false` suppresses all diagnostics and fixes.
+
+Defaults remain unchanged when a client does not advertise configuration capability. Dynamic changes are reparsed and all open documents receive republished diagnostics. Formatting continues to use only standard LSP `tabSize` and `insertSpaces` options, and Strudel version selection remains deferred because only one metadata snapshot exists.
+
+Rationale: ADR-034 deferred a broad settings contract for the first release. The `0.2.0` scope in ADR-051 selected one concrete diagnostics use case; a standard LSP section avoids editor-specific files and keeps the surface small. Provider defaults stay authoritative unless a client explicitly supplies a valid override, preserving live-coding resilience and published `0.1.0` behavior.
+
+Consequences:
+
+- Parsing and application are isolated in `src/configuration/` and consumed by the diagnostics provider, quick-fix provider and LSP server lifecycle.
+- Configuration contract tests cover defaults, invalid values, both LSP delivery shapes, severity remapping, suppression and dynamic republishing.
+- `docs/LSP_FEATURES.md`, `docs/TESTING_STRATEGY.md`, the README and the CHANGELOG describe this as unreleased behavior until a version is published.
+- No Strudel version selector, engine tuning setting, editor-specific configuration file or new dependency is introduced.

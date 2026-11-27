@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 
 import { test } from 'node:test';
 
+import { parseDiagnosticsConfiguration } from '../../src/configuration/index.js';
 import { provideQuickFixes } from '../../src/features/index.js';
 import type { SemanticRange } from '../../src/semantic/index.js';
 
@@ -56,4 +57,22 @@ void test('quick fixes ignore non-actionable diagnostics and unrelated ranges', 
 
   const invalid = createFeatureHarness('s("a)")');
   assert.deepEqual(provideQuickFixes(invalid.context, singleLineRange(0, 0)), []);
+});
+
+void test('quick fixes follow diagnostics configuration', () => {
+  const harness = createFeatureHarness('s("[]")');
+  const range = singleLineRange(0, harness.context.text.length);
+
+  const hintOnly = parseDiagnosticsConfiguration({
+    diagnostics: { severity: { 'empty-group': 'hint' } },
+  });
+  assert.equal(provideQuickFixes(harness.context, range, hintOnly).length, 1);
+
+  const suppressed = parseDiagnosticsConfiguration({
+    diagnostics: { severity: { 'empty-group': 'off' } },
+  });
+  assert.deepEqual(provideQuickFixes(harness.context, range, suppressed), []);
+
+  const disabled = parseDiagnosticsConfiguration({ diagnostics: { enabled: false } });
+  assert.deepEqual(provideQuickFixes(harness.context, range, disabled), []);
 });

@@ -57,6 +57,9 @@ jobs:
       - name: Run language database suite
         run: npm run test:metadata
 
+      - name: Run configuration suite
+        run: npm run test:configuration
+
       - name: Run language feature suite
         run: npm run test:features
 

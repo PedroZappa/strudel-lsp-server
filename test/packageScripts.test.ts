@@ -36,6 +36,7 @@ void test('test scripts use glob patterns supported by Node 24 and 26', () => {
     'test:parser',
     'test:semantic',
     'test:metadata',
+    'test:configuration',
     'test:features',
     'test:mini',
     'test:protocol',

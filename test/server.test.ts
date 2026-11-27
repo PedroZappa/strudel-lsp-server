@@ -30,11 +30,19 @@ interface JsonRpcError {
 interface JsonRpcMessage {
   jsonrpc: '2.0';
   id?: number;
+  method?: string;
+  params?: unknown;
   result?: unknown;
   error?: JsonRpcError;
 }
 
-type JsonRpcOutgoing = JsonRpcRequest | JsonRpcNotification;
+interface JsonRpcResponse {
+  jsonrpc: '2.0';
+  id: number;
+  result: unknown;
+}
+
+type JsonRpcOutgoing = JsonRpcRequest | JsonRpcNotification | JsonRpcResponse;
 
 interface NotificationWaiter {
   predicate: (params: unknown) => boolean;
@@ -47,6 +55,7 @@ class StdioLspClient {
   private readonly child: ChildProcessWithoutNullStreams;
   private readonly pending = new Map<number, (message: JsonRpcMessage) => void>();
   private readonly notificationWaiters = new Map<string, NotificationWaiter[]>();
+  private readonly requestHandlers = new Map<string, (params: unknown) => unknown>();
   private buffer = Buffer.alloc(0);
   private nextId = 1;
 
@@ -80,6 +89,10 @@ class StdioLspClient {
 
       this.send({ jsonrpc: '2.0', id, method, params });
     });
+  }
+
+  onRequest(method: string, handler: (params: unknown) => unknown): void {
+    this.requestHandlers.set(method, handler);
   }
 
   notify(method: string, params: unknown = {}): void {
@@ -166,6 +179,15 @@ class StdioLspClient {
       const parsed: unknown = JSON.parse(body);
       const message = parsed as JsonRpcMessage;
       if (message.id !== undefined) {
+        if (message.method !== undefined) {
+          const handler = this.requestHandlers.get(message.method);
+          this.send({
+            jsonrpc: '2.0',
+            id: message.id,
+            result: handler === undefined ? null : handler(message.params),
+          });
+          continue;
+        }
         const resolvePending = this.pending.get(message.id);
         if (resolvePending !== undefined) {
           this.pending.delete(message.id);
@@ -616,6 +638,51 @@ void test('stdio server searches workspace files and open documents', async (t) 
   assert.equal(parameterSymbols[0]?.kind, SymbolKind.Variable);
   assert.equal(parameterSymbols[0]?.containerName, 'closed');
   assert.equal(parameterSymbols[0]?.location.range.start.line, 0);
+
+  assert.equal(await client.request('shutdown'), null);
+  client.notify('exit', {});
+  await client.waitForExit();
+});
+
+void test('stdio server applies workspace configuration and republishes on change', async (t) => {
+  const serverPath = fileURLToPath(new URL('../src/server.js', import.meta.url));
+  const client = new StdioLspClient(serverPath);
+  t.after(async () => {
+    await client.terminate();
+  });
+
+  let settings: unknown = { diagnostics: { severity: { 'unknown-global': 'warning' } } };
+  client.onRequest('workspace/configuration', () => [settings]);
+
+  await client.request('initialize', {
+    processId: process.pid,
+    rootUri: null,
+    capabilities: { workspace: { configuration: true } },
+    workspaceFolders: null,
+  });
+  client.notify('initialized', {});
+
+  const uri = 'file:///test/config.strudel';
+  const warned = client.waitForNotification(
+    'textDocument/publishDiagnostics',
+    (params) =>
+      (params as PublishDiagnosticsParams).uri === uri &&
+      (params as PublishDiagnosticsParams).diagnostics[0]?.severity === 2,
+  );
+  client.notify('textDocument/didOpen', {
+    textDocument: { uri, languageId: 'strudel', version: 1, text: 'unknownFn()' },
+  });
+  await warned;
+
+  settings = { diagnostics: { severity: { 'unknown-global': 'off' } } };
+  const cleared = client.waitForNotification(
+    'textDocument/publishDiagnostics',
+    (params) =>
+      (params as PublishDiagnosticsParams).uri === uri &&
+      (params as PublishDiagnosticsParams).diagnostics.length === 0,
+  );
+  client.notify('workspace/didChangeConfiguration', { settings: {} });
+  await cleared;
 
   assert.equal(await client.request('shutdown'), null);
   client.notify('exit', {});

@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: re-implementation roadmap complete through Phase 13; Phases 14–15 define the proposed `0.2.0` hardening/configuration increment and controlled release path. `strudel-lsp-server@0.1.0` remains the published release. Phase 14–15 tasks are planned, not implemented or authorized for publication; ADR-051 records the proposed scope and the work deferred beyond it. Missing provenance for the operator-managed first publish is recorded in ADR-050. Priorities are proposals and remain subject to approval.
+Status: re-implementation roadmap complete through Phase 13; Phases 14–15 define the proposed `0.2.0` hardening/configuration increment and controlled release path. `strudel-lsp-server@0.1.0` remains the published release. The first Phase 14 diagnostics-configuration task is implemented and verified; the remaining Phase 14–15 work is not implemented or authorized for publication. ADR-051 records the scope and deferred work, and ADR-052 records the configuration contract. Missing provenance for the operator-managed first publish is recorded in ADR-050. Priorities are proposals and remain subject to approval.
 
 Authority: `AGENTS.md` sections 2–18 and the other documents in `docs/`.
 
@@ -366,11 +366,11 @@ Exit criteria:
 
 Dependencies: Phase 13 and explicit approval of the v0.2.0 scope recorded in ADR-051. This phase prepares changes; it does not publish a release.
 
-**Status: planned. No task in this phase is implemented or authorized for release.**
+**Status: the diagnostics-configuration task is implemented and verified; the remaining tasks are planned. Nothing in this phase is authorized for release.**
 
 Tasks:
 
-- [ ] Add a focused diagnostics configuration through standard `workspace/configuration`: a global enable flag, optional per-code severity overrides including suppression, and defaults unchanged from `0.1.0` when the client has no configuration capability. Cover `syntax-error`, `unknown-global`, `unknown-pattern-method` and the four mini-notation issue codes. Do not expose internal engine settings, and cover dynamic changes through `workspace/didChangeConfiguration`.
+- [x] Add a focused diagnostics configuration through standard `workspace/configuration`: a global enable flag, optional per-code severity overrides including suppression, and defaults unchanged from `0.1.0` when the client has no configuration capability. Cover `syntax-error`, `unknown-global`, `unknown-pattern-method` and the four mini-notation issue codes. Do not expose internal engine settings, and cover dynamic changes through `workspace/didChangeConfiguration`. Implemented with isolated parsing/application, provider and quick-fix integration, feature/configuration/protocol/stdio regression coverage and ADR-052; the remaining Phase 14 tasks are still planned.
 - [ ] Harden bounded workspace-symbol discovery for symlinks, path traversal, unreadable files and file-size/depth limits. Preserve open-document overrides and deterministic results; do not introduce a persistent index, file watcher or cross-file module graph.
 - [ ] Verify installation in a clean consumer environment that does not inherit this repository's `.npmrc`, especially `legacy-peer-deps=true`. Narrow or remove that setting only after compatibility is demonstrated, and record the decision with evidence.
 - [ ] Add a bounded soak/lifecycle test covering rapid edits, repeated initialize/shutdown cycles and memory-growth observation. Keep it deterministic and advisory if measurement proves environment-sensitive; do not add production telemetry.
@@ -380,7 +380,7 @@ Tasks:
 
 Exit criteria:
 
-- [ ] Diagnostics configuration is implemented, documented and covered by feature, protocol and stdio tests; default behaviour remains unchanged.
+- [x] Diagnostics configuration is implemented, documented and covered by feature, protocol and stdio tests; default behaviour remains unchanged.
 - [ ] Workspace-symbol filesystem edge cases have deterministic regression coverage and bounded limits remain enforced.
 - [ ] Consumer installation without inherited npm configuration passes, and the `.npmrc` decision is recorded.
 - [ ] Soak and two-client editor smoke evidence are recorded without new core dependencies or production telemetry.

@@ -2,7 +2,7 @@ import type { LanguageDatabase } from '../languageDatabase/index.js';
 import type { SemanticDocument, SemanticRange, SemanticSymbol } from '../semantic/index.js';
 import type { SyntaxDocument, SyntaxNode } from '../syntax/index.js';
 
-export type DiagnosticSeverityName = 'error' | 'warning' | 'information';
+export type DiagnosticSeverityName = 'error' | 'warning' | 'information' | 'hint';
 
 export type CompletionCandidateKind = 'function' | 'method' | 'variable' | 'class' | 'value';
 

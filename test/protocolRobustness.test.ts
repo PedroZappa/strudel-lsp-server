@@ -26,9 +26,14 @@ interface LspSymbol {
   name: string;
 }
 
+interface LspDiagnostic {
+  readonly code?: string;
+  readonly severity?: number;
+}
+
 interface PublishDiagnosticsParams {
   uri: string;
-  diagnostics: unknown[];
+  diagnostics: LspDiagnostic[];
 }
 
 const SERVER_PATH = fileURLToPath(new URL('../src/server.js', import.meta.url));
@@ -305,6 +310,55 @@ void test('no-workspace initialization does not request unsupported workspace fo
   assert.ok(
     !client.messages.some((message) => message.method === 'workspace/workspaceFolders'),
     'the server should not request a capability the client did not advertise',
+  );
+
+  assertCleanTransport(client);
+  assert.equal(await client.shutdownAndExit(), 0);
+});
+
+void test('clients without configuration capability keep default diagnostics until notified', async (t) => {
+  const client = new RawStdioClient();
+  t.after(async () => {
+    await client.terminate();
+  });
+
+  await client.initialize({ capabilities: {} });
+  assert.ok(
+    !client.messages.some((message) => message.method === 'workspace/configuration'),
+    'the server should not request a capability the client did not advertise',
+  );
+
+  const uri = 'file:///test/no-config.strudel';
+  const defaultDiagnostics = client.waitForNotification(
+    'textDocument/publishDiagnostics',
+    (params) => isDiagnosticsParams(params) && params.uri === uri,
+  );
+  client.notify('textDocument/didOpen', {
+    textDocument: {
+      uri,
+      languageId: 'strudel',
+      version: 1,
+      text: 'unknownFn()',
+    },
+  });
+  const initial = await defaultDiagnostics;
+  assert.ok(isDiagnosticsParams(initial));
+  assert.equal(initial.diagnostics[0]?.code, 'unknown-global');
+  assert.equal(initial.diagnostics[0]?.severity, 3);
+
+  const disabled = client.waitForNotification(
+    'textDocument/publishDiagnostics',
+    (params) => isDiagnosticsParams(params) && params.uri === uri,
+  );
+  client.notify('workspace/didChangeConfiguration', {
+    settings: { strudelLsp: { diagnostics: { enabled: false } } },
+  });
+  const cleared = await disabled;
+  assert.ok(isDiagnosticsParams(cleared));
+  assert.deepEqual(cleared.diagnostics, []);
+  assert.ok(
+    !client.messages.some((message) => message.method === 'workspace/configuration'),
+    'a settings notification must not cause a configuration request',
   );
 
   assertCleanTransport(client);
