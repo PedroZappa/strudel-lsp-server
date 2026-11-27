@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: re-implementation roadmap updated with completed Phases 0–9, the approved `0.1.0` release identity, reconciled configuration boundary and supported runtime matrix in Phase 10, and the remaining proposed Phase 10–13 work for validation, release governance and controlled first publication, 2026-11-27. Priorities are proposals and remain subject to approval.
+Status: re-implementation roadmap updated with completed Phases 0–9 and the completed Phase 10 release identity, configuration boundary, supported runtime matrix and final package review, with Phases 11–13 remaining for validation, release governance and controlled first publication, 2026-11-27. Priorities are proposals and remain subject to approval.
 
 Authority: `AGENTS.md` sections 2–18 and the other documents in `docs/`.
 
@@ -279,21 +279,21 @@ The following findings define the starting state for Phases 10–13. Each open g
 
 Dependencies: Phase 9 packaging foundation.
 
-**Status: in progress. The release identity is approved under ADR-033; compatibility metadata remains.**
+**Status: complete. The release identity, configuration boundary, runtime matrix and final package review are recorded.**
 
 Tasks:
 
 - [x] Decide the release identity: the first public version is `0.1.0`, tags use `vX.Y.Z`, and pre-1.0 SemVer is recorded in ADR-033. `1.0.0` remains reserved for a documented stability commitment.
 - [x] Reconcile configuration documentation with behaviour: no custom configuration channel exists in `0.1.0`; diagnostic overrides and Strudel version selection are explicitly deferred in ADR-034, while standard LSP formatting options remain the only user preference.
 - [x] Define and declare supported runtimes: both Node 24 and 26 are release-supported with npm 11; `engines` is declared and the required Linux x64, macOS arm64 and Windows x64 matrix is recorded in ADR-035.
-- [ ] Final README and manifest review: installation command, supported versions, known limitations, legacy prototype separation, and accurate `repository`, `homepage` and `bugs` metadata.
+- [x] Final README and manifest review: installation command, supported versions, known limitations and legacy prototype separation are explicit; `repository`, `homepage` and `bugs` metadata are accurate and covered by a package metadata contract test.
 
 Exit criteria:
 
 - [x] Version, tag format and SemVer policy are recorded and approved in ADR-033.
 - [x] Configuration documentation matches implemented behaviour and explicitly deferred items in ADR-034.
 - [x] `engines.node`, `engines.npm` and the supported runtime/OS matrix are documented in ADR-035.
-- [ ] README and manifest metadata accurately describe the first-release scope.
+- [x] README and manifest metadata accurately describe the first-release scope.
 
 ## Phase 11 — Compatibility and robustness validation
 

@@ -6,6 +6,15 @@ import { fileURLToPath } from 'node:url';
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const packageJson = JSON.parse(readFileSync(join(repositoryRoot, 'package.json'), 'utf8')) as {
+  name: string;
+  version: string;
+  license: string;
+  repository: { type: string; url: string };
+  homepage: string;
+  bugs: { url: string };
+  engines: { node: string; npm: string };
+  files: string[];
+  bin: Record<string, string>;
   scripts: Record<string, string>;
 };
 
@@ -40,4 +49,18 @@ void test('test scripts use glob patterns supported by Node 24 and 26', () => {
 
   assert.ok(compiledTests.length > 0, 'compiled test files must be present');
   assert.deepEqual(suiteFiles, compiledTests);
+});
+
+void test('package metadata describes the published server', () => {
+  assert.equal(packageJson.name, 'strudel-lsp-server');
+  assert.match(packageJson.version, /^\d+\.\d+\.\d+$/);
+  assert.equal(packageJson.license, 'AGPL-3.0-only');
+  assert.equal(packageJson.repository.type, 'git');
+  assert.equal(packageJson.repository.url, 'https://github.com/PedroZappa/strudel-lsp-server.git');
+  assert.equal(packageJson.homepage, 'https://github.com/PedroZappa/strudel-lsp-server#readme');
+  assert.equal(packageJson.bugs.url, 'https://github.com/PedroZappa/strudel-lsp-server/issues');
+  assert.equal(packageJson.engines.node, '^24.0.0 || ^26.0.0');
+  assert.equal(packageJson.engines.npm, '>=11 <12');
+  assert.deepEqual(packageJson.files, ['dist/src', 'LICENSE']);
+  assert.equal(packageJson.bin['strudel-lsp-server'], './dist/src/server.js');
 });

@@ -1,6 +1,6 @@
 # Strudel LSP Server
 
-An editor-agnostic Language Server Protocol implementation for [Strudel](https://strudel.cc/), published as the npm package `strudel-lsp-server`. The server core speaks LSP over stdio and does not depend on any editor client.
+An editor-agnostic Language Server Protocol implementation for [Strudel](https://strudel.cc/). The npm package is named `strudel-lsp-server` and the first release is `0.1.0`. The server core speaks LSP over stdio and does not depend on any editor client.
 
 ## Features
 
@@ -13,11 +13,17 @@ An editor-agnostic Language Server Protocol implementation for [Strudel](https:/
 
 ## Requirements
 
-The `0.1.0` package supports Node.js 24 and 26 with npm 11.x. The required first-release validation matrix is Linux x64 with glibc, macOS arm64 and Windows x64; the parser also ships prebuilds for Linux arm64, macOS x64 and Windows arm64, which remain best-effort until validated. See `docs/DECISIONS.md` ADR-035.
+The `0.1.0` package supports Node.js 24 and 26 with npm 11.x. The required first-release validation matrix is Linux x64 with glibc, macOS arm64 and Windows x64; the parser also ships prebuilds for Linux arm64, macOS x64 and Windows arm64, which remain best-effort until validated. See [ADR-035](https://github.com/PedroZappa/strudel-lsp-server/blob/main/docs/DECISIONS.md).
+
+The bundled language database targets `@strudel/core`, `@strudel/mini` and `@strudel/transpiler` `1.2.6`, plus `@strudel/reference` `1.2.2`. Strudel version selection is not exposed in `0.1.0`.
 
 ## Installation and launch
 
-Configure an LSP client to launch `strudel-lsp-server` over stdio:
+Install the package and configure an LSP client to launch `strudel-lsp-server` over stdio:
+
+```bash
+npm install --global strudel-lsp-server@0.1.0
+```
 
 ```json
 {
@@ -39,7 +45,18 @@ The core server does not provide a TCP mode. Editor-specific clients and configu
 
 The server advertises only capabilities that are implemented and verified: incremental text document sync, diagnostics, completion, hover, signature help, definition, references, document symbols, workspace symbols, rename, formatting, semantic tokens, code actions and document/workspace symbol requests. Workspace symbols use a bounded on-demand scan of `.strudel` files; no persistent workspace index or cross-file module graph is created.
 
-See `docs/LSP_FEATURES.md` in the repository for exact capability details and `docs/PERFORMANCE.md` for measured latency baselines.
+See [LSP_FEATURES.md](https://github.com/PedroZappa/strudel-lsp-server/blob/main/docs/LSP_FEATURES.md) for exact capability details and [PERFORMANCE.md](https://github.com/PedroZappa/strudel-lsp-server/blob/main/docs/PERFORMANCE.md) for measured latency baselines.
+
+## Known limitations
+
+Version `0.1.0` deliberately limits scope:
+
+- There is no custom configuration channel; diagnostic enablement/severity overrides and Strudel version selection are deferred.
+- Diagnostics stay conservative on incomplete live-coding input rather than reporting unreliable cascading errors.
+- Formatting is indentation-only. Range formatting is deferred.
+- Workspace symbols use a bounded on-demand scan of `.strudel` files rather than a persistent workspace index or cross-file module graph.
+- Only stdio transport is provided; the package has no TCP mode.
+- Platforms other than the required Linux x64, macOS arm64 and Windows x64 matrix are best-effort until validated.
 
 ## Configuration
 
@@ -67,11 +84,11 @@ client/       Legacy VS Code prototype, excluded from the package build
 server/       Legacy TypeScript prototype, excluded from the package build
 ```
 
-## Legacy prototype reference
+## Legacy prototype reference (not part of `0.1.0`)
 
-The original prototype directories and editor files are retained but are not authoritative for the npm package. They remain excluded from the package build, lint and test scopes until an explicit retirement decision is made.
+The original prototype directories and editor files are retained but are not authoritative for the npm package. They remain excluded from the package build, lint and test scopes until an explicit retirement decision is made. The commands below are historical reference only; use the installation and launch instructions above for `strudel-lsp-server@0.1.0`.
 
-### Testing with Neovim
+### Historical Neovim prototype test
 
 1. **Start the LSP server** (Terminal 1):
    ```bash
@@ -88,7 +105,7 @@ The original prototype directories and editor files are retained but are not aut
 
 4. **Test hover**: Press `K` on a function name
 
-### Legacy prototype configuration options
+### Historical prototype configuration options
 
 The prototype supported two modes:
 
@@ -104,7 +121,7 @@ The prototype supported two modes:
 
 The prototype TCP mode listens on port `5007`. The packaged server does not provide TCP mode.
 
-### Troubleshooting the prototype
+### Historical prototype troubleshooting
 
 - Check LSP status in Neovim:
   ```vim
@@ -121,6 +138,12 @@ The prototype TCP mode listens on port `5007`. The packaged server does not prov
   ```bash
   lsof -i :5007
   ```
+
+## Repository and support
+
+- Source: <https://github.com/PedroZappa/strudel-lsp-server>
+- Documentation: <https://github.com/PedroZappa/strudel-lsp-server/tree/main/docs>
+- Issues: <https://github.com/PedroZappa/strudel-lsp-server/issues>
 
 ## License
 
