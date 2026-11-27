@@ -1,3 +1,4 @@
+import type { SemanticRange } from '../semantic/index.js';
 import type { SyntaxKind, SyntaxNode } from '../syntax/index.js';
 
 import type {
@@ -183,4 +184,27 @@ export function provideFormatting(
   }
 
   return { edits: edits.sort((left, right) => left.range.startOffset - right.range.startOffset) };
+}
+
+/**
+ * Range formatting reuses the full-document indentation analysis and returns
+ * only edits whose target line lies inside the requested range. It never
+ * introduces edits that the full-document provider would not produce.
+ */
+export function provideRangeFormatting(
+  context: FeatureContext,
+  options: FormattingOptions,
+  range: SemanticRange,
+): FormattingResult {
+  const startLine = Math.max(0, range.start.line);
+  const endLine =
+    range.end.character === 0
+      ? Math.max(startLine, range.end.line - 1)
+      : Math.max(startLine, range.end.line);
+
+  return {
+    edits: provideFormatting(context, options).edits.filter(
+      (edit) => edit.range.start.line >= startLine && edit.range.start.line <= endLine,
+    ),
+  };
 }

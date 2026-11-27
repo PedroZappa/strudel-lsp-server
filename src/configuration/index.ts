@@ -8,3 +8,8 @@ export {
   type DiagnosticCode,
   type DiagnosticsConfiguration,
 } from './diagnostics.js';
+export {
+  DEFAULT_INLAY_HINTS_CONFIGURATION,
+  parseInlayHintsConfiguration,
+  type InlayHintsConfiguration,
+} from './inlayHints.js';

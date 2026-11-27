@@ -28,22 +28,29 @@ function matchesQuery(query: string, name: string): boolean {
 
 function collectSymbols(
   results: WorkspaceSymbolResult[],
-  uri: string,
+  context: FeatureContext,
   symbols: readonly DocumentSymbolResult[],
   query: string,
   containerName: string | undefined,
 ): void {
+  const metadataVersion = context.database.getSnapshot().catalogVersion;
   for (const symbol of symbols) {
     if (matchesQuery(query, symbol.name)) {
       results.push({
         name: symbol.name,
         kind: symbol.kind,
-        uri,
+        uri: context.uri,
         range: symbol.selectionRange,
         containerName,
+        data: Object.freeze({
+          metadataVersion,
+          name: symbol.name,
+          kind: symbol.kind,
+          range: symbol.selectionRange,
+        }),
       });
     }
-    collectSymbols(results, uri, symbol.children, query, symbol.name);
+    collectSymbols(results, context, symbol.children, query, symbol.name);
   }
 }
 
@@ -59,7 +66,7 @@ export function provideWorkspaceSymbols(
   const results: WorkspaceSymbolResult[] = [];
 
   for (const context of contexts) {
-    collectSymbols(results, context.uri, provideDocumentSymbols(context), query, undefined);
+    collectSymbols(results, context, provideDocumentSymbols(context), query, undefined);
   }
 
   return results

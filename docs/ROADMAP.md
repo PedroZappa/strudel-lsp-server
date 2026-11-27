@@ -563,26 +563,28 @@ Exit criteria:
 
 Evidence: ADR-070 hardened `.github/workflows/release.yml` with a bounded registry-visibility wait, and the Phase 22 publish job observed `0.4.0` on attempt 8 before passing its install and signature checks. ADR-071 records the exact authorization; ADR-072 records the green exact-tag run, registry and tarball identity, signatures, SLSA v1 provenance, clean installs, installed stdio handshake and GitHub release. Remaining semantic and mini-notation limitations are documented in `CHANGELOG.md` and `.github/RELEASE_NOTES_v0.4.0.md`.
 
-### Phase 23 — Editor ergonomics and navigation (proposed, `v0.5.0`)
+### Phase 23 — Editor ergonomics and navigation (complete in development tree, unreleased `v0.5.0`)
 
 Dependencies: Phase 22.
 
 Tasks:
 
-- [ ] Add folding ranges and selection ranges with deterministic, syntax-aware boundaries.
-- [ ] Add inlay hints that are opt-in by default and derived only from resolved semantic information.
-- [ ] Add completion resolution for richer documentation and detail where metadata supports it.
-- [ ] Add range formatting while preserving the existing conservative full-document behaviour.
-- [ ] Add call hierarchy, `workspaceSymbol/resolve` and bounded cross-file navigation for files under an explicit workspace root.
-- [ ] Add conservative refactoring support, such as local extract/rename operations, without introducing a JavaScript or TypeScript compiler into the core.
-- [ ] Update the capability matrix and contract tests for both added and still-unsupported capabilities.
+- [x] Add folding ranges and selection ranges with deterministic, syntax-aware boundaries.
+- [x] Add inlay hints that are opt-in by default and derived only from resolved semantic information.
+- [x] Add completion resolution for richer documentation and detail where metadata supports it.
+- [x] Add range formatting while preserving the existing conservative full-document behaviour.
+- [x] Add call hierarchy, `workspaceSymbol/resolve` and bounded cross-file navigation for files under an explicit workspace root.
+- [x] Add conservative refactoring support, including local extract, without introducing a JavaScript or TypeScript compiler into the core.
+- [x] Update the capability matrix and contract tests for both added and still-unsupported capabilities.
 
 Exit criteria:
 
-- [ ] Every added capability has feature, protocol and live-coding regression coverage.
-- [ ] Negative capability assertions prevent accidental advertisement of unimplemented features.
-- [ ] No editor-specific dependency becomes an architectural requirement.
-- [ ] Workspace filesystem access remains bounded, deterministic and privacy-preserving.
+- [x] Every added capability has feature, protocol and live-coding regression coverage.
+- [x] Negative capability assertions prevent accidental advertisement of unimplemented features.
+- [x] No editor-specific dependency becomes an architectural requirement.
+- [x] Workspace filesystem access remains bounded, deterministic and privacy-preserving.
+
+Evidence: ADR-073 defines the transport-independent provider boundary, opt-in inlay-hint semantics, validated resolve tokens, bounded cross-file rules and negative capability policy. `docs/TESTING_STRATEGY.md` records the 140/140 gate, focused suites, protocol/live-coding coverage, corpus validation, package and consumer checks, audits and benchmark percentiles. The work remains uncommitted and unpublished; Phase 25 owns the `v0.5.0` release.
 
 ### Phase 24 — Scale and responsiveness (proposed, `v0.5.0`)
 
@@ -680,7 +682,7 @@ These items were deferred after the first release and are not selected for `0.2.
 - [ ] **Proposed Phase 24.** Replace synthetic benchmark fixtures with representative real-world workloads once provenance and redistribution terms are confirmed.
 - [ ] **Proposed Phase 24.** Optimise incremental semantic reuse; current large-document updates rebuild the semantic snapshot and are documented in `docs/PERFORMANCE.md`.
 - [ ] **Proposed Phase 24.** Add local-only timing instrumentation for diagnosis behind an opt-in boundary; production telemetry remains excluded by default.
-- [ ] **Proposed Phase 23.** Add folding, selection ranges, inlay hints, call hierarchy, completion resolution, range formatting, broader refactoring and bounded cross-file navigation, with contract tests for advertised and unsupported capabilities.
+- [x] **Assigned to Phase 23 and completed in the development tree.** Folding, selection ranges, opt-in inlay hints, call hierarchy, completion resolution, range formatting, conservative extract refactoring and bounded cross-file navigation have feature, protocol and live-coding coverage with negative capability assertions; publication is deferred to Phase 25.
 
 ## Standing non-goals (not proposed for v1)
 
@@ -688,7 +690,7 @@ These items were deferred after the first release and are not selected for `0.2.
 - Standalone binary distribution instead of the npm package.
 - Editor-specific dependencies in the server core.
 
-The earlier deferral of folding, selection ranges, inlay hints and call hierarchy is superseded by proposed Phase 23; those capabilities are now included in the feature-expanded route to `v1.0.0`.
+The earlier deferral of folding, selection ranges, inlay hints and call hierarchy was superseded and implemented in Phase 23; those capabilities are now included in the feature-expanded route to `v1.0.0`, pending release and Phase 26 freeze.
 
 ## Transition constraint
 

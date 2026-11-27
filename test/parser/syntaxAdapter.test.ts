@@ -7,6 +7,7 @@ import {
   type SyntaxNode,
   type TextDocumentSnapshot,
 } from '../../src/syntax/index.js';
+import { positionToOffset } from '../../src/syntax/textCoordinates.js';
 
 function snapshot(text: string, version = 1): TextDocumentSnapshot {
   return { uri: 'file:///pattern.strdl', version, text };
@@ -86,6 +87,15 @@ void test('maps non-ASCII offsets to UTF-16 source positions', () => {
   assert.equal(identifier.text, 'note');
   assert.equal(identifier.range.startOffset, 6);
   assert.equal(identifier.range.endOffset, 10);
+});
+
+void test('maps LSP positions back to clamped UTF-16 offsets', () => {
+  const text = '// 🎵\r\nnote("bd sd")';
+  assert.equal(positionToOffset(text, { line: 0, character: 3 }), 3);
+  assert.equal(positionToOffset(text, { line: 1, character: 0 }), 7);
+  assert.equal(positionToOffset(text, { line: 1, character: 4 }), 11);
+  assert.equal(positionToOffset(text, { line: 9, character: 100 }), text.length);
+  assert.equal(positionToOffset(text, { line: -1, character: -1 }), 0);
 });
 
 void test('applies an incremental edit and preserves accurate ranges', () => {

@@ -17,6 +17,7 @@ export interface FeatureTestHarness {
 export interface FeatureHarnessOptions {
   readonly database?: LanguageDatabase;
   readonly catalog?: SemanticCatalog;
+  readonly uri?: string;
 }
 
 const defaultDatabase = createDefaultLanguageDatabase();
@@ -35,7 +36,12 @@ export function createFeatureHarness(
     options.catalog === undefined && database === defaultDatabase
       ? defaultEngine
       : createSemanticEngine(catalog);
-  const document = TextDocument.create('file:///test/features.strudel', 'strudel', 1, text);
+  const document = TextDocument.create(
+    options.uri ?? 'file:///test/features.strudel',
+    'strudel',
+    1,
+    text,
+  );
   const syntax = adapter.parse({
     uri: document.uri,
     version: document.version,

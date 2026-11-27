@@ -7,3 +7,4 @@ export {
   type WorkspaceScanOptions,
   type WorkspaceScanToken,
 } from './workspaceFiles.js';
+export { provideWorkspaceDefinition, provideWorkspaceReferences } from './workspaceNavigation.js';

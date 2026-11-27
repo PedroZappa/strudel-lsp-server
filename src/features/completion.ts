@@ -8,7 +8,12 @@ import {
   listPatternMethodRecords,
   recordDocumentation,
 } from './metadata.js';
-import type { CompletionCandidate, CompletionCandidateKind, FeatureContext } from './types.js';
+import type {
+  CompletionCandidate,
+  CompletionCandidateKind,
+  CompletionResolveData,
+  FeatureContext,
+} from './types.js';
 
 interface Prefix {
   readonly text: string;
@@ -157,6 +162,7 @@ export function provideCompletion(
     return [];
   }
 
+  const metadataVersion = context.database.getSnapshot().catalogVersion;
   const candidates = new Map<string, CompletionCandidate>();
   const add = (candidate: CompletionCandidate): void => {
     if (!candidates.has(candidate.label)) {
@@ -174,6 +180,7 @@ export function provideCompletion(
         kind: 'method',
         detail: record.returnType,
         documentation: recordDocumentation(record),
+        data: completionData(metadataVersion, 'method', record.name),
         replacementRange: offsetsToRange(context.text, prefix.startOffset, offset),
       });
     }
@@ -207,9 +214,18 @@ export function provideCompletion(
       kind: recordKind(record),
       detail: record.returnType,
       documentation: recordDocumentation(record),
+      data: completionData(metadataVersion, 'global', record.name),
       replacementRange: offsetsToRange(context.text, prefix.startOffset, offset),
     });
   }
 
   return [...candidates.values()].sort((left, right) => left.label.localeCompare(right.label));
+}
+
+function completionData(
+  metadataVersion: string,
+  recordKind: 'global' | 'method',
+  name: string,
+): CompletionResolveData {
+  return Object.freeze({ metadataVersion, recordKind, name });
 }

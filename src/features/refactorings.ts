@@ -5,6 +5,19 @@ import type { SyntaxNode } from '../syntax/index.js';
 import type { FeatureContext, RefactoringResult, TextEditResult } from './types.js';
 
 const CONSTANT_IDENTIFIERS = new Set(['true', 'false', 'null', 'undefined']);
+const EXTRACT_STATEMENT_KINDS = new Set([
+  'expressionStatement',
+  'variableDeclaration',
+  'returnStatement',
+]);
+const EXTRACT_FORBIDDEN_KINDS = new Set([
+  'assignmentExpression',
+  'comment',
+  'exportDeclaration',
+  'importDeclaration',
+  'string',
+  'templateString',
+]);
 
 function rangesOverlap(left: SemanticRange, right: SemanticRange): boolean {
   return left.startOffset <= right.endOffset && right.startOffset <= left.endOffset;
@@ -63,6 +76,98 @@ function declarationRemovalRange(text: string, range: SemanticRange): SemanticRa
   }
 
   return offsetsToRange(text, range.startOffset, range.endOffset + newlineLength);
+}
+
+function exactNode(root: SyntaxNode, range: SemanticRange): SyntaxNode | undefined {
+  const visit = (node: SyntaxNode): SyntaxNode | undefined => {
+    if (
+      node.range.startOffset === range.startOffset &&
+      node.range.endOffset === range.endOffset &&
+      isInlineableInitializer(node)
+    ) {
+      return node;
+    }
+    for (const child of node.children) {
+      const found = visit(child);
+      if (found !== undefined) {
+        return found;
+      }
+    }
+    return undefined;
+  };
+  return visit(root);
+}
+
+function unusedConstantName(context: FeatureContext): string | undefined {
+  for (let suffix = 0; suffix < 100; suffix += 1) {
+    const name = suffix === 0 ? 'extracted' : `extracted${suffix}`;
+    const used =
+      [...context.semantic.symbols.values()].some((symbol) => symbol.name === name) ||
+      context.semantic.references.some((reference) => reference.name === name) ||
+      new RegExp(`\\b${name}\\b`).test(context.text);
+    if (!used) {
+      return name;
+    }
+  }
+  return undefined;
+}
+
+function provideExtractLiteral(
+  context: FeatureContext,
+  range: SemanticRange,
+): RefactoringResult | undefined {
+  const literal = exactNode(context.syntax.root, range);
+  if (
+    literal === undefined ||
+    range.startOffset > literal.range.startOffset ||
+    range.endOffset < literal.range.endOffset ||
+    context.text.slice(literal.range.startOffset, literal.range.endOffset) !== literal.text
+  ) {
+    return undefined;
+  }
+
+  const path = nodesContainingOffset(context.syntax.root, literal.range.startOffset);
+  if (path.some((node) => EXTRACT_FORBIDDEN_KINDS.has(node.kind))) {
+    return undefined;
+  }
+  const statementIndex = path.findIndex((node) => EXTRACT_STATEMENT_KINDS.has(node.kind));
+  const statement = path[statementIndex];
+  if (statement === undefined || statementIndex < 0) {
+    return undefined;
+  }
+
+  const lineStart = context.text.lastIndexOf('\n', statement.range.startOffset - 1) + 1;
+  const indent = context.text.slice(lineStart, statement.range.startOffset);
+  if (!/^[ \t]*$/.test(indent)) {
+    return undefined;
+  }
+  const name = unusedConstantName(context);
+  if (name === undefined) {
+    return undefined;
+  }
+
+  const insertion = offsetsToRange(
+    context.text,
+    statement.range.startOffset,
+    statement.range.startOffset,
+  );
+  const replacement = offsetsToRange(
+    context.text,
+    literal.range.startOffset,
+    literal.range.endOffset,
+  );
+  return {
+    title: `Extract literal to constant '${name}'`,
+    kind: 'refactor.extract',
+    diagnostics: [],
+    edits: [
+      {
+        range: insertion,
+        newText: `const ${name} = ${literal.text};\n${indent}`,
+      },
+      { range: replacement, newText: name },
+    ],
+  };
 }
 
 /**
@@ -149,5 +254,9 @@ export function provideRefactorings(
     });
   }
 
+  const extract = provideExtractLiteral(context, range);
+  if (extract !== undefined) {
+    actions.push(extract);
+  }
   return actions;
 }

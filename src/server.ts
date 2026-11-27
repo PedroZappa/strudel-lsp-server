@@ -5,24 +5,37 @@ import {
   CompletionItemKind,
   createConnection,
   DiagnosticSeverity,
+  InlayHintKind,
   MarkupKind,
   ProposedFeatures,
   SemanticTokensBuilder,
   SymbolKind,
   TextDocumentSyncKind,
+  type CallHierarchyIncomingCall,
+  type CallHierarchyIncomingCallsParams,
+  type CallHierarchyItem,
+  type CallHierarchyOutgoingCall,
+  type CallHierarchyOutgoingCallsParams,
+  type CallHierarchyPrepareParams,
   type CodeAction,
   type CancellationToken,
   type CodeActionParams,
+  type Features as ServerFeatures,
+  type Languages as ServerLanguages,
+  type _ as ServerFeaturePlaceholder,
   type CompletionItem,
   type CompletionParams,
   type DefinitionParams,
   type Diagnostic,
   type DidChangeConfigurationParams,
   type DocumentFormattingParams,
+  type FoldingRange,
+  type DocumentRangeFormattingParams,
   type DocumentSymbol as LspDocumentSymbol,
   type DocumentSymbolParams,
   type Hover,
   type HoverParams,
+  type InlayHint,
   type InitializeParams,
   type InitializeResult,
   type Location,
@@ -30,37 +43,50 @@ import {
   type Range as LspRange,
   type ReferenceParams,
   type RenameParams,
+  type SelectionRange,
   type SemanticTokens,
   type SemanticTokensLegend,
   type SemanticTokensParams,
   type SignatureHelp,
   type SignatureHelpParams,
-  type SymbolInformation,
   type TextEdit,
   type WorkspaceEdit,
   type WorkspaceFolder,
+  type WorkspaceSymbol,
   type WorkspaceSymbolParams,
 } from 'vscode-languageserver/node';
 
 import {
   DEFAULT_DIAGNOSTICS_CONFIGURATION,
+  DEFAULT_INLAY_HINTS_CONFIGURATION,
   parseDiagnosticsConfiguration,
+  parseInlayHintsConfiguration,
 } from './configuration/index.js';
 import {
+  prepareCallHierarchy,
+  provideCallHierarchyCalls,
   provideCompletion,
   provideDefinition,
   provideDiagnostics,
   provideDocumentSymbols,
+  provideFoldingRanges,
   provideFormatting,
+  provideInlayHints,
   prepareRename,
   provideHover,
   provideQuickFixes,
+  provideRangeFormatting,
   provideReferences,
   provideRefactorings,
   provideRename,
   provideSemanticTokens,
+  provideSelectionRanges,
   provideSignatureHelp,
+  resolveCompletion,
+  resolveWorkspaceSymbol,
   provideWorkspaceSymbols,
+  type CallHierarchyData,
+  type CallHierarchyItemResult,
   type CodeActionKindName,
   type CompletionCandidateKind,
   type DiagnosticSeverityName,
@@ -77,11 +103,31 @@ import {
   createDefaultLanguageDatabase,
   createCatalogFromLanguageDatabase,
 } from './languageDatabase/index.js';
-import { DocumentAnalysisService, readWorkspaceFiles, type AnalyzedDocument } from './lsp/index.js';
+import {
+  DocumentAnalysisService,
+  provideWorkspaceDefinition,
+  provideWorkspaceReferences,
+  readWorkspaceFiles,
+  type AnalyzedDocument,
+} from './lsp/index.js';
 import { createSemanticEngine, type SemanticRange } from './semantic/index.js';
 import { createSyntaxAdapter } from './syntax/index.js';
 
-const connection = createConnection(ProposedFeatures.all, process.stdin, process.stdout);
+type StrudelServerFeatures = ServerFeatures<
+  ServerFeaturePlaceholder,
+  ServerFeaturePlaceholder,
+  ServerFeaturePlaceholder,
+  ServerFeaturePlaceholder,
+  ServerFeaturePlaceholder,
+  ServerFeaturePlaceholder,
+  ServerLanguages,
+  ServerFeaturePlaceholder
+>;
+
+// `ProposedFeatures.all` is deliberately typed with erased feature shapes even
+// though the connection installs the full default language feature set.
+const strudelFeatures = ProposedFeatures.all as StrudelServerFeatures;
+const connection = createConnection(strudelFeatures, process.stdin, process.stdout);
 const database = createDefaultLanguageDatabase();
 const catalog = createCatalogFromLanguageDatabase(database);
 const adapter = createSyntaxAdapter();
@@ -92,7 +138,10 @@ const latestVersions = new Map<string, number>();
 let workspaceRootUris: readonly string[] = [];
 let workspaceFoldersSupported = false;
 let configurationSupported = false;
+let inlayHintRefreshSupported = false;
+let workspaceSymbolRangeResolveSupported = false;
 let diagnosticsConfiguration = DEFAULT_DIAGNOSTICS_CONFIGURATION;
+let inlayHintsConfiguration = DEFAULT_INLAY_HINTS_CONFIGURATION;
 
 const SEMANTIC_TOKEN_TYPES: readonly SemanticTokenType[] = [
   'function',
@@ -177,18 +226,28 @@ function cancelDocumentAnalysis(uri: string): void {
   pendingAnalyses.delete(uri);
 }
 
-async function refreshDiagnosticsConfiguration(
-  params?: DidChangeConfigurationParams,
-): Promise<void> {
+async function refreshConfiguration(params?: DidChangeConfigurationParams): Promise<void> {
   const value: unknown = configurationSupported
     ? await connection.workspace.getConfiguration('strudelLsp')
     : params?.settings;
-  diagnosticsConfiguration = await guardAsync(diagnosticsConfiguration, () =>
-    Promise.resolve(parseDiagnosticsConfiguration(value)),
-  );
+  const previousInlayHints = inlayHintsConfiguration;
+  const [diagnostics, inlayHints] = await Promise.all([
+    guardAsync(diagnosticsConfiguration, () =>
+      Promise.resolve(parseDiagnosticsConfiguration(value)),
+    ),
+    guardAsync(inlayHintsConfiguration, () => Promise.resolve(parseInlayHintsConfiguration(value))),
+  ]);
+  diagnosticsConfiguration = diagnostics;
+  inlayHintsConfiguration = inlayHints;
   await Promise.all([...pendingAnalyses.values()]);
   for (const analyzed of documents.all()) {
     publishDiagnostics(analyzed);
+  }
+  if (inlayHints.enabled !== previousInlayHints.enabled && inlayHintRefreshSupported) {
+    void connection.languages.inlayHint.refresh().catch((error: unknown) => {
+      const message = error instanceof Error ? error.message : String(error);
+      connection.console.error(`Strudel inlay hint refresh failed: ${message}`);
+    });
   }
 }
 
@@ -218,6 +277,8 @@ function toLspCodeActionKind(kind: CodeActionKindName): CodeActionKind {
       return CodeActionKind.QuickFix;
     case 'refactor.inline':
       return CodeActionKind.RefactorInline;
+    case 'refactor.extract':
+      return CodeActionKind.RefactorExtract;
   }
 }
 
@@ -276,12 +337,15 @@ function toLspDocumentSymbol(symbol: DocumentSymbolResult): LspDocumentSymbol {
   };
 }
 
-function toLspSymbolInformation(symbol: WorkspaceSymbolResult): SymbolInformation {
+function toLspWorkspaceSymbol(symbol: WorkspaceSymbolResult): WorkspaceSymbol {
   return {
     name: symbol.name,
     kind: toLspSymbolKind(symbol.kind),
-    location: { uri: symbol.uri, range: toLspRange(symbol.range) },
+    location: workspaceSymbolRangeResolveSupported
+      ? { uri: symbol.uri }
+      : { uri: symbol.uri, range: toLspRange(symbol.range) },
     containerName: symbol.containerName,
+    data: symbol.data,
   };
 }
 
@@ -351,6 +415,75 @@ function contextFor(analyzed: AnalyzedDocument, offset: number): FeatureContext 
   };
 }
 
+function workspaceContextsFor(token: CancellationToken): Promise<readonly FeatureContext[]> {
+  return guardAsync([], async () => {
+    await Promise.all([...pendingAnalyses.values()]);
+    const openDocuments = documents.all();
+    const openUris = new Set(openDocuments.map((entry) => entry.document.uri));
+    const contexts: FeatureContext[] = openDocuments.map((entry) => contextFor(entry, 0));
+
+    const roots = await workspaceRoots();
+    if (roots.length === 0) {
+      return contexts;
+    }
+    const files = await readWorkspaceFiles(roots, { token });
+    for (const file of files) {
+      if (token.isCancellationRequested) {
+        return [];
+      }
+      if (openUris.has(file.uri)) {
+        continue;
+      }
+      const syntax = adapter.parse({ uri: file.uri, version: 1, text: file.text });
+      const semantic = engine.analyze(syntax, { token });
+      contexts.push({ uri: file.uri, text: file.text, syntax, semantic, database });
+    }
+    return contexts;
+  });
+}
+
+function mayHaveWorkspaceImport(analyzed: AnalyzedDocument): boolean {
+  return analyzed.document.getText().includes('import ');
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function callHierarchyData(item: CallHierarchyItem): CallHierarchyData | undefined {
+  if (!isRecord(item.data)) {
+    return undefined;
+  }
+  const data = item.data;
+  if (
+    typeof data.version !== 'number' ||
+    typeof data.uri !== 'string' ||
+    typeof data.symbolId !== 'string' ||
+    typeof data.name !== 'string' ||
+    data.name !== item.name ||
+    data.uri !== item.uri
+  ) {
+    return undefined;
+  }
+  return {
+    version: data.version,
+    uri: data.uri,
+    symbolId: data.symbolId,
+    name: data.name,
+  };
+}
+
+function toLspCallHierarchyItem(item: CallHierarchyItemResult): CallHierarchyItem {
+  return {
+    uri: item.uri,
+    name: item.name,
+    kind: SymbolKind.Function,
+    range: toLspRange(item.range),
+    selectionRange: toLspRange(item.selectionRange),
+    data: item.data,
+  };
+}
+
 function publishDiagnostics(analyzed: AnalyzedDocument): void {
   guard(undefined, () => {
     const context = contextFor(analyzed, 0);
@@ -364,21 +497,35 @@ function publishDiagnostics(analyzed: AnalyzedDocument): void {
 connection.onInitialize((params: InitializeParams): InitializeResult => {
   rememberWorkspaceRoots(params);
   configurationSupported = params?.capabilities?.workspace?.configuration === true;
+  inlayHintRefreshSupported = params?.capabilities?.workspace?.inlayHint?.refreshSupport === true;
+  workspaceSymbolRangeResolveSupported =
+    params?.capabilities?.workspace?.symbol?.resolveSupport?.properties?.includes(
+      'location.range',
+    ) === true;
   return {
     capabilities: {
       textDocumentSync: TextDocumentSyncKind.Incremental,
-      completionProvider: { triggerCharacters: ['.'] },
+      completionProvider: { triggerCharacters: ['.'], resolveProvider: true },
       codeActionProvider: {
-        codeActionKinds: [CodeActionKind.QuickFix, CodeActionKind.RefactorInline],
+        codeActionKinds: [
+          CodeActionKind.QuickFix,
+          CodeActionKind.RefactorInline,
+          CodeActionKind.RefactorExtract,
+        ],
         resolveProvider: false,
       },
       hoverProvider: true,
       signatureHelpProvider: { triggerCharacters: ['(', ','] },
       definitionProvider: true,
       referencesProvider: true,
+      callHierarchyProvider: true,
       documentSymbolProvider: true,
-      workspaceSymbolProvider: true,
+      workspaceSymbolProvider: { resolveProvider: true },
       documentFormattingProvider: true,
+      documentRangeFormattingProvider: true,
+      foldingRangeProvider: true,
+      selectionRangeProvider: true,
+      inlayHintProvider: true,
       semanticTokensProvider: {
         legend: SEMANTIC_TOKENS_LEGEND,
         range: false,
@@ -391,12 +538,12 @@ connection.onInitialize((params: InitializeParams): InitializeResult => {
 
 connection.onInitialized(() => {
   if (configurationSupported) {
-    void refreshDiagnosticsConfiguration();
+    void refreshConfiguration();
   }
 });
 
 connection.onDidChangeConfiguration((params) => {
-  void refreshDiagnosticsConfiguration(params);
+  void refreshConfiguration(params);
 });
 
 connection.onDidOpenTextDocument((params) => {
@@ -434,12 +581,27 @@ connection.onCompletion((params: CompletionParams): Promise<CompletionItem[]> =>
           candidate.documentation === undefined
             ? undefined
             : { kind: MarkupKind.Markdown, value: candidate.documentation },
+        data: candidate.data,
         textEdit: {
           range: toLspRange(candidate.replacementRange),
           newText: candidate.label,
         },
       }),
     );
+  }),
+);
+
+connection.onCompletionResolve((item: CompletionItem): CompletionItem =>
+  guard(item, () => {
+    const result = resolveCompletion({ label: item.label, data: item.data }, database);
+    return {
+      ...item,
+      detail: result.detail ?? item.detail,
+      documentation:
+        result.documentation === undefined
+          ? item.documentation
+          : { kind: MarkupKind.Markdown, value: result.documentation },
+    };
   }),
 );
 
@@ -491,22 +653,31 @@ connection.onHover((params: HoverParams): Promise<Hover | null> =>
   }),
 );
 
-connection.onDefinition((params: DefinitionParams): Promise<Location[] | null> =>
-  guardAsync(null, async () => {
-    await awaitDocumentAnalysis(params.textDocument.uri);
-    const analyzed = documents.get(params.textDocument.uri);
-    if (analyzed === undefined) {
-      return null;
-    }
-    const offset = analyzed.document.offsetAt(params.position);
-    const result = provideDefinition(contextFor(analyzed, offset), offset);
-    return result === undefined
-      ? null
-      : [{ uri: analyzed.document.uri, range: toLspRange(result.range) }];
-  }),
+connection.onDefinition(
+  (params: DefinitionParams, token: CancellationToken): Promise<Location[] | null> =>
+    guardAsync(null, async () => {
+      await awaitDocumentAnalysis(params.textDocument.uri);
+      const analyzed = documents.get(params.textDocument.uri);
+      if (analyzed === undefined) {
+        return null;
+      }
+      const offset = analyzed.document.offsetAt(params.position);
+      const context = contextFor(analyzed, offset);
+      if (mayHaveWorkspaceImport(analyzed)) {
+        const workspace = await workspaceContextsFor(token);
+        const remote = provideWorkspaceDefinition(context, workspace, offset);
+        if (remote !== undefined) {
+          return [{ uri: remote.uri, range: toLspRange(remote.range) }];
+        }
+      }
+      const result = provideDefinition(context, offset);
+      return result === undefined
+        ? null
+        : [{ uri: analyzed.document.uri, range: toLspRange(result.range) }];
+    }),
 );
 
-connection.onReferences((params: ReferenceParams): Promise<Location[]> =>
+connection.onReferences((params: ReferenceParams, token: CancellationToken): Promise<Location[]> =>
   guardAsync([], async () => {
     await awaitDocumentAnalysis(params.textDocument.uri);
     const analyzed = documents.get(params.textDocument.uri);
@@ -514,15 +685,79 @@ connection.onReferences((params: ReferenceParams): Promise<Location[]> =>
       return [];
     }
     const offset = analyzed.document.offsetAt(params.position);
-    return provideReferences(
-      contextFor(analyzed, offset),
-      offset,
-      params.context.includeDeclaration,
-    ).map((reference) => ({
-      uri: analyzed.document.uri,
-      range: toLspRange(reference.range),
-    }));
+    const context = contextFor(analyzed, offset);
+    if (mayHaveWorkspaceImport(analyzed)) {
+      const workspace = await workspaceContextsFor(token);
+      return provideWorkspaceReferences(
+        context,
+        workspace,
+        offset,
+        params.context.includeDeclaration,
+      ).map((reference) => ({
+        uri: reference.uri,
+        range: toLspRange(reference.range),
+      }));
+    }
+    return provideReferences(context, offset, params.context.includeDeclaration).map(
+      (reference) => ({
+        uri: analyzed.document.uri,
+        range: toLspRange(reference.range),
+      }),
+    );
   }),
+);
+
+connection.languages.callHierarchy.onPrepare(
+  (params: CallHierarchyPrepareParams): Promise<CallHierarchyItem[] | null> =>
+    guardAsync(null, async () => {
+      await awaitDocumentAnalysis(params.textDocument.uri);
+      const analyzed = documents.get(params.textDocument.uri);
+      if (analyzed === undefined) {
+        return null;
+      }
+      const offset = analyzed.document.offsetAt(params.position);
+      return prepareCallHierarchy(contextFor(analyzed, offset), offset).map(toLspCallHierarchyItem);
+    }),
+);
+
+async function callHierarchyContext(
+  item: CallHierarchyItem,
+): Promise<{ context: FeatureContext; data: CallHierarchyData } | undefined> {
+  const data = callHierarchyData(item);
+  if (data === undefined) {
+    return undefined;
+  }
+  await awaitDocumentAnalysis(data.uri);
+  const analyzed = documents.get(data.uri);
+  return analyzed === undefined ? undefined : { context: contextFor(analyzed, 0), data };
+}
+
+connection.languages.callHierarchy.onIncomingCalls(
+  (params: CallHierarchyIncomingCallsParams): Promise<CallHierarchyIncomingCall[]> =>
+    guardAsync([], async () => {
+      const resolved = await callHierarchyContext(params.item);
+      if (resolved === undefined) {
+        return [];
+      }
+      return provideCallHierarchyCalls(resolved.context, resolved.data, 'incoming').map((call) => ({
+        from: toLspCallHierarchyItem(call.from),
+        fromRanges: call.fromRanges.map(toLspRange),
+      }));
+    }),
+);
+
+connection.languages.callHierarchy.onOutgoingCalls(
+  (params: CallHierarchyOutgoingCallsParams): Promise<CallHierarchyOutgoingCall[]> =>
+    guardAsync([], async () => {
+      const resolved = await callHierarchyContext(params.item);
+      if (resolved === undefined) {
+        return [];
+      }
+      return provideCallHierarchyCalls(resolved.context, resolved.data, 'outgoing').map((call) => ({
+        to: toLspCallHierarchyItem(call.from),
+        fromRanges: call.fromRanges.map(toLspRange),
+      }));
+    }),
 );
 
 connection.onDocumentSymbol((params: DocumentSymbolParams): Promise<LspDocumentSymbol[]> =>
@@ -537,30 +772,11 @@ connection.onDocumentSymbol((params: DocumentSymbolParams): Promise<LspDocumentS
 );
 
 connection.onWorkspaceSymbol(
-  (params: WorkspaceSymbolParams, token: CancellationToken): Promise<SymbolInformation[]> =>
+  (params: WorkspaceSymbolParams, token: CancellationToken): Promise<WorkspaceSymbol[]> =>
     guardAsync([], async () => {
       try {
-        await Promise.all([...pendingAnalyses.values()]);
-        const openDocuments = documents.all();
-        const openUris = new Set(openDocuments.map((entry) => entry.document.uri));
-        const contexts = openDocuments.map((entry) => contextFor(entry, 0));
-
-        const roots = await workspaceRoots();
-        const files = await readWorkspaceFiles(roots, { token });
-        for (const file of files) {
-          if (token.isCancellationRequested) {
-            return [];
-          }
-          if (openUris.has(file.uri)) {
-            continue;
-          }
-
-          const syntax = adapter.parse({ uri: file.uri, version: 1, text: file.text });
-          const semantic = engine.analyze(syntax, { token });
-          contexts.push({ uri: file.uri, text: file.text, syntax, semantic, database });
-        }
-
-        return provideWorkspaceSymbols(contexts, params.query).map(toLspSymbolInformation);
+        const contexts = await workspaceContextsFor(token);
+        return provideWorkspaceSymbols(contexts, params.query).map(toLspWorkspaceSymbol);
       } catch (error) {
         if (token.isCancellationRequested) {
           return [];
@@ -568,6 +784,19 @@ connection.onWorkspaceSymbol(
         throw error;
       }
     }),
+);
+
+connection.onWorkspaceSymbolResolve((item: WorkspaceSymbol): WorkspaceSymbol =>
+  guard(item, () => {
+    const result = resolveWorkspaceSymbol({ name: item.name, data: item.data }, database);
+    return {
+      ...item,
+      location:
+        result.range === undefined
+          ? item.location
+          : { ...item.location, range: toLspRange(result.range) },
+    };
+  }),
 );
 
 connection.onDocumentFormatting((params: DocumentFormattingParams): Promise<TextEdit[]> =>
@@ -584,6 +813,83 @@ connection.onDocumentFormatting((params: DocumentFormattingParams): Promise<Text
     return result.edits.map((edit): TextEdit => ({
       range: toLspRange(edit.range),
       newText: edit.newText,
+    }));
+  }),
+);
+
+connection.onDocumentRangeFormatting((params: DocumentRangeFormattingParams): Promise<TextEdit[]> =>
+  guardAsync([], async () => {
+    await awaitDocumentAnalysis(params.textDocument.uri);
+    const analyzed = documents.get(params.textDocument.uri);
+    if (analyzed === undefined) {
+      return [];
+    }
+    const result = provideRangeFormatting(
+      contextFor(analyzed, 0),
+      { tabSize: params.options.tabSize, insertSpaces: params.options.insertSpaces },
+      semanticRangeFromLsp(analyzed.document, params.range),
+    );
+    return result.edits.map((edit): TextEdit => ({
+      range: toLspRange(edit.range),
+      newText: edit.newText,
+    }));
+  }),
+);
+
+connection.onFoldingRanges((params): Promise<FoldingRange[]> =>
+  guardAsync([], async () => {
+    await awaitDocumentAnalysis(params.textDocument.uri);
+    const analyzed = documents.get(params.textDocument.uri);
+    if (analyzed === undefined) {
+      return [];
+    }
+    return provideFoldingRanges(contextFor(analyzed, 0)).map((range) => ({
+      startLine: range.startLine,
+      endLine: range.endLine,
+      kind: range.kind,
+    }));
+  }),
+);
+
+connection.onSelectionRanges((params): Promise<SelectionRange[]> =>
+  guardAsync([], async () => {
+    await awaitDocumentAnalysis(params.textDocument.uri);
+    const analyzed = documents.get(params.textDocument.uri);
+    if (analyzed === undefined) {
+      return [];
+    }
+    const toLspSelectionRange = (
+      range: ReturnType<typeof provideSelectionRanges>[number],
+    ): SelectionRange => ({
+      range: toLspRange(range.range),
+      parent: range.parent === undefined ? undefined : toLspSelectionRange(range.parent),
+    });
+    return provideSelectionRanges(
+      contextFor(analyzed, 0),
+      params.positions.map((position) => ({
+        line: position.line,
+        character: position.character,
+      })),
+    ).map(toLspSelectionRange);
+  }),
+);
+
+connection.languages.inlayHint.on((params): Promise<InlayHint[]> =>
+  guardAsync([], async () => {
+    if (!inlayHintsConfiguration.enabled) {
+      return [];
+    }
+    await awaitDocumentAnalysis(params.textDocument.uri);
+    const analyzed = documents.get(params.textDocument.uri);
+    if (analyzed === undefined) {
+      return [];
+    }
+    return provideInlayHints(contextFor(analyzed, 0)).map((hint) => ({
+      position: hint.position,
+      label: hint.label,
+      kind: InlayHintKind.Type,
+      paddingLeft: hint.paddingLeft,
+      paddingRight: hint.paddingRight,
     }));
   }),
 );

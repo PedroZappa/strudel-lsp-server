@@ -57,6 +57,60 @@ void test('inline constant handles numbers and respects the requested range', ()
   assert.equal(applyEdits(text, actions[0]?.edits ?? []), 'bpm(120);');
 });
 
+void test('extract literal adds a constant only for exact safe literals', () => {
+  const text = 'const pattern = s("bd sd").fast(2);';
+  const offset = text.indexOf('2);');
+  const range: SemanticRange = {
+    start: { line: 0, character: offset },
+    end: { line: 0, character: offset + 1 },
+    startOffset: offset,
+    endOffset: offset + 1,
+  };
+  const actions = provideRefactorings(createFeatureHarness(text).context, range);
+  assert.equal(actions.length, 1);
+  assert.equal(actions[0]?.kind, 'refactor.extract');
+  assert.equal(actions[0]?.title, "Extract literal to constant 'extracted'");
+  assert.equal(
+    applyEdits(text, actions[0]?.edits ?? []),
+    'const extracted = 2;\nconst pattern = s("bd sd").fast(extracted);',
+  );
+
+  const collision = 'const extracted = 1;\ns("bd").fast(2);';
+  const collisionOffset = collision.indexOf('2);');
+  const lineStart = collision.indexOf('\n') + 1;
+  const collisionActions = provideRefactorings(createFeatureHarness(collision).context, {
+    start: { line: 1, character: collisionOffset - lineStart },
+    end: { line: 1, character: collisionOffset - lineStart + 1 },
+    startOffset: collisionOffset,
+    endOffset: collisionOffset + 1,
+  });
+  assert.equal(collisionActions[0]?.title, "Extract literal to constant 'extracted1'");
+});
+
+void test('extract literal rejects broad ranges and unsafe contexts', () => {
+  const text = 'export const pattern = s("bd").fast(2);';
+  const offset = text.indexOf('2);');
+  const range: SemanticRange = {
+    start: { line: 0, character: offset },
+    end: { line: 0, character: offset + 1 },
+    startOffset: offset,
+    endOffset: offset + 1,
+  };
+  assert.deepEqual(provideRefactorings(createFeatureHarness(text).context, range), []);
+
+  const stringOffset = text.indexOf('"bd"');
+  assert.deepEqual(
+    provideRefactorings(createFeatureHarness(text).context, {
+      start: { line: 0, character: stringOffset },
+      end: { line: 0, character: stringOffset + 4 },
+      startOffset: stringOffset,
+      endOffset: stringOffset + 4,
+    }),
+    [],
+  );
+  assert.deepEqual(provideRefactorings(createFeatureHarness(text).context, fullRange(text)), []);
+});
+
 void test('inline constant rejects unsafe or ambiguous bindings', () => {
   const cases = [
     'let kick = "bd sd";\ns(kick);',

@@ -95,6 +95,7 @@ function buildSymbols(
     symbols.push({
       name: symbol.name,
       kind,
+      symbolId: symbol.id,
       detail: symbol.type.kind,
       range: ownerScope?.range ?? symbol.declaration,
       selectionRange: symbol.declaration,

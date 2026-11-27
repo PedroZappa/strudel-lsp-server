@@ -178,6 +178,136 @@ void test('unknown methods and invalid parameters do not stop the server', async
   assert.equal(await client.shutdownAndExit(), 0);
 });
 
+void test('new capabilities stay safe on incomplete live-coding input', async (t) => {
+  const client = new RawStdioClient();
+  t.after(async () => {
+    await client.terminate();
+  });
+
+  await client.initialize();
+  const uri = 'file:///test/live-coding.strudel';
+  const text = 'const pat = s("bd").fast(';
+  client.notify('textDocument/didOpen', {
+    textDocument: { uri, languageId: 'strudel', version: 1, text },
+  });
+
+  const folding = await client.request('textDocument/foldingRange', { textDocument: { uri } });
+  assert.deepEqual(folding.result, []);
+
+  const selection = await client.request('textDocument/selectionRange', {
+    textDocument: { uri },
+    positions: [{ line: 0, character: 7 }],
+  });
+  assert.equal(Array.isArray(selection.result), true);
+  assert.equal((selection.result as unknown[]).length, 1);
+
+  const rangeFormatting = await client.request('textDocument/rangeFormatting', {
+    textDocument: { uri },
+    range: { start: { line: 0, character: 0 }, end: { line: 0, character: text.length } },
+    options: { tabSize: 2, insertSpaces: true },
+  });
+  assert.deepEqual(rangeFormatting.result, []);
+
+  const inlayHints = await client.request('textDocument/inlayHint', {
+    textDocument: { uri },
+    range: { start: { line: 0, character: 0 }, end: { line: 0, character: text.length } },
+  });
+  assert.deepEqual(inlayHints.result, []);
+
+  const codeActions = await client.request('textDocument/codeAction', {
+    textDocument: { uri },
+    range: { start: { line: 0, character: 7 }, end: { line: 0, character: 10 } },
+    context: { diagnostics: [] },
+  });
+  assert.deepEqual(codeActions.result, []);
+
+  const hierarchy = await client.request('textDocument/prepareCallHierarchy', {
+    textDocument: { uri },
+    position: { line: 0, character: 7 },
+  });
+  assert.deepEqual(hierarchy.result, []);
+
+  const incoming = await client.request('callHierarchy/incomingCalls', {
+    item: {
+      uri,
+      name: 'pat',
+      kind: 12,
+      range: { start: { line: 0, character: 0 }, end: { line: 0, character: 3 } },
+      selectionRange: { start: { line: 0, character: 0 }, end: { line: 0, character: 3 } },
+      data: { version: 1, uri, symbolId: 'stale', name: 'pat' },
+    },
+  });
+  assert.deepEqual(incoming.result, []);
+
+  const completionItem = { label: 'fast', data: { metadataVersion: 'stale' } };
+  const resolvedCompletion = await client.request('completionItem/resolve', completionItem);
+  assert.deepEqual(resolvedCompletion.result, completionItem);
+
+  const workspaceSymbol = {
+    name: 'pat',
+    kind: 13,
+    location: { uri },
+    data: { metadataVersion: 'stale' },
+  };
+  const resolvedSymbol = await client.request('workspaceSymbol/resolve', workspaceSymbol);
+  assert.deepEqual(resolvedSymbol.result, workspaceSymbol);
+
+  const followUp = await client.request('textDocument/documentSymbol', { textDocument: { uri } });
+  assert.equal(Array.isArray(followUp.result), true);
+
+  assertCleanTransport(client);
+  assert.equal(await client.shutdownAndExit(), 0);
+});
+
+void test('incomplete imports do not trigger cross-file navigation', async (t) => {
+  const root = await mkdtemp(join(tmpdir(), 'strudel-incomplete-import-'));
+  const client = new RawStdioClient();
+  t.after(async () => {
+    await client.terminate();
+    await rm(root, { recursive: true, force: true });
+  });
+
+  await writeFile(join(root, 'lib.strudel'), 'export const kick = s("bd");', 'utf8');
+  const rootUri = pathToFileURL(root).href;
+  await client.initialize({
+    rootUri,
+    workspaceFolders: [{ uri: rootUri, name: 'workspace' }],
+  });
+
+  const uri = pathToFileURL(join(root, 'main.strudel')).href;
+  const text = 'import { kick } from "./lib.strudel\nconst pat = kick;';
+  client.notify('textDocument/didOpen', {
+    textDocument: { uri, languageId: 'strudel', version: 1, text },
+  });
+  const position = { line: 0, character: text.indexOf('kick') + 1 };
+
+  const definitions = await client.request('textDocument/definition', {
+    textDocument: { uri },
+    position,
+  });
+  assert.equal(Array.isArray(definitions.result), true);
+  assert.deepEqual(
+    (definitions.result as { uri: string }[]).map((definition) => definition.uri),
+    [uri],
+  );
+
+  const references = await client.request('textDocument/references', {
+    textDocument: { uri },
+    position,
+    context: { includeDeclaration: true },
+  });
+  assert.equal(Array.isArray(references.result), true);
+  assert.equal(
+    (references.result as { uri: string }[]).some(
+      (reference) => reference.uri !== uri && reference.uri.endsWith('/lib.strudel'),
+    ),
+    false,
+  );
+
+  assertCleanTransport(client);
+  assert.equal(await client.shutdownAndExit(), 0);
+});
+
 void test('cancelRequest stops a workspace scan without breaking the connection', async (t) => {
   const root = await mkdtemp(join(tmpdir(), 'strudel-protocol-cancel-'));
   const client = new RawStdioClient();

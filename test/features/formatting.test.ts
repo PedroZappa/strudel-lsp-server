@@ -2,7 +2,11 @@ import assert from 'node:assert/strict';
 
 import { test } from 'node:test';
 
-import { provideFormatting, type FormattingOptions } from '../../src/features/index.js';
+import {
+  provideFormatting,
+  provideRangeFormatting,
+  type FormattingOptions,
+} from '../../src/features/index.js';
 
 import { createFeatureHarness } from './helpers.js';
 
@@ -51,4 +55,30 @@ void test('formatting preserves strings, templates, comments and blank lines', (
 void test('formatting leaves errors and already formatted documents unchanged', () => {
   assert.deepEqual(editSummary('const pat = s("bd").fast('), []);
   assert.deepEqual(editSummary('function f() {\n  return 1\n}\nf()'), []);
+});
+
+void test('range formatting returns only full-document edits inside the requested lines', () => {
+  const text = 'function f() {\n    return 1\n  }\nf()';
+  const { context, document } = createFeatureHarness(text);
+  const start = { line: 1, character: 0 };
+  const end = { line: 2, character: 0 };
+  const result = provideRangeFormatting(context, SPACES, {
+    start,
+    end,
+    startOffset: document.offsetAt(start),
+    endOffset: document.offsetAt(end),
+  });
+
+  assert.deepEqual(
+    result.edits.map((edit) => [edit.range.start.line, edit.range.end.character, edit.newText]),
+    [[1, 4, '  ']],
+  );
+
+  const outside = provideRangeFormatting(context, SPACES, {
+    start: { line: 3, character: 0 },
+    end: { line: 3, character: 1 },
+    startOffset: text.indexOf('f()', text.lastIndexOf('\n')),
+    endOffset: text.length,
+  });
+  assert.deepEqual(outside.edits, []);
 });

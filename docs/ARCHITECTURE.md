@@ -1,6 +1,6 @@
 # Architecture
 
-Status: transport, syntax adapter, semantic engine, language database, document store, feature providers, signature help, mini-notation token analysis and recovery AST, quick fixes, inline-constant refactoring, document-scoped rename, document and workspace symbols, semantic tokens, conservative formatting and the performance harness implemented on 2026-11-27; remaining extended capabilities are under evaluation.
+Status: transport, syntax adapter, semantic engine, language database, document store, feature providers, signature help, mini-notation token analysis and recovery AST, quick fixes, conservative refactoring, document-scoped rename, document and workspace symbols, semantic tokens, conservative formatting, folding, selection ranges, opt-in inlay hints, resolve providers, call hierarchy, bounded cross-file navigation and the performance harness implemented on 2026-11-27; other extended capabilities remain under evaluation. Phase 23 additions are unreleased.
 
 Authority: `AGENTS.md` sections 3–6.
 
@@ -26,8 +26,8 @@ Editor (any LSP client)
         |  request context
         v
 +---------------------------+
-| Language intelligence     |  diagnostics, quick fixes, inline refactoring, completion, hover, signature help,
-| feature providers         |  navigation, rename, document and workspace symbols, semantic tokens, formatting, mini-notation rules and other evaluated capabilities
+| Language intelligence     |  diagnostics, quick fixes, conservative refactoring, completion and resolution, hover, signature help,
+| feature providers         |  navigation, call hierarchy, rename, document and workspace symbols with resolve, semantic tokens, formatting, folding, selection ranges, inlay hints, mini-notation rules and other evaluated capabilities
 +---------------------------+
         |  semantic queries
         v
@@ -49,10 +49,10 @@ Editor (any LSP client)
 
 Side inputs:
   - Reproducible language database (generated, manual and runtime-derived metadata)
-  - User configuration (published `0.2.0` diagnostics settings via standard LSP configuration; standard formatting options only)
+  - User configuration (published `0.2.0` diagnostics settings, unreleased opt-in inlay-hint setting, and standard LSP formatting options)
 ```
 
-The current `src/server.ts` implements LSP lifecycle, incremental text sync, completion, code actions for quick fixes and inline refactoring, hover, signature help, definition, references, document and workspace symbols, semantic tokens, document formatting, prepare rename, rename and push diagnostics. `src/syntax/` implements the pinned Tree-sitter adapter and the parser-independent `SyntaxDocument` contract. `src/semantic/` implements parser-independent snapshots, scopes, symbols, references, limited type inference, incremental reuse and cancellation checks. `src/miniNotation/` implements a lexical token and conservative issue submodel over mini-notation string content plus a Strudel-owned recovery AST built from those tokens. `src/languageDatabase/` implements a reproducible, offline-capable metadata snapshot with a `SemanticCatalog` adapter; Phase 20 adds unambiguous synonym aliases and curated additive signatures behind the same adapter boundary. `src/lsp/` owns the text document store, bounded workspace file discovery and per-version syntax/semantic snapshots. `src/features/` contains transport-independent diagnostics, quick-fix, inline-refactoring, completion, hover, signature help, navigation, document-symbol, workspace-symbol, semantic-token, formatting and rename providers. The `src/configuration/` layer parses and applies only the focused diagnostics settings; it has no LSP or parser dependency. Document updates are analysed outside the request handlers on the next event-loop turn; request handlers await the latest scheduled analysis, and superseded document versions are discarded before publication. Published `0.1.0` had no custom configuration channel; published `0.2.0` adds focused diagnostics settings while language metadata remains pinned. ADR-034 records the first-release boundary, ADR-052 records the published `0.2.0` diagnostics extension, ADR-063 defines its v1 stability boundary, and Strudel version selection remains deferred.
+The current `src/server.ts` implements LSP lifecycle, incremental text sync, completion and completion resolution, code actions for quick fixes and conservative refactorings, hover, signature help, definition, references, call hierarchy, document and workspace symbols with client-gated resolve, semantic tokens, document and range formatting, folding ranges, selection ranges, opt-in inlay hints, prepare rename, rename and push diagnostics. Cross-file definition and references use the existing bounded workspace contexts on demand. `src/syntax/` implements the pinned Tree-sitter adapter and the parser-independent `SyntaxDocument` contract, including UTF-16 position/offset conversion for structural providers. `src/semantic/` implements parser-independent snapshots, scopes, symbols, references, limited type inference, incremental reuse and cancellation checks. `src/miniNotation/` implements a lexical token and conservative issue submodel over mini-notation string content plus a Strudel-owned recovery AST built from those tokens. `src/languageDatabase/` implements a reproducible, offline-capable metadata snapshot with a `SemanticCatalog` adapter; Phase 20 adds unambiguous synonym aliases and curated additive signatures behind the same adapter boundary. `src/lsp/` owns the text document store, bounded workspace file discovery, per-version syntax/semantic snapshots and the transport-adjacent cross-file navigation policy. `src/features/` contains transport-independent diagnostics, refactoring, completion and resolve, hover, signature help, navigation, structural, inlay-hint, call-hierarchy, document-symbol, workspace-symbol, semantic-token, formatting and rename providers. Resolve and call-hierarchy tokens are created from current semantic or metadata snapshots and validated at the transport boundary; they never authorize file access. The `src/configuration/` layer parses focused diagnostics settings and the opt-in inlay-hint setting; it has no LSP or parser dependency. Document updates are analysed outside the request handlers on the next event-loop turn; request handlers await the latest scheduled analysis, and superseded document versions are discarded before publication. Published `0.1.0` had no custom configuration channel; published `0.2.0` adds focused diagnostics settings, while unreleased `v0.5.0` adds inlay-hint opt-in under ADR-073. ADR-034 records the first-release boundary, ADR-052 records the published diagnostics extension, ADR-063 defines its v1 stability boundary, and Strudel version selection remains deferred.
 
 ## Responsibilities
 
@@ -63,7 +63,8 @@ The current `src/server.ts` implements LSP lifecycle, incremental text sync, com
 - Translate LSP requests into feature-provider calls and map results back to LSP types.
 - Propagate cancellation and discard superseded work where appropriate.
 - Keep expensive work off the communication-critical path.
-- Perform bounded on-demand workspace file discovery for cross-file navigation requests, with symlink, path-containment and unreadable-file guards and deterministic ordering.
+- Perform bounded on-demand workspace file discovery for navigation and symbol requests, with symlink, path-containment and unreadable-file guards and deterministic ordering.
+- Validate opaque resolve and call-hierarchy tokens at the protocol boundary before allowing provider enrichment or navigation.
 - Contain all editor-specific behaviour outside the server core.
 
 ### Language intelligence
@@ -75,10 +76,10 @@ The current `src/server.ts` implements LSP lifecycle, incremental text sync, com
 
 ### Configuration
 
-- Parse only user-facing diagnostics settings through a transport-independent boundary.
-- Keep provider defaults authoritative for missing, invalid or unknown values.
-- Apply valid overrides to published diagnostics and derived quick fixes without exposing engine internals.
-- Request configuration only from clients that advertise the LSP capability, while accepting standard settings notifications.
+- Parse only user-facing diagnostics and inlay-hint settings through a transport-independent boundary.
+- Keep provider defaults authoritative for missing, invalid or unknown values; inlay hints remain disabled unless explicitly enabled.
+- Apply valid diagnostics overrides to published diagnostics and derived quick fixes without exposing engine internals.
+- Request configuration only from clients that advertise the LSP capability, while accepting standard settings notifications; refresh inlay hints only when the client advertises refresh support.
 
 ### Performance harness
 
@@ -129,9 +130,10 @@ The current `src/server.ts` implements LSP lifecycle, incremental text sync, com
 ### Feature request
 
 1. LSP transport creates a request context with document version, position and cancellation token.
-2. Feature provider queries the semantic model and language database.
-3. Results are mapped to LSP response types.
-4. Obsolete requests are cancelled or discarded when a newer document version supersedes them.
+2. For resolve and call-hierarchy requests, the transport first validates the opaque token against the current item and snapshot.
+3. Feature provider queries the semantic model, syntax structure and language database; cross-file navigation consumes only contexts already supplied by the bounded workspace scan.
+4. Results are mapped to LSP response types; workspace-symbol ranges are withheld only for clients that advertise partial-range support.
+5. Obsolete requests are cancelled or discarded when a newer document version supersedes them.
 
 ## Stable contracts
 
@@ -162,7 +164,7 @@ Implemented document and feature contracts (exported from `src/lsp/index.ts` and
 - `AnalyzedDocument` — one immutable text, syntax and semantic snapshot pair per document version.
 - `DocumentAnalysisService` — incremental document updates with cached syntax/semantic results.
 - `FeatureContext` — provider input combining the document snapshot, syntax node at the request offset and language database.
-- `LanguageDiagnostic`, `DiagnosticFix`, `QuickFixResult`, `TextEditResult`, `CompletionCandidate`, `HoverResult`, `SignatureHelpResult`, `DefinitionResult`, `ReferenceResult`, `DocumentSymbolKind`, `DocumentSymbolResult`, `SemanticTokenModifier`, `SemanticTokenResult`, `SemanticTokenType`, `FormattingOptions`, `FormattingResult`, `PrepareRenameResult` and `RenameResult` — transport-independent provider results mapped by `src/server.ts`.
+- `LanguageDiagnostic`, `DiagnosticFix`, `QuickFixResult`, `RefactoringResult`, `TextEditResult`, `CompletionCandidate`, `CompletionResolveData`/`Input`/`Result`, `HoverResult`, `SignatureHelpResult`, `DefinitionResult`, `ReferenceResult`, `WorkspaceLocationResult`, `DocumentSymbolKind`, `DocumentSymbolResult`, `WorkspaceSymbolResult`, `WorkspaceSymbolResolveData`/`Input`/`Result`, `FoldingRangeResult`, `SelectionRangeResult`, `InlayHintResult`, `CallHierarchyItemResult`, `CallHierarchyData`, `CallHierarchyCallResult`, `SemanticTokenModifier`, `SemanticTokenResult`, `SemanticTokenType`, `FormattingOptions`, `FormattingResult`, `PrepareRenameResult` and `RenameResult` — transport-independent provider results mapped by `src/server.ts`.
 
 Implemented mini-notation contracts (exported from `src/miniNotation/index.ts`):
 

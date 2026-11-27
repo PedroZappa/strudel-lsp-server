@@ -267,29 +267,47 @@ void test('stdio server advertises and serves implemented language capabilities'
   })) as {
     capabilities: {
       textDocumentSync: number;
-      completionProvider: { triggerCharacters?: string[] };
+      completionProvider: { triggerCharacters?: string[]; resolveProvider?: boolean };
       codeActionProvider?: { codeActionKinds?: string[]; resolveProvider?: boolean };
       hoverProvider: boolean;
       signatureHelpProvider: { triggerCharacters?: string[] };
       definitionProvider: boolean;
       referencesProvider: boolean;
+      callHierarchyProvider?: boolean;
       documentSymbolProvider: boolean;
-      workspaceSymbolProvider?: boolean;
+      workspaceSymbolProvider?: boolean | { resolveProvider?: boolean };
       documentFormattingProvider: boolean;
+      documentRangeFormattingProvider?: boolean;
+      foldingRangeProvider?: boolean;
+      selectionRangeProvider?: boolean;
+      inlayHintProvider?: boolean;
       semanticTokensProvider?: {
         legend: { tokenTypes: string[]; tokenModifiers: string[] };
         range: boolean;
         full: boolean | { delta?: boolean };
       };
       renameProvider?: { prepareProvider?: boolean };
+      declarationProvider?: boolean;
+      typeDefinitionProvider?: boolean;
+      implementationProvider?: boolean;
+      documentHighlightProvider?: boolean;
+      documentLinkProvider?: boolean;
+      colorProvider?: boolean;
+      codeLensProvider?: boolean;
+      documentOnTypeFormattingProvider?: boolean;
+      linkedEditingRangeProvider?: boolean;
+      inlineValueProvider?: boolean;
+      monikerProvider?: boolean;
     };
   };
 
   assert.equal(initializeResult.capabilities.textDocumentSync, 2);
   assert.deepEqual(initializeResult.capabilities.completionProvider.triggerCharacters, ['.']);
+  assert.equal(initializeResult.capabilities.completionProvider.resolveProvider, true);
   assert.deepEqual(initializeResult.capabilities.codeActionProvider?.codeActionKinds, [
     'quickfix',
     'refactor.inline',
+    'refactor.extract',
   ]);
   assert.equal(initializeResult.capabilities.codeActionProvider?.resolveProvider, false);
   assert.equal(initializeResult.capabilities.hoverProvider, true);
@@ -299,9 +317,16 @@ void test('stdio server advertises and serves implemented language capabilities'
   ]);
   assert.equal(initializeResult.capabilities.definitionProvider, true);
   assert.equal(initializeResult.capabilities.referencesProvider, true);
+  assert.equal(initializeResult.capabilities.callHierarchyProvider, true);
   assert.equal(initializeResult.capabilities.documentSymbolProvider, true);
-  assert.equal(initializeResult.capabilities.workspaceSymbolProvider, true);
+  assert.deepEqual(initializeResult.capabilities.workspaceSymbolProvider, {
+    resolveProvider: true,
+  });
   assert.equal(initializeResult.capabilities.documentFormattingProvider, true);
+  assert.equal(initializeResult.capabilities.documentRangeFormattingProvider, true);
+  assert.equal(initializeResult.capabilities.foldingRangeProvider, true);
+  assert.equal(initializeResult.capabilities.selectionRangeProvider, true);
+  assert.equal(initializeResult.capabilities.inlayHintProvider, true);
   assert.deepEqual(initializeResult.capabilities.semanticTokensProvider?.legend.tokenTypes, [
     'function',
     'method',
@@ -317,6 +342,17 @@ void test('stdio server advertises and serves implemented language capabilities'
   assert.equal(initializeResult.capabilities.semanticTokensProvider?.range, false);
   assert.equal(initializeResult.capabilities.semanticTokensProvider?.full, true);
   assert.equal(initializeResult.capabilities.renameProvider?.prepareProvider, true);
+  assert.equal(initializeResult.capabilities.declarationProvider, undefined);
+  assert.equal(initializeResult.capabilities.typeDefinitionProvider, undefined);
+  assert.equal(initializeResult.capabilities.implementationProvider, undefined);
+  assert.equal(initializeResult.capabilities.documentHighlightProvider, undefined);
+  assert.equal(initializeResult.capabilities.documentLinkProvider, undefined);
+  assert.equal(initializeResult.capabilities.colorProvider, undefined);
+  assert.equal(initializeResult.capabilities.codeLensProvider, undefined);
+  assert.equal(initializeResult.capabilities.documentOnTypeFormattingProvider, undefined);
+  assert.equal(initializeResult.capabilities.linkedEditingRangeProvider, undefined);
+  assert.equal(initializeResult.capabilities.inlineValueProvider, undefined);
+  assert.equal(initializeResult.capabilities.monikerProvider, undefined);
 
   client.notify('initialized', {});
 
@@ -490,6 +526,119 @@ void test('stdio server advertises and serves implemented language capabilities'
     },
   ]);
 
+  const rangeFormatting = (await client.request('textDocument/rangeFormatting', {
+    textDocument: { uri: formatUri },
+    range: { start: { line: 1, character: 0 }, end: { line: 2, character: 0 } },
+    options: { tabSize: 2, insertSpaces: true },
+  })) as { range: { start: { line: number } }; newText: string }[];
+  assert.deepEqual(
+    rangeFormatting.map((edit) => [edit.range.start.line, edit.newText]),
+    [[1, '  ']],
+  );
+
+  const completionResolveUri = 'file:///test/completionResolve.strudel';
+  client.notify('textDocument/didOpen', {
+    textDocument: {
+      uri: completionResolveUri,
+      languageId: 'strudel',
+      version: 1,
+      text: 's("bd").fa',
+    },
+  });
+  const resolveCandidates = (await client.request('textDocument/completion', {
+    textDocument: { uri: completionResolveUri },
+    position: { line: 0, character: 10 },
+  })) as { label: string; data?: unknown }[];
+  const fastCandidate = resolveCandidates.find((item) => item.label === 'fast');
+  assert.ok(fastCandidate?.data !== undefined);
+  const resolvedCompletion = (await client.request('completionItem/resolve', {
+    label: fastCandidate.label,
+    data: fastCandidate.data,
+  })) as { detail?: string; documentation?: { value: string } };
+  assert.equal(resolvedCompletion.detail, 'Pattern');
+  assert.match(resolvedCompletion.documentation?.value ?? '', /Speed up a pattern/);
+  const invalidResolve = (await client.request('completionItem/resolve', {
+    label: 'fast',
+    data: { ...(fastCandidate.data as object), metadataVersion: 'stale' },
+  })) as { detail?: string };
+  assert.equal(invalidResolve.detail, undefined);
+
+  const structureUri = 'file:///test/structure.strudel';
+  const structureText = 'function f() {\n  const p = s("bd");\n  p;\n}';
+  client.notify('textDocument/didOpen', {
+    textDocument: { uri: structureUri, languageId: 'strudel', version: 1, text: structureText },
+  });
+  const foldingRanges = (await client.request('textDocument/foldingRange', {
+    textDocument: { uri: structureUri },
+  })) as { startLine: number; endLine: number; kind?: string }[];
+  assert.deepEqual(foldingRanges, [{ startLine: 0, endLine: 3, kind: 'region' }]);
+
+  const selectionRanges = (await client.request('textDocument/selectionRange', {
+    textDocument: { uri: structureUri },
+    positions: [{ line: 2, character: 2 }],
+  })) as { range: { start: { line: number } }; parent?: { range: { start: { line: number } } } }[];
+  assert.equal(selectionRanges.length, 1);
+  assert.equal(selectionRanges[0]?.range.start.line, 2);
+  assert.ok(selectionRanges[0]?.parent !== undefined);
+
+  const hintRange = { start: { line: 0, character: 0 }, end: { line: 1, character: 3 } };
+  assert.deepEqual(
+    await client.request('textDocument/inlayHint', {
+      textDocument: { uri },
+      range: hintRange,
+    }),
+    [],
+  );
+  const hintRefresh = client.waitForNotification(
+    'textDocument/publishDiagnostics',
+    (params) => (params as PublishDiagnosticsParams).uri === uri,
+  );
+  client.notify('workspace/didChangeConfiguration', {
+    settings: { strudelLsp: { inlayHints: { enabled: true } } },
+  });
+  await hintRefresh;
+  const hints = (await client.request('textDocument/inlayHint', {
+    textDocument: { uri },
+    range: hintRange,
+  })) as { label: string; kind: number }[];
+  assert.deepEqual(
+    hints.map((hint) => hint.label),
+    [': Pattern'],
+  );
+  assert.equal(hints[0]?.kind, 1);
+
+  const hierarchyUri = 'file:///test/hierarchy.strudel';
+  const hierarchyText = 'function outer() {\n  s("bd");\n}\nfunction inner() {\n  outer();\n}';
+  client.notify('textDocument/didOpen', {
+    textDocument: { uri: hierarchyUri, languageId: 'strudel', version: 1, text: hierarchyText },
+  });
+  const hierarchyItems = (await client.request('textDocument/prepareCallHierarchy', {
+    textDocument: { uri: hierarchyUri },
+    position: { line: 0, character: 9 },
+  })) as { name: string; kind: number; data?: unknown }[];
+  assert.equal(hierarchyItems.length, 1);
+  assert.equal(hierarchyItems[0]?.name, 'outer');
+  assert.equal(hierarchyItems[0]?.kind, SymbolKind.Function);
+  const incoming = (await client.request('callHierarchy/incomingCalls', {
+    item: hierarchyItems[0],
+  })) as { from: { name: string } }[];
+  assert.deepEqual(
+    incoming.map((call) => call.from.name),
+    ['inner'],
+  );
+
+  const innerItems = (await client.request('textDocument/prepareCallHierarchy', {
+    textDocument: { uri: hierarchyUri },
+    position: { line: 3, character: 9 },
+  })) as { name: string; data?: unknown }[];
+  const outgoing = (await client.request('callHierarchy/outgoingCalls', {
+    item: innerItems[0],
+  })) as { to: { name: string } }[];
+  assert.deepEqual(
+    outgoing.map((call) => call.to.name),
+    ['outer'],
+  );
+
   const miniUri = 'file:///test/mini.strudel';
   const miniText = 's("[]")';
   const miniDiagnostics = client.waitForNotification('textDocument/publishDiagnostics', (params) =>
@@ -538,6 +687,24 @@ void test('stdio server advertises and serves implemented language capabilities'
     refactorActions[0]?.edit.changes[refactorUri]?.map((edit) => edit.newText),
     ['', '"bd sd"'],
   );
+
+  const extractUri = 'file:///test/extract.strudel';
+  const extractText = 'const pattern = s("bd sd").fast(2);';
+  client.notify('textDocument/didOpen', {
+    textDocument: { uri: extractUri, languageId: 'strudel', version: 1, text: extractText },
+  });
+  const extractLiteralOffset = extractText.indexOf('2);');
+  const extractActions = (await client.request('textDocument/codeAction', {
+    textDocument: { uri: extractUri },
+    range: {
+      start: { line: 0, character: extractLiteralOffset },
+      end: { line: 0, character: extractLiteralOffset + 1 },
+    },
+    context: { diagnostics: [] },
+  })) as { title: string; kind: string }[];
+  assert.equal(extractActions.length, 1);
+  assert.equal(extractActions[0]?.title, "Extract literal to constant 'extracted'");
+  assert.equal(extractActions[0]?.kind, 'refactor.extract');
 
   const unknownDiagnostics = client.waitForNotification('textDocument/publishDiagnostics');
   client.notify('textDocument/didChange', {
@@ -610,8 +777,10 @@ void test('stdio server searches workspace files and open documents', async (t) 
     rootUri,
     capabilities: {},
     workspaceFolders: [{ uri: rootUri, name: 'workspace' }],
-  })) as { capabilities: { workspaceSymbolProvider?: boolean } };
-  assert.equal(initializeResult.capabilities.workspaceSymbolProvider, true);
+  })) as { capabilities: { workspaceSymbolProvider?: boolean | { resolveProvider?: boolean } } };
+  assert.deepEqual(initializeResult.capabilities.workspaceSymbolProvider, {
+    resolveProvider: true,
+  });
   client.notify('initialized', {});
 
   const openUri = pathToFileURL(join(root, 'open.strudel')).href;
@@ -656,6 +825,108 @@ void test('stdio server searches workspace files and open documents', async (t) 
   assert.equal(parameterSymbols[0]?.kind, SymbolKind.Variable);
   assert.equal(parameterSymbols[0]?.containerName, 'closed');
   assert.equal(parameterSymbols[0]?.location.range.start.line, 0);
+
+  assert.equal(await client.request('shutdown'), null);
+  client.notify('exit', {});
+  await client.waitForExit();
+});
+
+void test('stdio server resolves withheld workspace symbol ranges for supporting clients', async (t) => {
+  const root = await mkdtemp(join(tmpdir(), 'strudel-symbol-resolve-'));
+  const serverPath = fileURLToPath(new URL('../src/server.js', import.meta.url));
+  const client = new StdioLspClient(serverPath);
+  t.after(async () => {
+    await client.terminate();
+    await rm(root, { recursive: true, force: true });
+  });
+
+  await writeFile(join(root, 'resolve.strudel'), 'const target = s("bd");', 'utf8');
+  const rootUri = pathToFileURL(root).href;
+  await client.request('initialize', {
+    processId: process.pid,
+    rootUri,
+    capabilities: {
+      workspace: { symbol: { resolveSupport: { properties: ['location.range'] } } },
+    },
+    workspaceFolders: [{ uri: rootUri, name: 'workspace' }],
+  });
+  client.notify('initialized', {});
+
+  const symbols = (await client.request('workspace/symbol', { query: 'target' })) as {
+    name: string;
+    location: { uri: string; range?: { start: { character: number } } };
+    data?: unknown;
+  }[];
+  assert.equal(symbols.length, 1);
+  assert.equal(symbols[0]?.name, 'target');
+  assert.equal(symbols[0]?.location.range, undefined);
+
+  const resolved = (await client.request('workspaceSymbol/resolve', symbols[0])) as {
+    location: { range: { start: { character: number }; end: { character: number } } };
+  };
+  assert.equal(resolved.location.range.start.character, 6);
+  assert.equal(resolved.location.range.end.character, 12);
+
+  const tampered = (await client.request('workspaceSymbol/resolve', {
+    ...symbols[0],
+    data: { name: 'target', metadataVersion: 'stale' },
+  })) as { location: { range?: unknown } };
+  assert.equal(tampered.location.range, undefined);
+
+  assert.equal(await client.request('shutdown'), null);
+  client.notify('exit', {});
+  await client.waitForExit();
+});
+
+void test('stdio server resolves cross-file imports within the workspace boundary', async (t) => {
+  const root = await mkdtemp(join(tmpdir(), 'strudel-cross-file-'));
+  const serverPath = fileURLToPath(new URL('../src/server.js', import.meta.url));
+  const client = new StdioLspClient(serverPath);
+  t.after(async () => {
+    await client.terminate();
+    await rm(root, { recursive: true, force: true });
+  });
+
+  await writeFile(join(root, 'lib.strudel'), 'export const kick = s("bd");\nkick;', 'utf8');
+  const mainText = 'import { kick } from "./lib.strudel";\nconst pat = kick;';
+  await writeFile(join(root, 'main.strudel'), mainText, 'utf8');
+
+  const rootUri = pathToFileURL(root).href;
+  await client.request('initialize', {
+    processId: process.pid,
+    rootUri,
+    capabilities: {},
+    workspaceFolders: [{ uri: rootUri, name: 'workspace' }],
+  });
+  client.notify('initialized', {});
+
+  const mainUri = pathToFileURL(join(root, 'main.strudel')).href;
+  const opened = client.waitForNotification(
+    'textDocument/publishDiagnostics',
+    (params) => (params as PublishDiagnosticsParams).uri === mainUri,
+  );
+  client.notify('textDocument/didOpen', {
+    textDocument: { uri: mainUri, languageId: 'strudel', version: 1, text: mainText },
+  });
+  await opened;
+
+  const position = { line: 0, character: mainText.indexOf('kick') + 1 };
+  const definitions = (await client.request('textDocument/definition', {
+    textDocument: { uri: mainUri },
+    position,
+  })) as { uri: string; range: { start: { line: number } } }[];
+  assert.equal(definitions[0]?.uri, pathToFileURL(join(root, 'lib.strudel')).href);
+  assert.equal(definitions[0]?.range.start.line, 0);
+
+  const references = (await client.request('textDocument/references', {
+    textDocument: { uri: mainUri },
+    position,
+    context: { includeDeclaration: false },
+  })) as { uri: string }[];
+  assert.deepEqual(
+    references.map((reference) => reference.uri),
+    [pathToFileURL(join(root, 'lib.strudel')).href],
+  );
 
   assert.equal(await client.request('shutdown'), null);
   client.notify('exit', {});

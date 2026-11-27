@@ -1,5 +1,7 @@
 import type { LanguageDiagnostic } from '../features/types.js';
 
+import { isRecord, strudelLspSection } from './section.js';
+
 export const DIAGNOSTIC_CODES = [
   'syntax-error',
   'unknown-global',
@@ -32,10 +34,6 @@ export const DEFAULT_DIAGNOSTICS_CONFIGURATION: DiagnosticsConfiguration = Objec
   severity: Object.freeze({}),
 });
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
 function asConfiguredSeverity(value: unknown): ConfiguredDiagnosticSeverity | undefined {
   if (typeof value !== 'string') {
     return undefined;
@@ -46,18 +44,11 @@ function asConfiguredSeverity(value: unknown): ConfiguredDiagnosticSeverity | un
 }
 
 function diagnosticsSection(value: unknown): Record<string, unknown> | undefined {
-  if (!isRecord(value)) {
+  const section = strudelLspSection(value);
+  if (section === undefined) {
     return undefined;
   }
-
-  let current = value;
-  if (isRecord(current.settings)) {
-    current = current.settings;
-  }
-  if (isRecord(current.strudelLsp)) {
-    current = current.strudelLsp;
-  }
-  return isRecord(current.diagnostics) ? current.diagnostics : current;
+  return isRecord(section.diagnostics) ? section.diagnostics : section;
 }
 
 export function parseDiagnosticsConfiguration(value: unknown): DiagnosticsConfiguration {

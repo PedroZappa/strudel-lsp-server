@@ -1,6 +1,6 @@
 import type { LanguageDatabase } from '../languageDatabase/index.js';
 import type { SemanticDocument, SemanticRange, SemanticSymbol } from '../semantic/index.js';
-import type { SyntaxDocument, SyntaxNode } from '../syntax/index.js';
+import type { SyntaxDocument, SyntaxNode, SyntaxPosition } from '../syntax/index.js';
 
 export type DiagnosticSeverityName = 'error' | 'warning' | 'information' | 'hint';
 
@@ -35,7 +35,7 @@ export interface TextEditResult {
   readonly newText: string;
 }
 
-export type CodeActionKindName = 'quickfix' | 'refactor.inline';
+export type CodeActionKindName = 'quickfix' | 'refactor.inline' | 'refactor.extract';
 
 export interface QuickFixResult {
   readonly title: string;
@@ -46,7 +46,7 @@ export interface QuickFixResult {
 
 export interface RefactoringResult {
   readonly title: string;
-  readonly kind: 'refactor.inline';
+  readonly kind: 'refactor.inline' | 'refactor.extract';
   readonly diagnostics: readonly LanguageDiagnostic[];
   readonly edits: readonly TextEditResult[];
 }
@@ -58,7 +58,25 @@ export interface CompletionCandidate {
   readonly kind: CompletionCandidateKind;
   readonly detail?: string;
   readonly documentation?: string;
+  /** Opaque, versioned token used only by `completionItem/resolve`. */
+  readonly data?: CompletionResolveData;
   readonly replacementRange: SemanticRange;
+}
+
+export interface CompletionResolveData {
+  readonly metadataVersion: string;
+  readonly recordKind: 'global' | 'method';
+  readonly name: string;
+}
+
+export interface CompletionResolveInput {
+  readonly label: string;
+  readonly data?: unknown;
+}
+
+export interface CompletionResolveResult {
+  readonly detail?: string;
+  readonly documentation?: string;
 }
 
 export interface HoverResult {
@@ -71,6 +89,11 @@ export interface DefinitionResult {
 }
 
 export interface ReferenceResult {
+  readonly range: SemanticRange;
+}
+
+export interface WorkspaceLocationResult {
+  readonly uri: string;
   readonly range: SemanticRange;
 }
 
@@ -115,6 +138,8 @@ export type DocumentSymbolKind = 'variable' | 'function' | 'parameter' | 'import
 export interface DocumentSymbolResult {
   readonly name: string;
   readonly kind: DocumentSymbolKind;
+  /** Stable within a semantic snapshot; used by resolve tokens and call hierarchy. */
+  readonly symbolId?: string;
   readonly detail?: string;
   /** Full extent of the declaration, including an owned function body. */
   readonly range: SemanticRange;
@@ -130,6 +155,67 @@ export interface WorkspaceSymbolResult {
   /** Exact name token used to reveal the symbol in the editor. */
   readonly range: SemanticRange;
   readonly containerName?: string;
+  /** Opaque, versioned token used only by `workspaceSymbol/resolve`. */
+  readonly data?: WorkspaceSymbolResolveData;
+}
+
+export interface WorkspaceSymbolResolveData {
+  readonly metadataVersion: string;
+  readonly name: string;
+  readonly kind: DocumentSymbolKind;
+  /** Exact reveal range withheld from clients that support lazy range resolution. */
+  readonly range: SemanticRange;
+}
+
+export interface WorkspaceSymbolResolveInput {
+  readonly name: string;
+  readonly data?: unknown;
+}
+
+export interface WorkspaceSymbolResolveResult {
+  readonly range?: SemanticRange;
+}
+
+export interface FoldingRangeResult {
+  readonly startLine: number;
+  readonly endLine: number;
+  readonly kind?: 'comment' | 'imports' | 'region';
+}
+
+export interface SelectionRangeResult {
+  readonly range: SemanticRange;
+  readonly parent?: SelectionRangeResult;
+}
+
+export type InlayHintKindName = 'type';
+
+export interface InlayHintResult {
+  readonly position: SyntaxPosition;
+  readonly label: string;
+  readonly kind: InlayHintKindName;
+  readonly paddingLeft?: boolean;
+  readonly paddingRight?: boolean;
+}
+
+export interface CallHierarchyItemResult {
+  readonly uri: string;
+  readonly name: string;
+  readonly kind: 'function';
+  readonly range: SemanticRange;
+  readonly selectionRange: SemanticRange;
+  readonly data: CallHierarchyData;
+}
+
+export interface CallHierarchyData {
+  readonly version: number;
+  readonly uri: string;
+  readonly symbolId: string;
+  readonly name: string;
+}
+
+export interface CallHierarchyCallResult {
+  readonly from: CallHierarchyItemResult;
+  readonly fromRanges: readonly SemanticRange[];
 }
 
 export type SemanticTokenType =
