@@ -58,4 +58,4 @@ Once data exists, this document must record:
 
 ## Current status
 
-No benchmark suite, workload, baseline or target exists in the repository. The prototype has no performance instrumentation. Phase 6 added signature-help lookup and a linear token scan per analyzed double-quoted mini-notation string; Phase 7 added code-action computation from the cached semantic snapshot. None has a measured latency figure yet. Phase 8 must include them in representative edit, diagnostic, hover and code-action workloads.
+No benchmark suite, workload, baseline or target exists in the repository. The prototype has no performance instrumentation. Phase 6 added signature-help lookup and a linear token scan per analyzed double-quoted mini-notation string; Phase 7 added code-action computation and document-scoped rename lookup from the cached semantic snapshot. None has a measured latency figure yet. Phase 8 must include them in representative edit, diagnostic, hover, code-action and rename workloads.

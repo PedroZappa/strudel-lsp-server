@@ -81,3 +81,12 @@ export interface SymbolLookupResult {
   readonly symbol: SemanticSymbol;
   readonly range: SemanticRange;
 }
+
+export interface PrepareRenameResult {
+  readonly range: SemanticRange;
+  readonly placeholder: string;
+}
+
+export interface RenameResult {
+  readonly edits: readonly TextEditResult[];
+}

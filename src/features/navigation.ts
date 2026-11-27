@@ -7,7 +7,10 @@ import type {
   SymbolLookupResult,
 } from './types.js';
 
-function findSymbol(context: FeatureContext, offset: number): SymbolLookupResult | undefined {
+export function findSymbolAtOffset(
+  context: FeatureContext,
+  offset: number,
+): SymbolLookupResult | undefined {
   const declared = findSymbolAt(context.semantic, offset);
   if (declared?.declaration !== undefined) {
     return { symbol: declared, range: declared.declaration };
@@ -33,7 +36,7 @@ export function provideDefinition(
   context: FeatureContext,
   offset: number,
 ): DefinitionResult | undefined {
-  const found = findSymbol(context, offset);
+  const found = findSymbolAtOffset(context, offset);
   if (found?.symbol.declaration === undefined) {
     return undefined;
   }
@@ -45,7 +48,7 @@ export function provideReferences(
   offset: number,
   includeDeclaration: boolean,
 ): readonly ReferenceResult[] {
-  const found = findSymbol(context, offset);
+  const found = findSymbolAtOffset(context, offset);
   if (found === undefined) {
     return [];
   }

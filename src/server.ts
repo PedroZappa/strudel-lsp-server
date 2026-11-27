@@ -18,25 +18,31 @@ import {
   type HoverParams,
   type InitializeResult,
   type Location,
+  type PrepareRenameParams,
   type Range as LspRange,
   type ReferenceParams,
+  type RenameParams,
   type SignatureHelp,
   type SignatureHelpParams,
   type TextEdit,
+  type WorkspaceEdit,
 } from 'vscode-languageserver/node';
 
 import {
   provideCompletion,
   provideDefinition,
   provideDiagnostics,
+  prepareRename,
   provideHover,
   provideQuickFixes,
   provideReferences,
+  provideRename,
   provideSignatureHelp,
   type CompletionCandidateKind,
   type DiagnosticSeverityName,
   type FeatureContext,
   type LanguageDiagnostic,
+  type TextEditResult,
 } from './features/index.js';
 import {
   createDefaultLanguageDatabase,
@@ -157,6 +163,17 @@ function semanticRangeFromLsp(
   };
 }
 
+function toWorkspaceEdit(uri: string, edits: readonly TextEditResult[]): WorkspaceEdit {
+  return {
+    changes: {
+      [uri]: edits.map((edit): TextEdit => ({
+        range: toLspRange(edit.range),
+        newText: edit.newText,
+      })),
+    },
+  };
+}
+
 function toCompletionItemKind(kind: CompletionCandidateKind): CompletionItemKind {
   switch (kind) {
     case 'function':
@@ -200,6 +217,7 @@ connection.onInitialize((): InitializeResult => ({
     signatureHelpProvider: { triggerCharacters: ['(', ','] },
     definitionProvider: true,
     referencesProvider: true,
+    renameProvider: { prepareProvider: true },
   },
 }));
 
@@ -325,6 +343,35 @@ connection.onReferences((params: ReferenceParams): Promise<Location[]> =>
       uri: analyzed.document.uri,
       range: toLspRange(reference.range),
     }));
+  }),
+);
+
+connection.onPrepareRename(
+  (params: PrepareRenameParams): Promise<{ range: LspRange; placeholder: string } | null> =>
+    guardAsync(null, async () => {
+      await awaitDocumentAnalysis(params.textDocument.uri);
+      const analyzed = documents.get(params.textDocument.uri);
+      if (analyzed === undefined) {
+        return null;
+      }
+      const offset = analyzed.document.offsetAt(params.position);
+      const result = prepareRename(contextFor(analyzed, offset), offset);
+      return result === undefined
+        ? null
+        : { range: toLspRange(result.range), placeholder: result.placeholder };
+    }),
+);
+
+connection.onRenameRequest((params: RenameParams): Promise<WorkspaceEdit | null> =>
+  guardAsync(null, async () => {
+    await awaitDocumentAnalysis(params.textDocument.uri);
+    const analyzed = documents.get(params.textDocument.uri);
+    if (analyzed === undefined) {
+      return null;
+    }
+    const offset = analyzed.document.offsetAt(params.position);
+    const result = provideRename(contextFor(analyzed, offset), offset, params.newName);
+    return result === undefined ? null : toWorkspaceEdit(analyzed.document.uri, result.edits);
   }),
 );
 

@@ -1,6 +1,6 @@
 # Architecture
 
-Status: transport, syntax adapter, semantic engine, language database, document store, feature providers, signature help, mini-notation token analysis and quick fixes implemented on 2026-11-27; remaining extended capabilities are under evaluation.
+Status: transport, syntax adapter, semantic engine, language database, document store, feature providers, signature help, mini-notation token analysis, quick fixes and document-scoped rename implemented on 2026-11-27; remaining extended capabilities are under evaluation.
 
 Authority: `AGENTS.md` sections 3–6.
 
@@ -27,7 +27,7 @@ Editor (any LSP client)
         v
 +---------------------------+
 | Language intelligence     |  diagnostics, quick fixes, completion, hover, signature help,
-| feature providers         |  navigation, mini-notation rules and other evaluated capabilities
+| feature providers         |  navigation, rename, mini-notation rules and other evaluated capabilities
 +---------------------------+
         |  semantic queries
         v
@@ -52,7 +52,7 @@ Side inputs:
   - User configuration (focused, user-facing options only)
 ```
 
-The current `src/server.ts` implements LSP lifecycle, incremental text sync, completion, code actions for quick fixes, hover, signature help, definition, references and push diagnostics. `src/syntax/` implements the pinned Tree-sitter adapter and the parser-independent `SyntaxDocument` contract. `src/semantic/` implements parser-independent snapshots, scopes, symbols, references, limited type inference, incremental reuse and cancellation checks. `src/miniNotation/` implements a lexical token and conservative issue submodel over mini-notation string content. `src/languageDatabase/` implements a reproducible, offline-capable metadata snapshot with a `SemanticCatalog` adapter. `src/lsp/` owns the text document store and per-version syntax/semantic snapshots. `src/features/` contains transport-independent diagnostics, quick-fix, completion, hover, signature help and navigation providers. Document updates are analysed outside the request handlers on the next event-loop turn; request handlers await the latest scheduled analysis, and superseded document versions are discarded before publication.
+The current `src/server.ts` implements LSP lifecycle, incremental text sync, completion, code actions for quick fixes, hover, signature help, definition, references, prepare rename, rename and push diagnostics. `src/syntax/` implements the pinned Tree-sitter adapter and the parser-independent `SyntaxDocument` contract. `src/semantic/` implements parser-independent snapshots, scopes, symbols, references, limited type inference, incremental reuse and cancellation checks. `src/miniNotation/` implements a lexical token and conservative issue submodel over mini-notation string content. `src/languageDatabase/` implements a reproducible, offline-capable metadata snapshot with a `SemanticCatalog` adapter. `src/lsp/` owns the text document store and per-version syntax/semantic snapshots. `src/features/` contains transport-independent diagnostics, quick-fix, completion, hover, signature help, navigation and rename providers. Document updates are analysed outside the request handlers on the next event-loop turn; request handlers await the latest scheduled analysis, and superseded document versions are discarded before publication.
 
 ## Responsibilities
 
@@ -148,7 +148,7 @@ Implemented document and feature contracts (exported from `src/lsp/index.ts` and
 - `AnalyzedDocument` — one immutable text, syntax and semantic snapshot pair per document version.
 - `DocumentAnalysisService` — incremental document updates with cached syntax/semantic results.
 - `FeatureContext` — provider input combining the document snapshot, syntax node at the request offset and language database.
-- `LanguageDiagnostic`, `DiagnosticFix`, `QuickFixResult`, `TextEditResult`, `CompletionCandidate`, `HoverResult`, `SignatureHelpResult`, `DefinitionResult` and `ReferenceResult` — transport-independent provider results mapped by `src/server.ts`.
+- `LanguageDiagnostic`, `DiagnosticFix`, `QuickFixResult`, `TextEditResult`, `CompletionCandidate`, `HoverResult`, `SignatureHelpResult`, `DefinitionResult`, `ReferenceResult`, `PrepareRenameResult` and `RenameResult` — transport-independent provider results mapped by `src/server.ts`.
 
 Implemented mini-notation contracts (exported from `src/miniNotation/index.ts`):
 

@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: re-implementation roadmap updated with resolved blocker decisions, Phase 6 completion and Phase 7 quick fixes, 2026-11-27. Priorities are proposals and remain subject to approval.
+Status: re-implementation roadmap updated with resolved blocker decisions, Phase 6 completion, Phase 7 quick fixes and rename, 2026-11-27. Priorities are proposals and remain subject to approval.
 
 Authority: `AGENTS.md` sections 2–18 and the other documents in `docs/`.
 
@@ -159,14 +159,14 @@ Phase 6 exit criteria:
 
 ## Phase 7 — Extended capabilities
 
-**Status: quick fixes implemented and verified; the other candidates remain under evaluation.**
+**Status: quick fixes and rename implemented and verified; the other candidates remain under evaluation.**
 
 Dependencies: Phase 6.
 
 Candidate extended capabilities, evaluate and implement only where justified:
 
 - [x] Quick fixes.
-- [ ] Rename.
+- [x] Rename.
 - [ ] Document/workspace symbols.
 - [ ] Semantic tokens.
 - [ ] Formatting.
@@ -179,6 +179,14 @@ Quick fix exit criteria:
 - [x] Fixes use only actionable diagnostics with safe, deterministic edits.
 - [x] `textDocument/codeAction` advertises and returns only the quick-fix kind.
 - [x] Feature and stdio tests cover edit contents, range filtering and non-actionable diagnostics.
+
+Rename is document-scoped and only applies to resolved user variables, functions, parameters and import bindings. Builtins, pattern methods, unresolved names, invalid names and documents with syntax errors are rejected. `textDocument/prepareRename` advertises the exact token range and current name before any edit is generated.
+
+Rename exit criteria:
+
+- [x] Rename edits use resolved declarations and references with verified source text.
+- [x] `renameProvider` advertises `prepareProvider` and both requests are implemented.
+- [x] Feature and stdio tests cover declaration and reference edits, non-user symbols, invalid names and incomplete input.
 
 ## Phase 8 — Performance harness and targets
 

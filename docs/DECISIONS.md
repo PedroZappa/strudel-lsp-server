@@ -1,6 +1,6 @@
 # Decisions
 
-Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened; ADR-021 records the Phase 6 deferred-item completion and ADR-022 records Phase 7 quick fixes.
+Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened; ADR-021 records the Phase 6 deferred-item completion, ADR-022 records Phase 7 quick fixes and ADR-023 records document-scoped rename.
 
 ## ADR-001 — Clean-slate re-implementation
 
@@ -285,7 +285,7 @@ Rationale: incremental reuse, deferred analysis and version suppression protect 
 
 Consequences:
 
-- Signature help and mini-notation token analysis were added in ADR-021 and quick fixes in ADR-022; completion resolution, rename, symbols, semantic tokens, formatting and remaining extended capabilities remain deferred.
+- Signature help and mini-notation token analysis were added in ADR-021, quick fixes in ADR-022 and document-scoped rename in ADR-023; completion resolution, symbols, semantic tokens, formatting and remaining extended capabilities remain deferred.
 - User-facing configuration for diagnostics and Strudel version selection is not exposed yet.
 - The stdio integration test now exercises capability advertisement, all implemented request types, diagnostic publication, document closure and rapid-edit suppression.
 - Performance work in Phase 8 must measure this pipeline; no latency target is claimed here.
@@ -334,3 +334,22 @@ Consequences:
 - Mismatched-closer fixes use the expected delimiter recorded by the analyzer rather than parsing diagnostic messages.
 - Feature tests cover all four edits, non-actionable diagnostics and range filtering; the stdio test covers capability advertisement and edit mapping.
 - The code-action path recomputes diagnostics from cached syntax and semantic snapshots and has no measured latency figure; Phase 8 must include it in code-action workloads.
+
+## ADR-023 — Document-scoped rename
+
+Status: accepted on 2026-11-27.
+
+Decision: implement rename for the current document only, using existing semantic resolution, and reject every case that cannot be proven safe from the available model. No workspace index, new dependency or general JavaScript symbol engine is introduced.
+
+`src/features/rename.ts` exposes `prepareRename` and `provideRename`. A symbol is renamable only when it has a declaration and its kind is `variable`, `function`, `parameter` or `import`. Builtins, pattern methods, unresolved names, no-op renames and documents with syntax errors are rejected. New names must match ECMAScript identifier syntax and must not be reserved or strict-mode reserved words. Every replacement range is checked against the original symbol text, so stale incrementally shifted ranges cannot be applied. Edits come from `provideReferences(context, offset, true)` and are mapped to a single-document `WorkspaceEdit` by `src/server.ts`.
+
+`renameProvider` advertises `prepareProvider: true`; `textDocument/prepareRename` returns the exact token range and current placeholder before an edit is requested.
+
+Rationale: the semantic model already resolves local declarations and references reliably, but there is no workspace index or authoritative cross-file module graph. Claiming workspace-wide rename would be incorrect. Restricting rename to verified document-local symbols provides a useful, deterministic capability while preserving live-coding resilience and the editor-agnostic architecture.
+
+Consequences:
+
+- Rename never edits strings, comments, mini-notation content or symbols resolved only through the language database.
+- Import binding renames change the local binding only; external module exports are outside this model.
+- Feature tests cover declaration and reference edits, parameter rename, prepare ranges, builtin and method rejection, invalid names and incomplete input; the stdio test covers capability advertisement and both requests.
+- Rename uses the cached semantic snapshot and has no measured latency figure; Phase 8 must include it in representative request workloads.

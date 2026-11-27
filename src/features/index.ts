@@ -3,6 +3,7 @@ export { provideCompletion } from './completion.js';
 export { provideDiagnostics } from './diagnostics.js';
 export { provideHover } from './hover.js';
 export { provideDefinition, provideReferences } from './navigation.js';
+export { prepareRename, provideRename } from './rename.js';
 export { provideSignatureHelp } from './signatureHelp.js';
 export type {
   CompletionCandidate,
@@ -13,8 +14,10 @@ export type {
   FeatureContext,
   HoverResult,
   LanguageDiagnostic,
+  PrepareRenameResult,
   QuickFixResult,
   ReferenceResult,
+  RenameResult,
   SignatureHelpResult,
   SignatureParameter,
   SymbolLookupResult,

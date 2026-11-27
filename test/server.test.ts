@@ -210,6 +210,7 @@ void test('stdio server advertises and serves implemented language capabilities'
       signatureHelpProvider: { triggerCharacters?: string[] };
       definitionProvider: boolean;
       referencesProvider: boolean;
+      renameProvider?: { prepareProvider?: boolean };
     };
   };
 
@@ -224,6 +225,7 @@ void test('stdio server advertises and serves implemented language capabilities'
   ]);
   assert.equal(initializeResult.capabilities.definitionProvider, true);
   assert.equal(initializeResult.capabilities.referencesProvider, true);
+  assert.equal(initializeResult.capabilities.renameProvider?.prepareProvider, true);
 
   client.notify('initialized', {});
 
@@ -273,6 +275,36 @@ void test('stdio server advertises and serves implemented language capabilities'
     context: { includeDeclaration: true },
   })) as { range: { start: { line: number } } }[];
   assert.equal(references.length, 2);
+
+  const preparedRename = (await client.request('textDocument/prepareRename', {
+    textDocument: { uri },
+    position: { line: 1, character: 1 },
+  })) as {
+    range: { start: { line: number; character: number }; end: { line: number; character: number } };
+    placeholder: string;
+  } | null;
+  assert.ok(preparedRename !== null);
+  assert.equal(preparedRename.placeholder, 'pat');
+  assert.equal(preparedRename.range.start.line, 1);
+  assert.equal(preparedRename.range.end.character, 3);
+
+  const builtinPrepare = await client.request('textDocument/prepareRename', {
+    textDocument: { uri },
+    position: { line: 0, character: text.indexOf('s(') },
+  });
+  assert.equal(builtinPrepare, null);
+
+  const rename = (await client.request('textDocument/rename', {
+    textDocument: { uri },
+    position: { line: 1, character: 1 },
+    newName: 'loop',
+  })) as { changes: Record<string, { newText: string }[]> } | null;
+  assert.ok(rename !== null);
+  assert.equal(rename.changes[uri]?.length, 2);
+  assert.equal(
+    rename.changes[uri]?.every((edit) => edit.newText === 'loop'),
+    true,
+  );
 
   const miniUri = 'file:///test/mini.strudel';
   const miniText = 's("[]")';
