@@ -9,6 +9,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { CompletionItemKind, SymbolKind } from 'vscode-languageserver/node';
 
+import { DIAGNOSTIC_CODES } from '../src/configuration/diagnostics.js';
+
 interface JsonRpcRequest {
   jsonrpc: '2.0';
   id: number;
@@ -857,6 +859,8 @@ interface WorkspaceSymbolInformation {
 interface CompletionItemResult {
   readonly label: string;
   readonly kind?: number;
+  readonly deprecated?: boolean;
+  readonly data?: unknown;
   readonly textEdit?: {
     readonly range: {
       readonly start: { readonly line: number; readonly character: number };
@@ -1008,6 +1012,149 @@ void test('stdio server completes relative .strudel import paths from the bounde
   assert.equal(
     items.some((item) => item.label.includes('ignored')),
     false,
+  );
+
+  assert.equal(await client.request('shutdown'), null);
+  client.notify('exit', {});
+  await client.waitForExit();
+});
+
+void test('stdio server serves ADR-077 additions without broadening frozen capabilities', async (t) => {
+  const root = await mkdtemp(join(tmpdir(), 'strudel-adr077-'));
+  const serverPath = fileURLToPath(new URL('../src/server.js', import.meta.url));
+  const client = new StdioLspClient(serverPath);
+  t.after(async () => {
+    await client.terminate();
+    await rm(root, { recursive: true, force: true });
+  });
+
+  const libDirectory = join(root, 'lib');
+  await mkdir(libDirectory);
+  await writeFile(join(libDirectory, 'kick.strudel'), 'export const kick = 1;', 'utf8');
+  const mainPath = join(root, 'main.strudel');
+  const lines = [
+    'import { kick } from "./li"',
+    'samples({ bd: "bd.wav" })',
+    's("bd").fa',
+    'const tempo = 120',
+    'tempo',
+    'cpm',
+  ];
+  const text = lines.join('\n');
+  await writeFile(mainPath, text, 'utf8');
+
+  const rootUri = pathToFileURL(root).href;
+  const initializeResult = (await client.request('initialize', {
+    processId: process.pid,
+    rootUri,
+    capabilities: {},
+    workspaceFolders: [{ uri: rootUri, name: 'workspace' }],
+  })) as {
+    capabilities: {
+      completionProvider: { triggerCharacters?: string[]; resolveProvider?: boolean };
+      hoverProvider: boolean;
+      documentHighlightProvider?: boolean;
+      codeLensProvider?: boolean;
+      inlineValueProvider?: boolean;
+      diagnosticProvider?: unknown;
+    };
+  };
+  assert.deepEqual(initializeResult.capabilities.completionProvider.triggerCharacters, ['.']);
+  assert.equal(initializeResult.capabilities.completionProvider.resolveProvider, true);
+  assert.equal(initializeResult.capabilities.hoverProvider, true);
+  assert.equal(initializeResult.capabilities.documentHighlightProvider, undefined);
+  assert.equal(initializeResult.capabilities.codeLensProvider, undefined);
+  assert.equal(initializeResult.capabilities.inlineValueProvider, undefined);
+  assert.equal(initializeResult.capabilities.diagnosticProvider, undefined);
+  client.notify('initialized', {});
+
+  const uri = pathToFileURL(mainPath).href;
+  const openedDiagnostics = client.waitForNotification(
+    'textDocument/publishDiagnostics',
+    (params) => (params as PublishDiagnosticsParams).uri === uri,
+  );
+  client.notify('textDocument/didOpen', {
+    textDocument: { uri, languageId: 'strudel', version: 1, text },
+  });
+  const published = (await openedDiagnostics) as PublishDiagnosticsParams;
+  assert.equal(
+    published.diagnostics.some(
+      (diagnostic) =>
+        diagnostic.code !== undefined &&
+        !(DIAGNOSTIC_CODES as readonly string[]).includes(diagnostic.code),
+    ),
+    false,
+  );
+
+  const importItems = (await client.request('textDocument/completion', {
+    textDocument: { uri },
+    position: { line: 0, character: lines[0].indexOf('./li') + 4 },
+  })) as CompletionItemResult[];
+  assert.equal(
+    importItems.some(
+      (item) => item.kind === CompletionItemKind.File && item.label === './lib/kick.strudel',
+    ),
+    true,
+  );
+
+  const stepCharacter = lines[2].indexOf('b') + 1;
+  const stepItems = (await client.request('textDocument/completion', {
+    textDocument: { uri },
+    position: { line: 2, character: stepCharacter },
+  })) as CompletionItemResult[];
+  assert.equal(
+    stepItems.some(
+      (item) => item.label === 'bd' && item.textEdit?.range.start.character === stepCharacter - 1,
+    ),
+    true,
+  );
+  const stepHover = (await client.request('textDocument/hover', {
+    textDocument: { uri },
+    position: { line: 2, character: lines[2].indexOf('bd') + 1 },
+  })) as { contents: { value: string } } | null;
+  assert.ok(stepHover !== null);
+  assert.match(stepHover.contents.value, /sample key/);
+
+  const cpmItems = (await client.request('textDocument/completion', {
+    textDocument: { uri },
+    position: { line: 5, character: 1 },
+  })) as CompletionItemResult[];
+  const cpmItem = cpmItems.find((item) => item.label === 'cpm');
+  assert.equal(cpmItem?.deprecated, true);
+  const resolvedDeprecated = (await client.request('completionItem/resolve', {
+    label: 'cpm',
+    data: cpmItem?.data,
+  })) as { deprecated?: boolean; documentation?: { value: string } };
+  assert.equal(resolvedDeprecated.deprecated, true);
+  assert.match(resolvedDeprecated.documentation?.value ?? '', /Deprecated/);
+  const cpmHover = (await client.request('textDocument/hover', {
+    textDocument: { uri },
+    position: { line: 5, character: 1 },
+  })) as { contents: { value: string } } | null;
+  assert.ok(cpmHover !== null);
+  assert.match(cpmHover.contents.value, /Deprecated/);
+
+  const highlights = (await client.request('textDocument/documentHighlight', {
+    textDocument: { uri },
+    position: { line: 4, character: 1 },
+  })) as {
+    range: {
+      start: { line: number; character: number };
+      end: { line: number; character: number };
+    };
+    kind: number;
+  }[];
+  assert.deepEqual(
+    highlights.map((highlight) => [
+      highlight.range.start.line,
+      highlight.range.start.character,
+      highlight.range.end.character,
+      highlight.kind,
+    ]),
+    [
+      [3, 6, 11, 3],
+      [4, 0, 5, 2],
+    ],
   );
 
   assert.equal(await client.request('shutdown'), null);

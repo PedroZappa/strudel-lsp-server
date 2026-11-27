@@ -637,7 +637,7 @@ Tasks:
 - [x] Implement relative `.strudel` import-path completion using the bounded workspace scan and its existing symlink, traversal, size, depth and unreadable-file guards.
 - [x] Surface pinned deprecation metadata in completion and hover without adding a diagnostic code.
 - [x] Implement `documentHighlight` only if it passes the same gate as the other additions; otherwise record an explicit deferral to Phase 28 under ADR-077.
-- [ ] Add feature, protocol, live-coding and negative-capability tests for each implemented addition before advertising it.
+- [x] Add feature, protocol, live-coding and negative-capability tests for each implemented addition before advertising it.
 - [ ] Add contract tests for advertised providers, deliberately unsupported capabilities, configuration schema and diagnostic-code identity.
 - [ ] Align the release workflow with the full CI gate, including configuration, LSP filesystem, soak, corpus, consumer-install, package, audit and benchmark checks.
 - [ ] Decide whether the compatibility matrix must run `verify:consumer` on every supported OS/Node pair.
@@ -653,7 +653,9 @@ Import-path evidence: `test/features/importPathCompletion.test.ts`, the guarded-
 
 Deprecation evidence: `test/metadata/languageDatabase.test.ts`, `test/features/deprecationMetadata.test.ts` and the stdio completion/resolve/hover assertions cover the pinned `cpm` flag, absence of a flag on non-deprecated records, completion and resolve marking, hover documentation, incomplete live-coding input and unchanged diagnostic codes and capabilities.
 
-Document-highlight evidence: `test/features/documentHighlight.test.ts` and the stdio assertions in `test/server.test.ts` cover resolved declarations, reads and writes, repeated builtin references, unresolved names, malformed live input, exact UTF-16 ranges and read/write kinds. The handler is intentionally not advertised in `initialize`, and the existing negative-capability assertion remains authoritative for the frozen `0.5.0` surface. The full working-tree gate is 163/163. These four tasks remain outside the final matrix until the remaining ADR-077 gates and an explicit re-freeze pass.
+Document-highlight evidence: `test/features/documentHighlight.test.ts` and the stdio assertions in `test/server.test.ts` cover resolved declarations, reads and writes, repeated builtin references, unresolved names, malformed live input, exact UTF-16 ranges and read/write kinds. The handler is intentionally not advertised in `initialize`, and the existing negative-capability assertion remains authoritative for the frozen `0.5.0` surface.
+
+Consolidated ADR-077 evidence: `test/server.test.ts` now exercises all four additions in one stdio session with an incomplete live chain. It verifies bounded import-path completion, mini-notation step completion and hover, completion/resolve/hover deprecation metadata and exact document-highlight ranges while asserting unchanged completion triggers, unchanged diagnostic-code identity and no `documentHighlight`, code-lens, inline-value or pull-diagnostic provider. The full working-tree gate is 164/164. These four tasks remain outside the final matrix until the remaining ADR-077 gates and an explicit re-freeze pass.
 
 Exit criteria:
 
@@ -762,7 +764,7 @@ These items were deferred after the first release and are not selected for `0.2.
 - Persistent workspace index or file watcher as a prerequisite for navigation.
 - Vendored grammar or generated parser source, and TCP transport.
 
-The earlier deferral of folding, selection ranges, inlay hints and call hierarchy was superseded and implemented in Phase 23; those capabilities are included in `0.5.0` and in the Phase 26 frozen baseline. ADR-077 adds four further v1 goals; step completion/hover, relative `.strudel` import-path completion, deprecation metadata and conditional `documentHighlight` now have implementation evidence. None is part of the final matrix or advertised until its gate passes and an explicit re-freeze records it.
+The earlier deferral of folding, selection ranges, inlay hints and call hierarchy was superseded and implemented in Phase 23; those capabilities are included in `0.5.0` and in the Phase 26 frozen baseline. ADR-077 adds four further v1 goals; step completion/hover, relative `.strudel` import-path completion, deprecation metadata and conditional `documentHighlight` now have implementation and consolidated test evidence. None is part of the final matrix or advertised until its gate passes and an explicit re-freeze records it.
 
 ## Transition constraint
 
