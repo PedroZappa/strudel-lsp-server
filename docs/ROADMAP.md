@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: re-implementation roadmap updated with completed Phases 0–11, all Phase 12 preparation and the Phase 13 authorization for `0.1.0` with `pedrozappa` as operator. The Phase 13 gate review found unresolved bootstrap and GitHub settings blockers; publication-dependent evidence and the controlled first publication remain, 2026-11-27. Priorities are proposals and remain subject to approval.
+Status: re-implementation roadmap complete through Phase 13. `strudel-lsp-server@0.1.0` was published by operator `pedrozappa` from `v0.1.0`, the GitHub release is published, and post-publication smoke checks passed on 2026-11-27. Missing provenance for the operator-managed first publish is recorded as a limitation in ADR-050. Priorities are proposals and remain subject to approval.
 
 Authority: `AGENTS.md` sections 2–18 and the other documents in `docs/`.
 
@@ -320,7 +320,7 @@ Exit criteria:
 
 Dependencies: Phases 10 and 11.
 
-**Status: all Phase 12 preparation is complete, including the post-publication smoke plan. Publication-dependent evidence remains for Phase 13.**
+**Status: complete. Phase 12 preparation and its publication-dependent validation were completed during Phase 13; evidence and the provenance limitation are recorded in ADR-050.**
 
 Tasks:
 
@@ -336,31 +336,31 @@ Tasks:
 Exit criteria:
 
 - [x] Licensing, provenance and audit sign-offs are recorded with evidence in ADR-040 and ADR-041.
-- [ ] The release workflow is validated without publishing and produces provenance. Local validation passed (ADR-042); provenance attestation can only be confirmed after the first publish, so this exit criterion stays open for Phase 13.
-- [x] Publish dry-run matches the verified package contents and manifest on the current candidate (ADR-043); repeat on the exact tagged release commit before publication.
-- [ ] Changelog, release notes, rollback policy and the post-publication smoke plan are prepared (ADR-044, ADR-045, ADR-046); the combined exit criterion stays open until the plan is executed after publication and provenance is observed. Confirm all artifacts on the exact release commit.
+- [x] The release workflow is validated without publishing. Exact-tag run `46015208619` succeeded with the publish job skipped for `v0.1.0` under ADR-049. Provenance was not produced for the operator-managed first publish; its absence is recorded under ADR-042, ADR-049 and ADR-050, and later OIDC releases use the controlled workflow.
+- [x] Publish dry-run matches the verified package contents and manifest. `npm run verify:release` passed on exact tag `v0.1.0`; the published tarball shasum and integrity match the verified artifact (ADR-043, ADR-050).
+- [x] Changelog, release notes, rollback policy and the post-publication smoke plan are prepared on the exact release commit and the plan was executed after publication (ADR-044–ADR-046, ADR-050).
 
 ## Phase 13 — Controlled first publication
 
 Dependencies: Phases 10–12 and explicit release authorization.
 
-**Status: `0.1.0` release explicitly authorized with `pedrozappa` as operator (ADR-047). Gate review is in ADR-048 and the first-publish bootstrap exception is in ADR-049; operator-configured GitHub settings and exact-tag confirmation remain open, so publication remains blocked.**
+**Status: complete. `0.1.0` was published by operator `pedrozappa` from the exact `v0.1.0` commit, GitHub release `v0.1.0` is published, and smoke checks passed. ADR-047–ADR-050 record authorization, gate review, bootstrap exception and publication evidence.**
 
 Tasks:
 
 - [x] Obtain explicit authorization naming the exact version to publish and the operator who will run the release. Authorized on 2026-11-27 for exactly `strudel-lsp-server@0.1.0` with `pedrozappa` as operator; scope, limits and remaining gates in ADR-047.
-- [ ] Confirm every blocking gate is checked or has an explicit, approved exception recorded in `docs/DECISIONS.md`. Review in ADR-048 found candidate gates passing locally; the first-publish bootstrap exception is recorded and implemented in ADR-049. `npm-release` environment reviewers, `v*` tag protection and exact-tag revalidation remain unresolved, so this task stays open.
-- [ ] Confirm CI is green on the exact tagged release commit, including package verification and dependency audit.
-- [ ] Tag the validated commit and create the GitHub release record.
-- [ ] Publish `0.1.0` with the ADR-049 operator-managed bootstrap and no workflow publish or ordinary-commit publication path; configure trusted publishing afterward and use the controlled OIDC workflow for later releases.
-- [ ] Execute the post-publication smoke plan defined in ADR-046 and `docs/TESTING_STRATEGY.md`: verify registry metadata and licence, install from the public registry on a clean machine, run the stdio handshake, confirm the documented launch command, and verify release notes/tag.
+- [x] Confirm every blocking gate is checked or has an explicit, approved exception recorded in `docs/DECISIONS.md`. ADR-048 records the review, ADR-049 the first-publish bootstrap exception, and ADR-050 the exact-tag, GitHub-setting and smoke evidence.
+- [x] Confirm CI is green on the exact tagged release commit, including package verification and dependency audit. Run `46015208619` succeeded on commit `271da3738ce1e81161fd0087c17ebe06e7870b06`; the publish job was skipped for `v0.1.0`.
+- [x] Tag the validated commit and create the GitHub release record. Local tag `v0.1.0` was pushed; release <https://github.com/PedroZappa/strudel-lsp-server/releases/tag/v0.1.0> was drafted first and published after smoke checks.
+- [x] Publish `0.1.0` with the ADR-049 operator-managed bootstrap and no workflow publish or ordinary-commit publication path. Operator `pedrozappa` performed the publish and confirmed trusted publishing was configured afterward for later controlled OIDC releases; the agent handled no credential or 2FA value.
+- [x] Execute the post-publication smoke plan defined in ADR-046 and `docs/TESTING_STRATEGY.md`: registry metadata/licence, signed tarball, clean installs, installed stdio handshake, documented launch command, tag and release notes all verified; provenance absence recorded (ADR-050).
 
 Exit criteria:
 
 - [x] Explicit authorization for the exact version is recorded in ADR-047: `strudel-lsp-server@0.1.0`, operator `pedrozappa`.
-- [ ] `0.1.0` publication uses the approved ADR-049 bootstrap with no workflow publish; provenance is generated or its absence is recorded under ADR-042 and ADR-049.
-- [ ] Public registry metadata, licence and installed executable smoke checks pass.
-- [ ] Git tag, GitHub release record and versioned changelog are present.
+- [x] `0.1.0` publication uses the approved ADR-049 bootstrap with no workflow publish; no provenance attestation was produced, and its absence is recorded under ADR-042, ADR-049 and ADR-050.
+- [x] Public registry metadata, licence, tarball identity, signatures and installed executable smoke checks pass (ADR-050).
+- [x] Git tag `v0.1.0`, published GitHub release and versioned changelog section are present.
 
 ## Release-quality backlog (recommended, not blocking)
 

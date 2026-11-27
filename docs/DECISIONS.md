@@ -913,3 +913,30 @@ Consequences:
 - `.github/workflows/release.yml` validates `v0.1.0` but skips its publish job; later `v*` tags retain the approval-guarded OIDC publish path.
 - The GitHub release record, smoke plan and rollback policy remain unchanged, and the operator still decides when to publish.
 - No publication, tag push, repository-setting change or registry mutation was performed by this decision.
+
+## ADR-050 — Phase 13 publication evidence and provenance limitation
+
+Status: accepted on 2026-11-27 as the final Phase 13 evidence record. It completes the publication-dependent evidence deferred in ADR-048 and records the provenance limitation allowed by ADR-049. It does not alter the published artifact, retag a commit or authorize further registry mutation.
+
+Inputs: version `0.1.0`, tag `v0.1.0`, release commit `271da3738ce1e81161fd0087c17ebe06e7870b06`, operator `pedrozappa`, and release <https://github.com/PedroZappa/strudel-lsp-server/releases/tag/v0.1.0>. The detailed command-level smoke evidence is in `docs/TESTING_STRATEGY.md`.
+
+Recorded evidence:
+
+- Gate resolution: the operator configured the `npm-release` environment with required reviewer `PedroZappa` and admin bypass disabled, and an active tag ruleset targeting `refs/tags/v*` with update, deletion and non-fast-forward restrictions. The local tag was pushed and dereferenced to the expected release commit. Exact-tag CI run `46015208619` succeeded: validation passed and the publish job was skipped for `v0.1.0` under ADR-049.
+- Publication: operator `pedrozappa` published `strudel-lsp-server@0.1.0` from the clean exact-commit checkout. The agent handled no npm credential, password, OTP, recovery code or 2FA challenge. The new-name bootstrap produced the public `0.0.0-stage` placeholder; the operator approved the staged `0.1.0` artifact in their authenticated session. Because `npm stage list` was empty in the agent session, the agent verified artifact identity after publication rather than before operator approval.
+- Registry identity: published metadata matched the release manifest for name, version, description, licence `AGPL-3.0-only`, homepage, repository, bugs, engines and `bin`. `dist-tags.latest` was `0.1.0`; no deprecation field was present. `dist.shasum` was `c9e7f8a9b5c5450b03d988e56e119fcb9a3f1daf`, matching the expected release artifact. The downloaded tarball reproduced that SHA-1 and `dist.integrity` `sha512-jrsNUsg5amzb1DtGun7Kk3raK8q1vcUonNE3GB0Jl6APlEkir7bgV++y1F7Grun5s3vLO693GczF/u9FZykgmw==`. `fileCount` was 132 and `gitHead` was the release commit.
+- Signatures: registry metadata contained registry signatures, and `npm audit signatures --json --include-attestations` on the installed tree reported no invalid or missing signatures. Dependencies with public SLSA attestations were reported as verified.
+- Clean installs: isolated prefix installs with fresh caches succeeded locally with `--ignore-scripts` and globally into a clean prefix. Both installed manifests reported `0.1.0`, `AGPL-3.0-only`, the expected `bin` and `engines`, and the installed `LICENSE` contained the AGPL-3.0 notice. The installed PATH shim completed initialize/initialized/shutdown/exit with framed JSON-RPC, advertised completion, definition and workspace-symbol providers, and exited with code 0. Smoke environment: darwin-arm64, Node `v26.8.2`, npm `11.19.1`, registry `https://registry.npmjs.org/`, `legacy-peer-deps=false`, `omit` empty.
+- Release record: the GitHub release was drafted from the exact tag before smoke checks and published only after they passed. It has no assets and uses the prepared release template body. No manual dist-tag change, deprecation, unpublish or retag occurred.
+- Later-release path: the operator confirmed that npm trusted publishing was configured after `0.1.0` existed for repository `PedroZappa/strudel-lsp-server`, workflow `release.yml`, environment `npm-release`, with publish permission. The agent could not independently list that configuration because `npm trust list` required an operator 2FA challenge; no challenge or credential value was recorded.
+
+Provenance limitation: `strudel-lsp-server@0.1.0` has no public provenance attestation. The registry attestation endpoint returned 404, and ADR-049 did not assume provenance for the operator-managed first publish. This is a supply-chain traceability limitation, not a failed functional smoke check: registry signatures were present, and tarball shasum/integrity matched the locally verified artifact. No provenance was added retroactively because that would require an unauthorized registry mutation. Later releases should use the controlled OIDC workflow, whose attestations remain to be verified on those releases.
+
+Rationale: Phase 13 cannot be marked complete on implementation intent alone. Recording exact-tag CI, public artifact identity, installed behavior and the release record prevents point-in-time candidate evidence from being mistaken for release evidence, while stating the provenance gap plainly avoids a false claim under ADR-042.
+
+Consequences:
+
+- Phase 13 is complete with the provenance limitation recorded here and in `docs/ROADMAP.md` and `docs/TESTING_STRATEGY.md`.
+- `0.1.0` remains the only authorized published version; a correction requires a new explicit decision under ADR-045.
+- Trusted publishing is operator-confirmed for later controlled releases, but its exact-tag provenance is not yet independently verified by the agent.
+- No registry mutation, tag change, deprecation, unpublish or manual dist-tag change was performed by the smoke run.
