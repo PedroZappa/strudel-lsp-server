@@ -1,6 +1,6 @@
 # Semantic Engine
 
-Status: Phase 4 model, Phase 5 database-backed catalog and Phase 6 provider integration implemented on 2026-11-27. The model remains deliberately limited.
+Status: Phase 4 model, Phase 5 database-backed catalog, Phase 6 provider integration, signature help and mini-notation token analysis implemented on 2026-11-27. The model remains deliberately limited.
 
 Authority: `AGENTS.md` sections 3 and 5.
 
@@ -49,7 +49,9 @@ The current discriminated union is:
 
 Inference covers variable initializers, imported bindings, user functions and parameters, calls to catalog globals, chained pattern methods, literal shapes, simple binary/conditional expressions and explicit returns. Unknown JavaScript constructs remain `Unknown` instead of producing speculative diagnostics.
 
-Mini-notation is currently a flattened context model: a catalog entry declares which call arguments accept mini-notation, and the engine records the string range, owner name and `MiniNotationPattern` inference. A dedicated mini-notation submodel and token-level analysis were deferred after the approved Phase 6 core increment.
+Mini-notation has a dedicated parser-independent submodel in `src/miniNotation/`. A catalog entry still declares which call arguments accept mini-notation; the engine now also scans the content of plain double-quoted literals and records ordered tokens, absolute document ranges and conservative structural issues on each `MiniNotationArgument`. Template substitutions are not analyzed because mapping nested expressions is outside this lightweight model; the pinned transpiler only converts double-quoted literals and template literals to mini notation.
+
+Token boundaries and semantics were validated against pinned sources: `@strudel/mini@1.2.6` `krill.pegjs` defines numbers (lines 61–94), step characters (107–110), group delimiters (113–128), slice operators (132–163), sequences and stacks (166–197), quoted mini notation (205–206) and the haskellish statement layer (210–281). `@strudel/core@1.2.6` JSDoc confirms `*` as `.fast()` (`pattern.mjs:1914`), `/` as `.slow()` (`pattern.mjs:1948`), `:` as list/sample parameters (`controls.mjs:24–31, 97–110`), `~` as silence (`pattern.mjs:1245`) and Euclidean calls (`euclid.mjs:54–69`). `@strudel/reference@1.2.2` supplies the generated JSDoc metadata; it is one minor version behind mini/core, so grammar evidence takes precedence for token boundaries. Descriptions live in `src/miniNotation/documentation.ts`; in particular `!` is replication, not velocity.
 
 ## Incrementality
 
@@ -77,12 +79,13 @@ The engine exposes semantic facts only. Feature providers will decide which fact
 - Sample names are not resolved from string contents because no authoritative sample-name source is available in the pinned metadata set.
 - Function return inference handles explicit returns but does not infer parameter types from usage.
 - Incremental reuse is statement-level, not sub-expression-level.
-- Signature help and token-level mini-notation analysis do not yet consume the model.
+- Mini-notation tokenization is lexical and conservative, not a recovery parser: it does not attempt a full 1.2.6 AST or haskellish statement analysis.
+- Signature labels use the flat JSDoc parameter list; overloads, optional and rest parameters, and user-defined signatures are not modeled beyond resolved symbol kinds.
 
 ## Open questions
 
 - How imports and REPL-style global injections should be selected per document or workspace.
-- Whether mini-notation receives a dedicated semantic submodel or a flattened token model.
-- Which generated parameter shapes should become full callable signatures.
+- Whether a future mini-notation recovery parser should replace the lexical token model.
+- How optional, rest and overloaded parameters should be represented when authoritative metadata provides them.
 - How version-specific metadata is selected per document or workspace.
 - What invalidation granularity gives the best measured responsiveness.

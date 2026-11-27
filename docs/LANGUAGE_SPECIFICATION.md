@@ -1,7 +1,8 @@
 # Strudel Language Specification
 
-Status: preliminary. Constructs below must be verified against the pinned Strudel source version before being encoded in the semantic engine.  
-Target version: `@strudel/core@1.2.6` as of 2026-11-25.
+Status: host-language constructs are preliminary; mini-notation token rules below were verified against the pinned Strudel source on 2026-11-27.
+
+Target version: `@strudel/core@1.2.6`, `@strudel/mini@1.2.6` and `@strudel/transpiler@1.2.6`, with `@strudel/reference@1.2.2` for JSDoc metadata.
 
 ## Scope
 
@@ -35,26 +36,32 @@ The parser project README states that its injected mini-notation functions inclu
 
 ## Mini-notation
 
-Mini-notation is a compact rhythm/pattern language embedded in strings. According to the official documentation:
+Mini-notation is a compact rhythm/pattern language embedded in strings. Verified rules from the official documentation and pinned 1.2.6 sources:
 
-- Backticks allow multi-line mini-notation; double quotes allow single-line mini-notation.
-- Single quotes produce an ordinary string that is not parsed as mini-notation.
+- Double-quoted literals and template literals are converted to mini notation by the pinned transpiler; single-quoted literals remain ordinary strings.
 - Space-separated events form a sequence inside one cycle.
-- `*` speeds a pattern up; `/` slows it down; decimal factors are allowed.
-- `<...>` defines sequence length from the number of events.
+- `*` speeds a pattern up and `/` slows it down; numeric and patterned operands are allowed.
+- `<...>` is slow alternation, playing one alternative per cycle.
+- `{...}` is polymeter and optional `%n` sets explicit steps per cycle.
 - `[...]` nests or subdivides events within one outer event.
 - `~` or `-` represents a rest.
-- `,` produces parallel events/chords.
-- `@` assigns temporal weight.
-- `!` replicates without speeding up.
-- `?` applies probabilistic removal; `|` chooses between alternatives randomly.
-- `(beats, segments[, offset])` expresses Euclidean rhythms.
+- `,` produces a parallel stack; `|` selects one alternative randomly.
+- `@` and `_` assign temporal weight.
+- `!` replicates a step without speeding it up; it is not velocity.
+- `?` applies probabilistic deletion; the default probability is 0.5.
+- `:` supplies list/sample parameters such as `bd:0:0.3`.
+- `(beats, segments[, rotation])` expresses Euclidean rhythms.
+- `^` marks the first step of a sequence; `a . b c` is feet syntax equivalent to `a [b c]`, while `a.b` is one atom.
+
+The authoritative grammar is `node_modules/@strudel/mini/krill.pegjs` from the pinned `@strudel/mini@1.2.6`. The generated `krill-parser.js` and `@strudel/mini/test/mini.test.mjs` confirm token boundaries and defaults; `@strudel/core@1.2.6` JSDoc documents `*` as `.fast()`, `/` as `.slow()`, `~` as silence, `:` as sample parameters and Euclidean calls. `@strudel/reference@1.2.2` is the pinned JSDoc metadata source and is one minor version behind mini/core, so grammar evidence takes precedence when the two conflict.
 
 Example from the official documentation:
 
 ```js
 note('<[g3,b3,e4] [a3,c3,e4] [b3,d3,f#4]>*2');
 ```
+
+The language server's token submodel is lexical rather than a full mini parser. It intentionally suppresses speculative issues for unclosed delimiters, trailing operators and unsupported characters during live coding.
 
 ## Semantic information to model
 
@@ -74,7 +81,7 @@ note('<[g3,b3,e4] [a3,c3,e4] [b3,d3,f#4]>*2');
 
 ## Open questions
 
-- Authoritative signature database source and generation process.
-- Whether mini-notation parsing uses the same parser dependency or a dedicated adapter over its injected grammar.
-- Exact diagnostic rules for unknown functions, unknown sample names and malformed mini-notation.
+- How optional, rest and overloaded parameters should be represented if authoritative metadata gains them.
+- Whether a recovery parser should replace the current lexical mini-notation token model.
+- Exact diagnostic rules for unknown sample names and malformed mini-notation beyond verified structural faults.
 - How much JavaScript expression evaluation is needed for useful constant folding without building a JS type checker.

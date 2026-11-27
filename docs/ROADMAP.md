@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: re-implementation roadmap updated with resolved blocker decisions and Phase 6 core increment completion, 2026-11-27. Priorities are proposals and remain subject to approval.
+Status: re-implementation roadmap updated with resolved blocker decisions and Phase 6 completion, 2026-11-27. Priorities are proposals and remain subject to approval.
 
 Authority: `AGENTS.md` sections 2–18 and the other documents in `docs/`.
 
@@ -134,7 +134,7 @@ Exit criteria:
 
 ## Phase 6 — Core language intelligence
 
-**Status: approved core increment complete; signature help and token-level mini-notation analysis remain deferred.**
+**Status: complete. The approved core increment and the deferred signature-help and mini-notation items are implemented and verified.**
 
 Dependencies: Phases 4 and 5.
 
@@ -143,16 +143,19 @@ Candidate first capabilities, subject to explicit approval:
 - [x] Resilient diagnostics.
 - [x] Position-aware completion.
 - [x] Hover documentation.
-- [ ] Signature help.
+- [x] Signature help.
 - [x] Definition and references.
-- [ ] Mini-notation-aware analysis.
+- [x] Mini-notation-aware analysis.
 
-The approved core increment adds an incremental text document store, deferred analysis with superseded-version suppression, and providers for diagnostics, completion, hover, definition and references. Providers are separate from the LSP transport and consume the Phase 4 semantic model plus the Phase 5 language database. Capabilities are advertised only for implemented features. Tests cover conservative diagnostics for malformed input, rapid edits, position-aware completion, database-backed hover and resolved-symbol navigation.
+Phase 6 adds an incremental text document store, deferred analysis with superseded-version suppression, and transport-independent providers for diagnostics, completion, hover, signature help, definition and references. Providers consume the Phase 4 semantic model plus the Phase 5 language database. Capabilities are advertised only for implemented features. Signature help uses authoritative generated JSDoc parameter metadata and tracks the innermost active call and parameter. Mini-notation receives a parser-independent token submodel validated against the pinned `@strudel/mini@1.2.6` grammar; only clearly structural faults become warnings, while incomplete live-coding states stay quiet.
 
-Core-increment exit criteria:
+Phase 6 exit criteria:
 
 - [x] Capabilities are advertised only when implemented and verified.
 - [x] Live-coding resilience requirements in `docs/LSP_FEATURES.md` are covered by tests.
+- [x] Signature help derives labels, parameters and documentation from pinned metadata and tracks nested calls.
+- [x] Mini-notation tokens, diagnostics and hover follow validated 1.2.6 rules and preserve ranges through incremental reuse.
+- [x] Focused protocol, feature and mini-notation suites plus the full validation gate pass.
 
 ## Phase 7 — Extended capabilities
 

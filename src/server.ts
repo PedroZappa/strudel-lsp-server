@@ -17,6 +17,8 @@ import {
   type Location,
   type Range as LspRange,
   type ReferenceParams,
+  type SignatureHelp,
+  type SignatureHelpParams,
 } from 'vscode-languageserver/node';
 
 import {
@@ -25,6 +27,7 @@ import {
   provideDiagnostics,
   provideHover,
   provideReferences,
+  provideSignatureHelp,
   type CompletionCandidateKind,
   type DiagnosticSeverityName,
   type FeatureContext,
@@ -171,6 +174,7 @@ connection.onInitialize((): InitializeResult => ({
     textDocumentSync: TextDocumentSyncKind.Incremental,
     completionProvider: { triggerCharacters: ['.'] },
     hoverProvider: true,
+    signatureHelpProvider: { triggerCharacters: ['(', ','] },
     definitionProvider: true,
     referencesProvider: true,
   },
@@ -272,6 +276,38 @@ connection.onReferences((params: ReferenceParams): Promise<Location[]> =>
       uri: analyzed.document.uri,
       range: toLspRange(reference.range),
     }));
+  }),
+);
+
+connection.onSignatureHelp((params: SignatureHelpParams): Promise<SignatureHelp | null> =>
+  guardAsync(null, async () => {
+    await awaitDocumentAnalysis(params.textDocument.uri);
+    const analyzed = documents.get(params.textDocument.uri);
+    if (analyzed === undefined) {
+      return null;
+    }
+    const offset = analyzed.document.offsetAt(params.position);
+    const result = provideSignatureHelp(contextFor(analyzed, offset), offset);
+    if (result === undefined) {
+      return null;
+    }
+    return {
+      signatures: [
+        {
+          label: result.label,
+          documentation:
+            result.documentation === undefined
+              ? undefined
+              : { kind: MarkupKind.Markdown, value: result.documentation },
+          parameters: result.parameters.map((parameter) => ({
+            label: [...parameter.labelRange],
+            documentation: parameter.documentation,
+          })),
+        },
+      ],
+      activeSignature: 0,
+      activeParameter: result.activeParameter,
+    };
   }),
 );
 

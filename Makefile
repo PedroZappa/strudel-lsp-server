@@ -51,7 +51,7 @@ _INFO    = [$(BLU)INFO$(D)]
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install install-dev build typecheck lint format format-check test test-parser test-semantic test-metadata test-features generate-metadata benchmark pack-check check verify verify-all ci check-static audit clean docs docs-open
+.PHONY: help install install-dev build typecheck lint format format-check test test-parser test-semantic test-metadata test-features test-mini generate-metadata benchmark pack-check check verify verify-all ci check-static audit clean docs docs-open
 
 #==============================================================================#
 #                                  RULES                                       #
@@ -120,6 +120,11 @@ test-features:	## Build and run language feature provider tests only
 	@echo "$(YEL)Running language feature tests...$(D)"
 	@$(NPM) run test:features
 	@echo "$(YEL)* $(_SUCCESS) Language feature tests completed$(D)"
+
+test-mini:	## Build and run mini-notation analysis tests only
+	@echo "$(YEL)Running mini-notation tests...$(D)"
+	@$(NPM) run test:mini
+	@echo "$(YEL)* $(_SUCCESS) Mini-notation tests completed$(D)"
 
 generate-metadata:	## Regenerate the pinned Strudel language database snapshot
 	@echo "$(YEL)Generating language database...$(D)"

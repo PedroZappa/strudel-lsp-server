@@ -22,9 +22,49 @@ function symbolLabel(kind: string): string {
   }
 }
 
+function provideMiniNotationHover(
+  context: FeatureContext,
+  offset: number,
+): HoverResult | undefined {
+  for (const argument of context.semantic.miniNotationArguments) {
+    const analysis = argument.analysis;
+    if (
+      analysis === undefined ||
+      offset < argument.range.startOffset ||
+      offset >= argument.range.endOffset
+    ) {
+      continue;
+    }
+
+    const token = analysis.tokens.find(
+      (candidate) =>
+        candidate.kind !== 'whitespace' &&
+        offset >= candidate.range.startOffset &&
+        offset < candidate.range.endOffset,
+    );
+    if (token === undefined) {
+      continue;
+    }
+
+    return {
+      range: token.range,
+      contents: [
+        `\`${token.text}\` — mini notation ${token.kind}`,
+        token.description,
+        `_Owner: ${argument.ownerName}_`,
+      ].join('\n\n'),
+    };
+  }
+
+  return undefined;
+}
+
 export function provideHover(context: FeatureContext, offset: number): HoverResult | undefined {
   const declared = findSymbolAt(context.semantic, offset);
   const reference = declared === undefined ? findReferenceAt(context.semantic, offset) : undefined;
+  if (declared === undefined && reference === undefined) {
+    return provideMiniNotationHover(context, offset);
+  }
   const symbol =
     declared ??
     (reference === undefined ? undefined : resolveReference(context.semantic, reference));

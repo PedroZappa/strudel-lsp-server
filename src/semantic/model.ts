@@ -123,6 +123,19 @@ export function cloneStatementAnalysis(
     miniNotationArguments: analysis.miniNotationArguments.map((argument) => ({
       ...argument,
       range: mapRange(argument.range),
+      analysis:
+        argument.analysis === undefined
+          ? undefined
+          : {
+              tokens: argument.analysis.tokens.map((token) => ({
+                ...token,
+                range: mapRange(token.range),
+              })),
+              issues: argument.analysis.issues.map((issue) => ({
+                ...issue,
+                range: mapRange(issue.range),
+              })),
+            },
     })),
   };
 }

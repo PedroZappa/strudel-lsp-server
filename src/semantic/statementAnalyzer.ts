@@ -1,3 +1,4 @@
+import { analyzeMiniNotation, type MiniNotationAnalysis } from '../miniNotation/index.js';
 import type { SyntaxNode } from '../syntax/index.js';
 
 import type { SemanticCatalog, SemanticCatalogEntry } from './catalog.js';
@@ -637,10 +638,26 @@ export class StatementAnalyzer {
           range: toSemanticRange(this.text, argument.range),
           ownerName,
           inferredType: MINI_NOTATION_PATTERN_TYPE,
+          analysis: this.miniNotationAnalysis(argument),
         });
       }
       argumentIndex += 1;
     }
+  }
+
+  private miniNotationAnalysis(node: SyntaxNode): MiniNotationAnalysis | undefined {
+    // Template substitutions require mapping through nested expressions, which
+    // is outside this lightweight token model. Plain double-quoted literals
+    // are the form the pinned transpiler converts to mini notation.
+    if (node.kind !== 'string' || !node.text.startsWith('"') || node.text.length < 2) {
+      return undefined;
+    }
+    const startOffset = node.range.startOffset + 1;
+    const endOffset = node.range.endOffset - 1;
+    if (endOffset <= startOffset) {
+      return undefined;
+    }
+    return analyzeMiniNotation(this.text, startOffset, endOffset);
   }
 
   private inferArrowFunction(node: SyntaxNode, scopeId: string): StrudelType {

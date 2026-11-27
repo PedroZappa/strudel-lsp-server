@@ -1,6 +1,6 @@
 # LSP Features
 
-Status: core Phase 6 capabilities implemented and verified; remaining candidates are tracked below.
+Status: Phase 6 capabilities, signature help and conservative token-level mini-notation analysis implemented and verified; remaining candidates are tracked below.
 
 Authority: `AGENTS.md` sections 4 and 5.
 
@@ -28,7 +28,7 @@ None of this behaviour is treated as a specification.
 | Completion                   | Implemented     | Early           | Position-aware globals, locals and Pattern methods; `.` trigger.                 |
 | Completion resolution        | Not implemented | With completion | Only if additional lazy metadata adds real value.                                |
 | Hover documentation          | Implemented     | Early           | Database descriptions, examples and inferred types.                              |
-| Signature help               | Not implemented | Early           | Requires authoritative function signatures.                                      |
+| Signature help               | Implemented     | Early           | Database-backed globals and methods; `(`, `,` triggers and active parameter.     |
 | Go to definition             | Implemented     | Early           | Resolved user and local symbols; builtins have no source declaration.            |
 | References                   | Implemented     | Early           | Resolved references plus optional declarations.                                  |
 | Rename                       | Not implemented | Later           | Requires reliable symbol resolution and workspace awareness.                     |
@@ -41,7 +41,7 @@ None of this behaviour is treated as a specification.
 | Selection ranges             | Deferred        | Deferred        | Evaluate editor benefit against implementation cost.                             |
 | Inlay hints                  | Deferred        | Deferred        | Evaluate only with concrete, non-noisy use cases.                                |
 | Call hierarchy               | Deferred        | Deferred        | Depends on robust cross-reference semantics.                                     |
-| Mini-notation-aware analysis | Deferred        | Early           | Flattened argument contexts exist; token-level rules need validation.            |
+| Mini-notation-aware analysis | Implemented     | Early           | Parser-independent tokens; conservative structural warnings and operator hover.  |
 
 Priorities are proposed by phase in `docs/ROADMAP.md` and remain subject to approval once licensing and metadata sources are resolved.
 
@@ -56,7 +56,7 @@ Priorities are proposed by phase in `docs/ROADMAP.md` and remain subject to appr
 - Provide accurate source ranges and actionable messages.
 - Reanalyse documents as they change without unnecessary recomputation.
 
-Current implementation: outermost non-empty syntax error nodes produce warnings; missing nodes and speculative semantic conclusions are suppressed. Unknown calls and pattern methods produce informational diagnostics only when the syntax tree is clean. Unresolved value references are intentionally not reported because runtime globals may be injected outside the document.
+Current implementation: outermost non-empty syntax error nodes produce warnings; missing nodes and speculative semantic conclusions are suppressed. Unknown calls and pattern methods produce informational diagnostics only when the syntax tree is clean. Unresolved value references are intentionally not reported because runtime globals may be injected outside the document. Mini-notation reports empty groups, unmatched or mismatched closers and missing steps at the start of or between `,` or `|` separators; unclosed groups, trailing separators, other trailing operators and unsupported characters are not reported during live editing.
 
 ## Configuration
 
@@ -75,11 +75,13 @@ Implemented and advertised in `initialize`:
 - `textDocumentSync: Incremental` with an incremental text document store.
 - `completionProvider` with the `.` trigger character.
 - `hoverProvider`, `definitionProvider` and `referencesProvider`.
+- `signatureHelpProvider` with `(` and `,` trigger characters.
 - Push diagnostics through `textDocument/publishDiagnostics`; no pull-diagnostic capability is claimed.
 
 Verification evidence:
 
-- `npm run test:features`: five provider tests cover conservative diagnostics, malformed input, position-aware completion, hover content and resolved-symbol navigation.
-- `npm test`: the stdio integration test verifies capability advertisement, all four request types, diagnostic publication, document closure and rapid-edit version suppression.
+- `npm run test:features`: nine provider tests cover conservative diagnostics, malformed input, position-aware completion, hover content, resolved-symbol navigation, signature help, mini-notation diagnostics and hover, and incremental range shifting.
+- `npm run test:mini`: five isolated token-model tests cover documented operators, token descriptions, structural faults, live-coding suppression and unsupported-character progress.
+- `npm test`: 32 tests include a stdio integration test that verifies capability advertisement, all five implemented request types, diagnostic publication, document closure and rapid-edit version suppression.
 
-Deferred after the approved core increment: signature help, completion resolution, mini-notation token analysis, quick fixes, rename, symbols, semantic tokens, formatting and remaining extended capabilities. User-facing configuration for diagnostics and Strudel version selection is not exposed yet.
+Deferred: completion resolution, quick fixes, rename, symbols, semantic tokens, formatting and remaining extended capabilities. User-facing configuration for diagnostics and Strudel version selection is not exposed yet.

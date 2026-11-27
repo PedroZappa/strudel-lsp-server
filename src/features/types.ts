@@ -44,6 +44,21 @@ export interface ReferenceResult {
   readonly range: SemanticRange;
 }
 
+export interface SignatureParameter {
+  readonly label: string;
+  /** UTF-16 offsets into the signature label, as required by LSP. */
+  readonly labelRange: readonly [number, number];
+  readonly documentation?: string;
+}
+
+export interface SignatureHelpResult {
+  readonly label: string;
+  readonly documentation?: string;
+  readonly parameters: readonly SignatureParameter[];
+  readonly activeParameter: number;
+  readonly range: SemanticRange;
+}
+
 export interface SymbolLookupResult {
   readonly symbol: SemanticSymbol;
   readonly range: SemanticRange;

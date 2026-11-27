@@ -1,3 +1,5 @@
+import type { MiniNotationAnalysis } from '../miniNotation/index.js';
+
 /** Parser-independent source range used by the semantic model. */
 export interface SemanticRange {
   start: { line: number; character: number };
@@ -62,6 +64,7 @@ export interface MiniNotationArgument {
   readonly range: SemanticRange;
   readonly ownerName: string;
   readonly inferredType: StrudelType;
+  readonly analysis?: MiniNotationAnalysis;
 }
 
 export interface SemanticDocument {

@@ -32,6 +32,7 @@
     "test:semantic": "npm run build && node --test dist/test/semantic",
     "test:metadata": "npm run build && node --test dist/test/metadata",
     "test:features": "npm run build && node --test dist/test/features",
+    "test:mini": "npm run build && node --test dist/test/miniNotation",
     "generate:metadata": "node scripts/generate-metadata.mjs",
     "benchmark": "node scripts/benchmark.mjs",
     "check": "npm run typecheck && npm run lint && npm run format:check && npm test"

@@ -75,5 +75,19 @@ export function provideDiagnostics(context: FeatureContext): readonly LanguageDi
     }
   }
 
+  // Only structural mini-notation faults are reported. Unclosed delimiters and
+  // trailing operators are expected mid-edit and are intentionally omitted.
+  for (const argument of context.semantic.miniNotationArguments) {
+    for (const issue of argument.analysis?.issues ?? []) {
+      diagnostics.push({
+        range: issue.range,
+        severity: 'warning',
+        message: issue.message,
+        source: 'strudel-mini',
+        code: issue.code,
+      });
+    }
+  }
+
   return diagnostics;
 }

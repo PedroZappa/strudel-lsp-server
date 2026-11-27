@@ -3,11 +3,20 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import {
+  createCatalogFromLanguageDatabase,
+  createDefaultLanguageDatabase,
+} from '../../src/languageDatabase/index.js';
+import { DocumentAnalysisService } from '../../src/lsp/index.js';
+import { createSemanticEngine } from '../../src/semantic/index.js';
+import { createSyntaxAdapter } from '../../src/syntax/index.js';
+
+import {
   provideCompletion,
   provideDefinition,
   provideDiagnostics,
   provideHover,
   provideReferences,
+  provideSignatureHelp,
 } from '../../src/features/index.js';
 
 import { createFeatureHarness } from './helpers.js';
@@ -116,4 +125,100 @@ void test('definition and references use resolved semantic symbols', () => {
 
   const builtin = createFeatureHarness('s("bd")', 0);
   assert.equal(provideDefinition(builtin.context, 0), undefined);
+});
+
+void test('signature help uses database parameters and tracks the active argument', () => {
+  const fastText = 's("bd").fast(2)';
+  const fastOffset = fastText.indexOf('2');
+  const fast = createFeatureHarness(fastText, fastOffset);
+  const fastResult = provideSignatureHelp(fast.context, fastOffset);
+  assert.ok(fastResult !== undefined);
+  assert.equal(fastResult.label, 'fast(factor: number | Pattern)');
+  assert.equal(fastResult.activeParameter, 0);
+  assert.equal(fastResult.parameters[0]?.documentation, 'speed up factor');
+
+  const euclidText = 's("bd").euclid(3, 8)';
+  const euclidOffset = euclidText.indexOf('8');
+  const euclid = createFeatureHarness(euclidText, euclidOffset);
+  const euclidResult = provideSignatureHelp(euclid.context, euclidOffset);
+  assert.ok(euclidResult !== undefined);
+  assert.equal(euclidResult.label, 'euclid(pulses: number, steps: number)');
+  assert.equal(euclidResult.activeParameter, 1);
+  assert.deepEqual(euclidResult.parameters[1]?.labelRange, [23, 36]);
+
+  const nestedText = 's("bd").fast(s("hh").euclid(3, 8))';
+  const nestedOffset = nestedText.lastIndexOf('8');
+  const nested = createFeatureHarness(nestedText, nestedOffset);
+  assert.equal(provideSignatureHelp(nested.context, nestedOffset)?.label, euclidResult.label);
+
+  const outsideArgs = createFeatureHarness(fastText, fastText.indexOf('fast'));
+  assert.equal(provideSignatureHelp(outsideArgs.context, fastText.indexOf('fast')), undefined);
+
+  const partialText = 's("bd").euclid(3, ';
+  const partial = createFeatureHarness(partialText, partialText.length);
+  assert.equal(
+    provideSignatureHelp(partial.context, partialText.length)?.label,
+    euclidResult.label,
+  );
+
+  const userText = 'function mix(a) {}\nmix(1)';
+  const userOffset = userText.lastIndexOf('1');
+  const user = createFeatureHarness(userText, userOffset);
+  assert.equal(provideSignatureHelp(user.context, userOffset), undefined);
+
+  const unknownText = 'notAFunction(1)';
+  const unknown = createFeatureHarness(unknownText, unknownText.indexOf('1'));
+  assert.equal(provideSignatureHelp(unknown.context, unknownText.indexOf('1')), undefined);
+});
+
+void test('mini-notation diagnostics report structural faults but not incomplete input', () => {
+  const invalid = createFeatureHarness('s("[]")');
+  const diagnostics = provideDiagnostics(invalid.context);
+  assert.equal(
+    diagnostics.some((diagnostic) => diagnostic.code === 'empty-group'),
+    true,
+  );
+
+  const incomplete = createFeatureHarness('s("bd sd [")');
+  assert.deepEqual(provideDiagnostics(incomplete.context), []);
+});
+
+void test('hover documents mini-notation operators', () => {
+  const text = 's("bd [hh]*2")';
+  const offset = text.indexOf('*');
+  const harness = createFeatureHarness(text, offset);
+  const hover = provideHover(harness.context, offset);
+  assert.ok(hover !== undefined);
+  assert.match(hover.contents, /mini notation repeat/);
+  assert.match(hover.contents, /\.fast\(3\)/);
+});
+
+void test('incremental edits keep mini-notation analysis ranges aligned', () => {
+  const database = createDefaultLanguageDatabase();
+  const engine = createSemanticEngine(createCatalogFromLanguageDatabase(database));
+  const documents = new DocumentAnalysisService(createSyntaxAdapter(), engine);
+  const uri = 'file:///test/incremental.strudel';
+
+  documents.open({
+    textDocument: { uri, languageId: 'strudel', version: 1, text: 's("[]")' },
+  });
+  const firstIssue = documents.get(uri)?.semantic.miniNotationArguments[0]?.analysis?.issues[0];
+  assert.equal(firstIssue?.code, 'empty-group');
+
+  documents.change({
+    textDocument: { uri, version: 2 },
+    contentChanges: [
+      {
+        range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } },
+        text: 'const intro = 1\n',
+      },
+    ],
+  });
+
+  const analyzed = documents.get(uri);
+  assert.ok(analyzed !== undefined);
+  const issue = analyzed.semantic.miniNotationArguments[0]?.analysis?.issues[0];
+  assert.ok(issue !== undefined);
+  assert.equal(issue.range.start.line, 1);
+  assert.equal(issue.range.startOffset, analyzed.document.getText().indexOf('[]'));
 });

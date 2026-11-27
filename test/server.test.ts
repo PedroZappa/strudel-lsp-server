@@ -206,6 +206,7 @@ void test('stdio server advertises and serves implemented language capabilities'
       textDocumentSync: number;
       completionProvider: { triggerCharacters?: string[] };
       hoverProvider: boolean;
+      signatureHelpProvider: { triggerCharacters?: string[] };
       definitionProvider: boolean;
       referencesProvider: boolean;
     };
@@ -214,6 +215,10 @@ void test('stdio server advertises and serves implemented language capabilities'
   assert.equal(initializeResult.capabilities.textDocumentSync, 2);
   assert.deepEqual(initializeResult.capabilities.completionProvider.triggerCharacters, ['.']);
   assert.equal(initializeResult.capabilities.hoverProvider, true);
+  assert.deepEqual(initializeResult.capabilities.signatureHelpProvider.triggerCharacters, [
+    '(',
+    ',',
+  ]);
   assert.equal(initializeResult.capabilities.definitionProvider, true);
   assert.equal(initializeResult.capabilities.referencesProvider, true);
 
@@ -244,6 +249,14 @@ void test('stdio server advertises and serves implemented language capabilities'
   })) as { contents: { value: string } } | null;
   assert.ok(hover !== null);
   assert.match(hover.contents.value, /Select a sound/);
+
+  const signatureHelp = (await client.request('textDocument/signatureHelp', {
+    textDocument: { uri },
+    position: { line: 0, character: text.indexOf('2') },
+  })) as { signatures: { label: string }[]; activeParameter: number } | null;
+  assert.ok(signatureHelp !== null);
+  assert.equal(signatureHelp.signatures[0]?.label, 'fast(factor: number | Pattern)');
+  assert.equal(signatureHelp.activeParameter, 0);
 
   const definition = (await client.request('textDocument/definition', {
     textDocument: { uri },
