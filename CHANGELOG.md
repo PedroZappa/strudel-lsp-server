@@ -10,6 +10,10 @@ Version `0.1.0` was published on 2026-11-27 from tag `v0.1.0`; full user-facing 
 
 - Focused, unreleased diagnostics configuration through standard `workspace/configuration` and `workspace/didChangeConfiguration`: a global enable flag, per-code severity overrides including `off`, and unchanged defaults when no settings are supplied. Quick fixes follow the resulting diagnostics.
 
+### Changed
+
+- Hardened unreleased workspace-symbol discovery to reject symlinks, unsafe entry names and paths outside the normalized root, skip unreadable or oversized files, enforce depth and file-count limits, and return locale-independent deterministic results. Open-document overrides remain unchanged.
+
 ## [0.1.0] - 2026-11-27
 
 ### Added

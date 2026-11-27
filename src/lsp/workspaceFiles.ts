@@ -1,9 +1,22 @@
 import { readdir, readFile, stat } from 'node:fs/promises';
-import { join } from 'node:path';
+import { isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 export interface WorkspaceScanToken {
   readonly isCancellationRequested: boolean;
+}
+
+export interface WorkspaceScanDirent {
+  readonly name: string;
+  isDirectory(): boolean;
+  isFile(): boolean;
+  isSymbolicLink(): boolean;
+}
+
+export interface WorkspaceScanFileSystem {
+  readdir(path: string): Promise<readonly WorkspaceScanDirent[]>;
+  stat(path: string): Promise<{ readonly size: number }>;
+  readFile(path: string): Promise<string>;
 }
 
 export interface WorkspaceScanOptions {
@@ -11,6 +24,7 @@ export interface WorkspaceScanOptions {
   readonly maxFileBytes?: number;
   readonly maxDepth?: number;
   readonly token?: WorkspaceScanToken;
+  readonly fileSystem?: WorkspaceScanFileSystem;
 }
 
 export interface WorkspaceFile {
@@ -23,6 +37,7 @@ interface WorkspaceScanConfig {
   readonly maxFileBytes: number;
   readonly maxDepth: number;
   readonly token: WorkspaceScanToken | undefined;
+  readonly fileSystem: WorkspaceScanFileSystem;
 }
 
 interface DirectoryEntry {
@@ -44,6 +59,12 @@ const IGNORED_DIRECTORIES = new Set([
   '.vscode',
 ]);
 
+const NODE_FILE_SYSTEM: WorkspaceScanFileSystem = {
+  readdir: async (path) => readdir(path, { withFileTypes: true }),
+  stat: async (path) => stat(path),
+  readFile: async (path) => readFile(path, 'utf8'),
+};
+
 function positiveInteger(value: number | undefined, fallback: number): number {
   return value === undefined || !Number.isInteger(value) || value <= 0 ? fallback : value;
 }
@@ -54,11 +75,35 @@ function normalizeOptions(options: WorkspaceScanOptions): WorkspaceScanConfig {
     maxFileBytes: positiveInteger(options.maxFileBytes, DEFAULT_MAX_FILE_BYTES),
     maxDepth: positiveInteger(options.maxDepth, DEFAULT_MAX_DEPTH),
     token: options.token,
+    fileSystem: options.fileSystem ?? NODE_FILE_SYSTEM,
   };
 }
 
 function isCancelled(token: WorkspaceScanToken | undefined): boolean {
   return token?.isCancellationRequested === true;
+}
+
+function compareStrings(left: string, right: string): number {
+  return left < right ? -1 : left > right ? 1 : 0;
+}
+
+function isSafeEntryName(name: string): boolean {
+  return (
+    name.length > 0 &&
+    name !== '.' &&
+    name !== '..' &&
+    !name.includes('/') &&
+    !name.includes('\\') &&
+    !name.includes('\0')
+  );
+}
+
+function isWithinRoot(rootPath: string, candidatePath: string): boolean {
+  const relativePath = relative(rootPath, candidatePath);
+  return (
+    relativePath === '' ||
+    (!isAbsolute(relativePath) && relativePath !== '..' && !relativePath.startsWith(`..${sep}`))
+  );
 }
 
 async function collectPaths(
@@ -75,20 +120,32 @@ async function collectPaths(
       break;
     }
 
-    let entries;
+    let entries: readonly WorkspaceScanDirent[];
     try {
-      entries = await readdir(current.path, { withFileTypes: true });
+      entries = await config.fileSystem.readdir(current.path);
     } catch {
       continue;
     }
 
-    entries.sort((left, right) => left.name.localeCompare(right.name));
-    for (const entry of entries) {
+    for (const entry of [...entries].sort((left, right) => compareStrings(left.name, right.name))) {
       if (budget.remaining <= 0 || isCancelled(config.token)) {
         break;
       }
+      if (!isSafeEntryName(entry.name)) {
+        continue;
+      }
 
       const path = join(current.path, entry.name);
+      if (!isWithinRoot(rootPath, path)) {
+        continue;
+      }
+
+      // Symlinks are never followed: a link inside a workspace could otherwise
+      // escape the bounded root or duplicate an open document under a new URI.
+      if (entry.isSymbolicLink()) {
+        continue;
+      }
+
       if (entry.isDirectory()) {
         if (
           entry.name.startsWith('.') ||
@@ -108,14 +165,16 @@ async function collectPaths(
     }
   }
 
-  return paths.sort((left, right) => left.localeCompare(right));
+  return paths.sort(compareStrings);
 }
 
 /**
  * Discovers `.strudel` files beneath the supplied workspace folder URIs with
- * explicit file-count, file-size and depth limits. Hidden and generated
- * directories are skipped. Errors for individual entries are ignored so one
- * inaccessible path cannot fail the whole symbol request.
+ * explicit file-count, file-size and depth limits. Hidden, generated and
+ * symlinked directories are skipped, and unsafe entry names or paths that
+ * escape the root are ignored. Errors for individual entries are ignored so
+ * one inaccessible path cannot fail the whole symbol request. Results use
+ * locale-independent ordering for deterministic symbol responses.
  */
 export async function readWorkspaceFiles(
   rootUris: readonly string[],
@@ -133,7 +192,7 @@ export async function readWorkspaceFiles(
 
     let rootPath: string;
     try {
-      rootPath = fileURLToPath(rootUri);
+      rootPath = resolve(fileURLToPath(rootUri));
     } catch {
       continue;
     }
@@ -152,11 +211,11 @@ export async function readWorkspaceFiles(
 
       let text: string;
       try {
-        const details = await stat(path);
+        const details = await config.fileSystem.stat(path);
         if (details.size > config.maxFileBytes) {
           continue;
         }
-        text = await readFile(path, 'utf8');
+        text = await config.fileSystem.readFile(path);
       } catch {
         continue;
       }

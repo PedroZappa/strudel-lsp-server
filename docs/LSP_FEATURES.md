@@ -1,6 +1,6 @@
 # LSP Features
 
-Status: Phase 6 capabilities, signature help, conservative token-level mini-notation analysis, Phase 7 quick fixes, rename, document and workspace symbols, semantic tokens, formatting and inline-constant refactoring implemented and verified. The unreleased `0.2.0` work adds focused diagnostics configuration; remaining candidates are tracked below.
+Status: Phase 6 capabilities, signature help, conservative token-level mini-notation analysis, Phase 7 quick fixes, rename, document and workspace symbols, semantic tokens, formatting and inline-constant refactoring implemented and verified. The unreleased `0.2.0` work adds focused diagnostics configuration and hardened workspace-symbol filesystem discovery; remaining candidates are tracked below.
 
 Authority: `AGENTS.md` sections 4 and 5.
 
@@ -95,7 +95,8 @@ Current implementation: outermost non-empty syntax error nodes produce warnings;
 
 - `workspace/symbol` scans workspace folders on demand; no persistent index or file watcher is maintained.
 - Discovery is limited to `.strudel` files and bounded by file count, file size and directory depth. Hidden and generated directories are skipped.
-- Open documents override scanned file contents so unsaved edits are reflected in results.
+- Roots are normalized, symlink entries are never followed, and unsafe entry names or paths outside the root are skipped. Unreadable and oversized files are ignored without failing the request.
+- Results use locale-independent ordering. Open documents override scanned file contents so unsaved edits are reflected in results.
 - Symbols are the verified declarations from document outlines, flattened with container names and revealed using their exact name ranges.
 - Queries use relaxed, case-insensitive subsequence matching. Empty queries return all symbols up to the result limit.
 - No cross-file module graph, symbol resolution or `workspaceSymbol/resolve` support is claimed.
@@ -164,9 +165,10 @@ Verification evidence:
 
 - `npm run test:features`: thirty-one provider tests cover conservative diagnostics, malformed input, diagnostics configuration remapping and suppression, quick-fix edits, range filtering and configuration, inline-constant refactoring and unsafe-binding rejection, position-aware completion, hover content, resolved-symbol navigation, document-symbol ranges and hierarchy, workspace-symbol matching, container names and result limits, formatting indentation and preferences, rename preparation and edits, semantic-token classification, signature help, mini-notation diagnostics and hover, and incremental range shifting.
 - `npm run test:configuration`: four isolated tests cover missing and invalid settings, both LSP delivery shapes, severity remapping, suppression and global disablement.
+- `npm run test:lsp`: three isolated filesystem tests cover deterministic ordering, symlink and traversal rejection, depth and file-size limits, unreadable paths and cancellation.
 - `npm run test:mini`: five isolated token-model tests cover documented operators, token descriptions, structural faults, expected-closer metadata, live-coding suppression and unsupported-character progress.
 - `npm run test:protocol`: nine raw stdio tests cover framed stdout purity, malformed JSON-RPC bodies and envelopes, unknown methods, invalid parameters, `$/cancelRequest` during a workspace scan, stale-edit suppression and document closure, no-workspace and multi-root initialization, unchanged defaults without a configuration capability, settings-notification changes, and shutdown/exit codes.
-- `npm test`: 78 tests include the three stdio integration tests that verify capability advertisement, all twelve implemented request types, diagnostic publication, workspace configuration and dynamic republishing, quick-fix and inline-refactor code-action mapping, document-symbol and workspace-symbol, formatting, semantic-token and rename mapping, workspace file scanning with open-document overrides, document closure and rapid-edit version suppression, the nine protocol robustness tests, plus package/manifest contract checks.
+- `npm test`: 81 tests include the three stdio integration tests that verify capability advertisement, all twelve implemented request types, diagnostic publication, workspace configuration and dynamic republishing, quick-fix and inline-refactor code-action mapping, document-symbol and workspace-symbol, formatting, semantic-token and rename mapping, workspace file scanning with open-document overrides, document closure and rapid-edit version suppression, the nine protocol robustness tests, the three LSP filesystem regression tests, plus package/manifest contract checks.
 
 ## Protocol lifecycle behaviour
 

@@ -40,6 +40,7 @@
     "test:semantic": "npm run build && node --test \"dist/test/semantic/**/*.test.js\"",
     "test:metadata": "npm run build && node --test \"dist/test/metadata/**/*.test.js\"",
     "test:configuration": "npm run build && node --test \"dist/test/configuration/**/*.test.js\"",
+    "test:lsp": "npm run build && node --test \"dist/test/lsp/**/*.test.js\"",
     "test:features": "npm run build && node --test \"dist/test/features/**/*.test.js\"",
     "test:mini": "npm run build && node --test \"dist/test/miniNotation/**/*.test.js\"",
     "test:protocol": "npm run build && node --test \"dist/test/protocolRobustness.test.js\"",

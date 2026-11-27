@@ -60,6 +60,9 @@ jobs:
       - name: Run configuration suite
         run: npm run test:configuration
 
+      - name: Run LSP layer suite
+        run: npm run test:lsp
+
       - name: Run language feature suite
         run: npm run test:features
 

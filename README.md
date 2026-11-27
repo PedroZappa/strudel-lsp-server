@@ -43,7 +43,7 @@ The core server does not provide a TCP mode. Editor-specific clients and configu
 
 ## Capabilities
 
-The server advertises only capabilities that are implemented and verified: incremental text document sync, diagnostics, completion, hover, signature help, definition, references, document symbols, workspace symbols, rename, formatting, semantic tokens, code actions and document/workspace symbol requests. Workspace symbols use a bounded on-demand scan of `.strudel` files; no persistent workspace index or cross-file module graph is created.
+The server advertises only capabilities that are implemented and verified: incremental text document sync, diagnostics, completion, hover, signature help, definition, references, document symbols, workspace symbols, rename, formatting, semantic tokens, code actions and document/workspace symbol requests. Workspace symbols use a bounded on-demand scan of `.strudel` files with symlink, path-traversal and unreadable-file guards; no persistent workspace index or cross-file module graph is created.
 
 See [LSP_FEATURES.md](https://github.com/PedroZappa/strudel-lsp-server/blob/main/docs/LSP_FEATURES.md) for exact capability details and [PERFORMANCE.md](https://github.com/PedroZappa/strudel-lsp-server/blob/main/docs/PERFORMANCE.md) for measured latency baselines.
 
@@ -54,7 +54,7 @@ Published version `0.1.0` deliberately limits scope:
 - It has no custom configuration channel; diagnostic enablement/severity overrides and Strudel version selection are deferred. The current development tree adds an unreleased, focused diagnostics configuration described below and in ADR-052.
 - Diagnostics stay conservative on incomplete live-coding input rather than reporting unreliable cascading errors.
 - Formatting is indentation-only. Range formatting is deferred.
-- Workspace symbols use a bounded on-demand scan of `.strudel` files rather than a persistent workspace index or cross-file module graph.
+- Workspace symbols use a bounded on-demand scan of `.strudel` files rather than a persistent workspace index or cross-file module graph; symlink entries and paths outside the workspace root are skipped.
 - Only stdio transport is provided; the package has no TCP mode.
 - Platforms other than the required Linux x64, macOS arm64 and Windows x64 matrix are best-effort until validated.
 

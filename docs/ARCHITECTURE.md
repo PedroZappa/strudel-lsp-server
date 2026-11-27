@@ -63,7 +63,7 @@ The current `src/server.ts` implements LSP lifecycle, incremental text sync, com
 - Translate LSP requests into feature-provider calls and map results back to LSP types.
 - Propagate cancellation and discard superseded work where appropriate.
 - Keep expensive work off the communication-critical path.
-- Perform bounded on-demand workspace file discovery for cross-file navigation requests.
+- Perform bounded on-demand workspace file discovery for cross-file navigation requests, with symlink, path-containment and unreadable-file guards and deterministic ordering.
 - Contain all editor-specific behaviour outside the server core.
 
 ### Language intelligence

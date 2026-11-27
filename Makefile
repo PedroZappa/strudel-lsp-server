@@ -51,7 +51,7 @@ _INFO    = [$(BLU)INFO$(D)]
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install install-dev build typecheck lint format format-check test test-parser test-semantic test-metadata test-configuration test-features test-mini test-protocol validate-corpus validate-corpus-write generate-metadata benchmark benchmark-check benchmark-baseline pack-check verify-package verify-release check verify verify-all ci check-static audit audit-client clean docs docs-open
+.PHONY: help install install-dev build typecheck lint format format-check test test-parser test-semantic test-metadata test-configuration test-lsp test-features test-mini test-protocol validate-corpus validate-corpus-write generate-metadata benchmark benchmark-check benchmark-baseline pack-check verify-package verify-release check verify verify-all ci check-static audit audit-client clean docs docs-open
 
 #==============================================================================#
 #                                  RULES                                       #
@@ -120,6 +120,11 @@ test-configuration:	## Build and run configuration parsing and application tests
 	@echo "$(YEL)Running configuration tests...$(D)"
 	@$(NPM) run test:configuration
 	@echo "$(YEL)* $(_SUCCESS) Configuration tests completed$(D)"
+
+test-lsp:	## Build and run LSP layer tests only
+	@echo "$(YEL)Running LSP layer tests...$(D)"
+	@$(NPM) run test:lsp
+	@echo "$(YEL)* $(_SUCCESS) LSP layer tests completed$(D)"
 
 test-features:	## Build and run language feature provider tests only
 	@echo "$(YEL)Running language feature tests...$(D)"
