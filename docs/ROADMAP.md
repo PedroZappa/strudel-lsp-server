@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: re-implementation roadmap updated with resolved blocker decisions and Phase 5 completion, 2026-11-27. Priorities are proposals and remain subject to approval.
+Status: re-implementation roadmap updated with resolved blocker decisions and Phase 6 core increment completion, 2026-11-27. Priorities are proposals and remain subject to approval.
 
 Authority: `AGENTS.md` sections 2–18 and the other documents in `docs/`.
 
@@ -134,21 +134,25 @@ Exit criteria:
 
 ## Phase 6 — Core language intelligence
 
+**Status: approved core increment complete; signature help and token-level mini-notation analysis remain deferred.**
+
 Dependencies: Phases 4 and 5.
 
 Candidate first capabilities, subject to explicit approval:
 
-- [ ] Resilient diagnostics.
-- [ ] Position-aware completion.
-- [ ] Hover documentation.
+- [x] Resilient diagnostics.
+- [x] Position-aware completion.
+- [x] Hover documentation.
 - [ ] Signature help.
-- [ ] Definition and references.
+- [x] Definition and references.
 - [ ] Mini-notation-aware analysis.
 
-Exit criteria:
+The approved core increment adds an incremental text document store, deferred analysis with superseded-version suppression, and providers for diagnostics, completion, hover, definition and references. Providers are separate from the LSP transport and consume the Phase 4 semantic model plus the Phase 5 language database. Capabilities are advertised only for implemented features. Tests cover conservative diagnostics for malformed input, rapid edits, position-aware completion, database-backed hover and resolved-symbol navigation.
 
-- [ ] Capabilities are advertised only when implemented and verified.
-- [ ] Live-coding resilience requirements in `docs/LSP_FEATURES.md` are covered by tests.
+Core-increment exit criteria:
+
+- [x] Capabilities are advertised only when implemented and verified.
+- [x] Live-coding resilience requirements in `docs/LSP_FEATURES.md` are covered by tests.
 
 ## Phase 7 — Extended capabilities
 

@@ -1,6 +1,7 @@
 # LSP Features
 
-Status: planning matrix; no capability from the re-implementation exists yet.  
+Status: core Phase 6 capabilities implemented and verified; remaining candidates are tracked below.
+
 Authority: `AGENTS.md` sections 4 and 5.
 
 ## Evaluation policy
@@ -22,14 +23,14 @@ None of this behaviour is treated as a specification.
 
 | Capability                   | Status          | Proposed phase  | Notes                                                                            |
 | ---------------------------- | --------------- | --------------- | -------------------------------------------------------------------------------- |
-| Diagnostics                  | Not implemented | Early           | Must be resilient, source-accurate and live-coding aware; see policy below.      |
+| Diagnostics                  | Implemented     | Early           | Conservative syntax warnings and unknown-call/method information; see policy.    |
 | Quick fixes                  | Not implemented | Later           | Depends on actionable diagnostic kinds and safe edits.                           |
-| Completion                   | Not implemented | Early           | Generated metadata is available; provider needed.                                |
+| Completion                   | Implemented     | Early           | Position-aware globals, locals and Pattern methods; `.` trigger.                 |
 | Completion resolution        | Not implemented | With completion | Only if additional lazy metadata adds real value.                                |
-| Hover documentation          | Not implemented | Early           | Metadata provenance and docs are available.                                      |
+| Hover documentation          | Implemented     | Early           | Database descriptions, examples and inferred types.                              |
 | Signature help               | Not implemented | Early           | Requires authoritative function signatures.                                      |
-| Go to definition             | Not implemented | Early           | Prototype stub is not a foundation.                                              |
-| References                   | Not implemented | Early           | Prototype stub is not a foundation.                                              |
+| Go to definition             | Implemented     | Early           | Resolved user and local symbols; builtins have no source declaration.            |
+| References                   | Implemented     | Early           | Resolved references plus optional declarations.                                  |
 | Rename                       | Not implemented | Later           | Requires reliable symbol resolution and workspace awareness.                     |
 | Document symbols             | Not implemented | Later           | Semantic scope/symbol model exists; needs LSP provider and document store.       |
 | Workspace symbols            | Not implemented | Later           | Requires workspace indexing strategy.                                            |
@@ -40,7 +41,7 @@ None of this behaviour is treated as a specification.
 | Selection ranges             | Deferred        | Deferred        | Evaluate editor benefit against implementation cost.                             |
 | Inlay hints                  | Deferred        | Deferred        | Evaluate only with concrete, non-noisy use cases.                                |
 | Call hierarchy               | Deferred        | Deferred        | Depends on robust cross-reference semantics.                                     |
-| Mini-notation-aware analysis | Design subject  | Early           | Phase 4 records argument contexts; token-level rules need validation.            |
+| Mini-notation-aware analysis | Deferred        | Early           | Flattened argument contexts exist; token-level rules need validation.            |
 
 Priorities are proposed by phase in `docs/ROADMAP.md` and remain subject to approval once licensing and metadata sources are resolved.
 
@@ -55,6 +56,8 @@ Priorities are proposed by phase in `docs/ROADMAP.md` and remain subject to appr
 - Provide accurate source ranges and actionable messages.
 - Reanalyse documents as they change without unnecessary recomputation.
 
+Current implementation: outermost non-empty syntax error nodes produce warnings; missing nodes and speculative semantic conclusions are suppressed. Unknown calls and pattern methods produce informational diagnostics only when the syntax tree is clean. Unresolved value references are intentionally not reported because runtime globals may be injected outside the document.
+
 ## Configuration
 
 Configuration stays narrow and user-facing:
@@ -67,4 +70,16 @@ Internal engine settings are not exposed without a concrete user-facing requirem
 
 ## Implementation status
 
-No re-implemented capability is complete. Status changes belong here together with verification evidence and any capability advertisement changes.
+Implemented and advertised in `initialize`:
+
+- `textDocumentSync: Incremental` with an incremental text document store.
+- `completionProvider` with the `.` trigger character.
+- `hoverProvider`, `definitionProvider` and `referencesProvider`.
+- Push diagnostics through `textDocument/publishDiagnostics`; no pull-diagnostic capability is claimed.
+
+Verification evidence:
+
+- `npm run test:features`: five provider tests cover conservative diagnostics, malformed input, position-aware completion, hover content and resolved-symbol navigation.
+- `npm test`: the stdio integration test verifies capability advertisement, all four request types, diagnostic publication, document closure and rapid-edit version suppression.
+
+Deferred after the approved core increment: signature help, completion resolution, mini-notation token analysis, quick fixes, rename, symbols, semantic tokens, formatting and remaining extended capabilities. User-facing configuration for diagnostics and Strudel version selection is not exposed yet.

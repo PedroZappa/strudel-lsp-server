@@ -1,6 +1,6 @@
 # Architecture
 
-Status: transport, syntax adapter, semantic engine and language database layers implemented on 2026-11-27; feature providers and LSP request integration remain to be implemented.
+Status: transport, syntax adapter, semantic engine, language database, document store and core feature providers implemented on 2026-11-27; signature help, mini-notation token analysis and extended capabilities remain to be implemented.
 
 Authority: `AGENTS.md` sections 3–6.
 
@@ -52,7 +52,7 @@ Side inputs:
   - User configuration (focused, user-facing options only)
 ```
 
-The current `src/server.ts` implements only the LSP transport lifecycle and advertises `textDocumentSync: None`. `src/syntax/` implements the pinned Tree-sitter adapter and the parser-independent `SyntaxDocument` contract. `src/semantic/` implements parser-independent snapshots, scopes, symbols, references, limited type inference, incremental reuse and cancellation checks. `src/languageDatabase/` implements a reproducible, offline-capable metadata snapshot with a `SemanticCatalog` adapter. Neither is yet connected to LSP requests. Feature providers and the LSP document store are not yet implemented.
+The current `src/server.ts` implements LSP lifecycle, incremental text sync, completion, hover, definition, references and push diagnostics. `src/syntax/` implements the pinned Tree-sitter adapter and the parser-independent `SyntaxDocument` contract. `src/semantic/` implements parser-independent snapshots, scopes, symbols, references, limited type inference, incremental reuse and cancellation checks. `src/languageDatabase/` implements a reproducible, offline-capable metadata snapshot with a `SemanticCatalog` adapter. `src/lsp/` owns the text document store and per-version syntax/semantic snapshots. `src/features/` contains transport-independent diagnostics, completion, hover and navigation providers. Document updates are analysed outside the request handlers on the next event-loop turn; request handlers await the latest scheduled analysis, and superseded document versions are discarded before publication.
 
 ## Responsibilities
 
@@ -142,9 +142,16 @@ Implemented language database contracts (exported from `src/languageDatabase/ind
 - `RuntimeSymbolMetadata` — optional runtime-derived extension point; no runtime import is used by default.
 - `createCatalogFromLanguageDatabase` — adapter from the database to `SemanticCatalog`.
 
+Implemented document and feature contracts (exported from `src/lsp/index.ts` and `src/features/index.ts`):
+
+- `AnalyzedDocument` — one immutable text, syntax and semantic snapshot pair per document version.
+- `DocumentAnalysisService` — incremental document updates with cached syntax/semantic results.
+- `FeatureContext` — provider input combining the document snapshot, syntax node at the request offset and language database.
+- `LanguageDiagnostic`, `CompletionCandidate`, `HoverResult`, `DefinitionResult` and `ReferenceResult` — transport-independent provider results mapped by `src/server.ts`.
+
 Proposed contracts for later phases:
 
-- `FeatureProvider` — common request contract for language intelligence features.
+- `FeatureProvider` — common request contract if provider count makes the current explicit functions unwieldy.
 - `RequestContext` — document version, position, configuration, cancellation and progress plumbing.
 
 ## Explicit constraints

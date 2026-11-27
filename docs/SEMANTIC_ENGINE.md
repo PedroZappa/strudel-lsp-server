@@ -1,6 +1,6 @@
 # Semantic Engine
 
-Status: Phase 4 model and Phase 5 database-backed catalog implemented on 2026-11-27. The model is deliberately limited and is not connected to LSP feature providers yet.
+Status: Phase 4 model, Phase 5 database-backed catalog and Phase 6 provider integration implemented on 2026-11-27. The model remains deliberately limited.
 
 Authority: `AGENTS.md` sections 3 and 5.
 
@@ -49,7 +49,7 @@ The current discriminated union is:
 
 Inference covers variable initializers, imported bindings, user functions and parameters, calls to catalog globals, chained pattern methods, literal shapes, simple binary/conditional expressions and explicit returns. Unknown JavaScript constructs remain `Unknown` instead of producing speculative diagnostics.
 
-Mini-notation is currently a flattened context model: a catalog entry declares which call arguments accept mini-notation, and the engine records the string range, owner name and `MiniNotationPattern` inference. A dedicated mini-notation submodel and token-level analysis remain Phase 6 work.
+Mini-notation is currently a flattened context model: a catalog entry declares which call arguments accept mini-notation, and the engine records the string range, owner name and `MiniNotationPattern` inference. A dedicated mini-notation submodel and token-level analysis were deferred after the approved Phase 6 core increment.
 
 ## Incrementality
 
@@ -73,11 +73,11 @@ The engine exposes semantic facts only. Feature providers will decide which fact
 
 ## Current limitations
 
-- Feature providers do not yet construct the default database-backed catalog for LSP requests.
+- The LSP server constructs the default database-backed catalog; editor clients cannot yet select a Strudel metadata version per workspace.
 - Sample names are not resolved from string contents because no authoritative sample-name source is available in the pinned metadata set.
 - Function return inference handles explicit returns but does not infer parameter types from usage.
 - Incremental reuse is statement-level, not sub-expression-level.
-- No LSP document store, diagnostics, completion or navigation consumes the model yet.
+- Signature help and token-level mini-notation analysis do not yet consume the model.
 
 ## Open questions
 

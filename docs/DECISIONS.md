@@ -67,7 +67,7 @@ Status: accepted on 2026-11-25.
 
 The selected baseline is Node's built-in `node:test` runner over compiled ESM JavaScript, with the TypeScript compiler producing test output. This avoids a separate test-framework dependency while still supporting module, protocol and subprocess tests.
 
-Vitest remains a documented alternative if richer ergonomics become necessary. Phase 2 added the first stdio transport smoke test, Phase 4 added the semantic engine suite, and Phase 5 added the metadata-generation and language-database suite; language-feature suites remain to be added.
+Vitest remains a documented alternative if richer ergonomics become necessary. Phase 2 added the first stdio transport smoke test, Phase 4 added the semantic engine suite, Phase 5 added the metadata-generation and language-database suite, and Phase 6 added the language-feature suite and expanded the stdio test into an end-to-end capability integration test.
 
 ## ADR-009 — Repository licence metadata
 
@@ -190,7 +190,7 @@ Status: accepted on 2026-11-26.
 
 Decision: the repository root is now the npm package `strudel-lsp-server`. It is ESM, strictly typed, and exposes an executable stdio LSP entry point at `dist/src/server.js`. Source and tests live under `src/` and `test/`; prototype `client/`, `server/`, `dist/` and editor-specific files are excluded from build, lint, format and test scopes. `@stylistic/eslint-plugin` remains a development dependency because the ESLint configuration uses it.
 
-The initial server entry point explicitly uses `process.stdin`/`process.stdout` and advertises only `textDocumentSync: None`. This satisfies the editor-agnostic transport scaffold without claiming language features that do not yet exist. A stdio handshake smoke test verifies that contract. The benchmark script is a runner placeholder; Phase 8 establishes workloads and measured p50/p95/p99 targets.
+The server entry point explicitly uses `process.stdin`/`process.stdout`. Phase 2 initially advertised only `textDocumentSync: None` to avoid claiming unimplemented features; Phase 6 replaced this with incremental sync and the verified core capabilities described in ADR-020. A stdio integration test verifies that contract. The benchmark script is a runner placeholder; Phase 8 establishes workloads and measured p50/p95/p99 targets.
 
 Consequences:
 
@@ -260,3 +260,32 @@ Consequences:
 - Metadata tests compare fresh generator output with the committed snapshot and do not access the network.
 - Pattern-method types are generated from `memberOf: 'Pattern'` and `scope: 'static'`; sample names remain unavailable because no pinned authoritative sample list exists.
 - Full function signatures and token-level mini-notation analysis remain future work.
+
+## ADR-020 — Phase 6 core language intelligence
+
+Status: accepted on 2026-11-27.
+
+Scope decision: implement an approved core increment of resilient diagnostics, position-aware completion, hover documentation, go to definition and references. Signature help and token-level mini-notation analysis are deferred to a follow-up because authoritative signatures and validated token rules are not yet available.
+
+Decision: `src/lsp/` owns a text document store built on `vscode-languageserver-textdocument` and a per-version analysis cache. Each open/change stores one `AnalyzedDocument` combining the text, `SyntaxDocument` and `SemanticDocument`. Single-range changes are forwarded to the parser's incremental `update`; multi-change events and full-text changes fall back to a full parse. Semantic analysis reuses the previous snapshot. Out-of-order versions are discarded to avoid regressing to stale content.
+
+`src/features/` contains transport-independent providers. They consume `FeatureContext` (document text, syntax node at the request offset, semantic model and language database) and return plain result objects that `src/server.ts` maps to LSP types. Provider-layer separation keeps future editors and request types independent of feature logic.
+
+Live-coding policy:
+
+- Outermost non-empty syntax error nodes produce warning diagnostics; missing nodes and speculative semantic conclusions are suppressed.
+- Unknown calls and pattern methods produce informational diagnostics only when the syntax tree is clean, so temporary malformed state does not cascade.
+- Unresolved value references are not reported because runtime globals may be injected outside the document.
+- Builtin and method symbols resolve through the language database and document descriptions, examples and source provenance in hover and completion.
+- Builtins have no source declaration, so definition requests correctly return no location.
+
+Request/transport behaviour: updates are analysed on the next event-loop turn. Request handlers await the latest scheduled analysis for the URI and then use the current snapshot. Superseded versions are discarded before diagnostic publication. Capabilities are advertised only for implemented and verified features: incremental sync, completion with a `.` trigger, hover, definition, references and push diagnostics. No pull-diagnostic or unimplemented capability is claimed.
+
+Rationale: incremental reuse, deferred analysis and version suppression protect responsiveness and correctness during rapid edits. Keeping providers out of the LSP layer and the database out of the semantic layer preserves ADR-007 and ADR-019 boundaries.
+
+Consequences:
+
+- Signature help, completion resolution, mini-notation token analysis, quick fixes, rename, symbols, semantic tokens, formatting and extended capabilities remain deferred.
+- User-facing configuration for diagnostics and Strudel version selection is not exposed yet.
+- The stdio integration test now exercises capability advertisement, all implemented request types, diagnostic publication, document closure and rapid-edit suppression.
+- Performance work in Phase 8 must measure this pipeline; no latency target is claimed here.

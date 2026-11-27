@@ -1,0 +1,50 @@
+import type { LanguageDatabase } from '../languageDatabase/index.js';
+import type { SemanticDocument, SemanticRange, SemanticSymbol } from '../semantic/index.js';
+import type { SyntaxDocument, SyntaxNode } from '../syntax/index.js';
+
+export type DiagnosticSeverityName = 'error' | 'warning' | 'information';
+
+export type CompletionCandidateKind = 'function' | 'method' | 'variable' | 'class' | 'value';
+
+export interface FeatureContext {
+  readonly uri: string;
+  readonly text: string;
+  readonly syntax: SyntaxDocument;
+  readonly semantic: SemanticDocument;
+  readonly database: LanguageDatabase;
+  readonly node?: SyntaxNode;
+}
+
+export interface LanguageDiagnostic {
+  readonly range: SemanticRange;
+  readonly severity: DiagnosticSeverityName;
+  readonly message: string;
+  readonly source: string;
+  readonly code?: string;
+}
+
+export interface CompletionCandidate {
+  readonly label: string;
+  readonly kind: CompletionCandidateKind;
+  readonly detail?: string;
+  readonly documentation?: string;
+  readonly replacementRange: SemanticRange;
+}
+
+export interface HoverResult {
+  readonly range: SemanticRange;
+  readonly contents: string;
+}
+
+export interface DefinitionResult {
+  readonly range: SemanticRange;
+}
+
+export interface ReferenceResult {
+  readonly range: SemanticRange;
+}
+
+export interface SymbolLookupResult {
+  readonly symbol: SemanticSymbol;
+  readonly range: SemanticRange;
+}
