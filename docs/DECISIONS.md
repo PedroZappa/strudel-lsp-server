@@ -1,6 +1,6 @@
 # Decisions
 
-Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened; ADR-021 records the Phase 6 deferred-item completion, ADR-022 records Phase 7 quick fixes, ADR-023 records document-scoped rename and ADR-024 records document symbols with workspace symbols deferred.
+Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened; ADR-021 records the Phase 6 deferred-item completion, ADR-022 records Phase 7 quick fixes, ADR-023 records document-scoped rename, ADR-024 records document symbols with workspace symbols deferred and ADR-025 records semantic tokens.
 
 ## ADR-001 — Clean-slate re-implementation
 
@@ -285,7 +285,7 @@ Rationale: incremental reuse, deferred analysis and version suppression protect 
 
 Consequences:
 
-- Signature help and mini-notation token analysis were added in ADR-021, quick fixes in ADR-022, document-scoped rename in ADR-023 and document symbols in ADR-024; completion resolution, workspace symbols, semantic tokens, formatting and remaining extended capabilities remain deferred.
+- Signature help and mini-notation token analysis were added in ADR-021, quick fixes in ADR-022, document-scoped rename in ADR-023, document symbols in ADR-024 and semantic tokens in ADR-025; completion resolution, workspace symbols, formatting and remaining extended capabilities remain deferred.
 - User-facing configuration for diagnostics and Strudel version selection is not exposed yet.
 - The stdio integration test now exercises capability advertisement, all implemented request types, diagnostic publication, document closure and rapid-edit suppression.
 - Performance work in Phase 8 must measure this pipeline; no latency target is claimed here.
@@ -371,3 +371,21 @@ Consequences:
 - Feature tests cover function-scope children, type details, catalog-only exclusion, imports and incomplete input; the stdio test covers capability advertisement and response mapping.
 - Document-symbol traversal uses the cached semantic snapshot and has no measured latency figure; Phase 8 must include it in representative request workloads.
 - `workspace/symbol` is not advertised until a workspace indexing strategy is approved.
+
+## ADR-025 — Conservative semantic tokens
+
+Status: accepted on 2026-11-27.
+
+Decision: implement full-document semantic tokens from verified semantic and mini-notation facts, with an exact legend and no range or delta support. No general JavaScript tokenizer, TextMate grammar, new dependency or unvalidated keyword colouring is introduced.
+
+`src/features/semanticTokens.ts` emits tokens for resolved declarations and references, catalog globals, pattern methods, and mini-notation numbers and operators. Symbol kinds map to the `function`, `method`, `variable` and `parameter` legend entries. Declared user symbols carry `declaration`; catalog symbols carry `defaultLibrary`. Mini-notation tokens come from the pinned 1.2.6 lexical model: numbers become `number`, and validated operators and group delimiters become `operator`. Unknown identifiers, ordinary steps, whitespace, syntax errors and stale ranges are skipped. `src/server.ts` advertises `semanticTokensProvider`, maps provider results through `SemanticTokensBuilder` and handles `textDocument/semanticTokens/full`.
+
+Rationale: semantic tokens are valuable only where they convey meaning the client cannot infer reliably from syntax. The semantic model provides authoritative symbol resolution, and the mini-notation analyser provides validated token kinds. Guessing from raw text would duplicate generic highlighting and would produce misleading colours during live coding. A limited legend also avoids advertising modifier or token categories the server cannot support.
+
+Consequences:
+
+- Unresolved names receive no semantic token; clients retain their normal syntax highlighting for them.
+- The legend is `function`, `method`, `variable`, `parameter`, `number`, `operator` with `declaration` and `defaultLibrary` modifiers.
+- `range: false` and `full: true` are advertised; no incremental delta computation is claimed.
+- Feature tests cover classification, unresolved names, mini-notation tokens and incomplete input; the stdio test verifies legend advertisement and encoded response data.
+- Semantic-token computation uses the cached semantic snapshot and has no measured latency figure; Phase 8 must include it in representative request workloads.

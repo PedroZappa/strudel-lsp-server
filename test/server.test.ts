@@ -191,6 +191,42 @@ interface PublishDiagnosticsParams {
   diagnostics: { code?: string; message: string; severity: number }[];
 }
 
+function decodeSemanticTokens(data: readonly number[]): {
+  line: number;
+  character: number;
+  length: number;
+  type: number;
+  modifiers: number;
+}[] {
+  const tokens: {
+    line: number;
+    character: number;
+    length: number;
+    type: number;
+    modifiers: number;
+  }[] = [];
+  let line = 0;
+  let character = 0;
+  for (let index = 0; index + 4 < data.length; index += 5) {
+    const deltaLine = data[index] ?? 0;
+    const deltaCharacter = data[index + 1] ?? 0;
+    if (deltaLine === 0) {
+      character += deltaCharacter;
+    } else {
+      line += deltaLine;
+      character = deltaCharacter;
+    }
+    tokens.push({
+      line,
+      character,
+      length: data[index + 2] ?? 0,
+      type: data[index + 3] ?? 0,
+      modifiers: data[index + 4] ?? 0,
+    });
+  }
+  return tokens;
+}
+
 void test('stdio server advertises and serves implemented language capabilities', async (t) => {
   const serverPath = fileURLToPath(new URL('../src/server.js', import.meta.url));
   const client = new StdioLspClient(serverPath);
@@ -213,6 +249,11 @@ void test('stdio server advertises and serves implemented language capabilities'
       definitionProvider: boolean;
       referencesProvider: boolean;
       documentSymbolProvider: boolean;
+      semanticTokensProvider?: {
+        legend: { tokenTypes: string[]; tokenModifiers: string[] };
+        range: boolean;
+        full: boolean | { delta?: boolean };
+      };
       renameProvider?: { prepareProvider?: boolean };
     };
   };
@@ -229,6 +270,20 @@ void test('stdio server advertises and serves implemented language capabilities'
   assert.equal(initializeResult.capabilities.definitionProvider, true);
   assert.equal(initializeResult.capabilities.referencesProvider, true);
   assert.equal(initializeResult.capabilities.documentSymbolProvider, true);
+  assert.deepEqual(initializeResult.capabilities.semanticTokensProvider?.legend.tokenTypes, [
+    'function',
+    'method',
+    'variable',
+    'parameter',
+    'number',
+    'operator',
+  ]);
+  assert.deepEqual(initializeResult.capabilities.semanticTokensProvider?.legend.tokenModifiers, [
+    'declaration',
+    'defaultLibrary',
+  ]);
+  assert.equal(initializeResult.capabilities.semanticTokensProvider?.range, false);
+  assert.equal(initializeResult.capabilities.semanticTokensProvider?.full, true);
   assert.equal(initializeResult.capabilities.renameProvider?.prepareProvider, true);
 
   client.notify('initialized', {});
@@ -297,6 +352,25 @@ void test('stdio server advertises and serves implemented language capabilities'
   assert.equal(documentSymbols[0]?.selectionRange.start.character, 6);
   assert.equal(documentSymbols[0]?.selectionRange.end.character, 9);
   assert.equal(documentSymbols[0]?.range.start.line, 0);
+
+  const semanticTokens = (await client.request('textDocument/semanticTokens/full', {
+    textDocument: { uri },
+  })) as { data: number[] };
+  assert.deepEqual(
+    decodeSemanticTokens(semanticTokens.data).map((token) => [
+      token.line,
+      token.character,
+      token.length,
+      token.type,
+      token.modifiers,
+    ]),
+    [
+      [0, 6, 3, 2, 1],
+      [0, 12, 1, 0, 2],
+      [0, 23, 4, 1, 2],
+      [1, 0, 3, 2, 0],
+    ],
+  );
 
   const preparedRename = (await client.request('textDocument/prepareRename', {
     textDocument: { uri },

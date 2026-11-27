@@ -103,3 +103,14 @@ export interface DocumentSymbolResult {
   readonly selectionRange: SemanticRange;
   readonly children: readonly DocumentSymbolResult[];
 }
+
+export type SemanticTokenType =
+  'function' | 'method' | 'variable' | 'parameter' | 'number' | 'operator';
+
+export type SemanticTokenModifier = 'declaration' | 'defaultLibrary';
+
+export interface SemanticTokenResult {
+  readonly range: SemanticRange;
+  readonly type: SemanticTokenType;
+  readonly modifiers: readonly SemanticTokenModifier[];
+}

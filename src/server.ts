@@ -7,6 +7,7 @@ import {
   DiagnosticSeverity,
   MarkupKind,
   ProposedFeatures,
+  SemanticTokensBuilder,
   SymbolKind,
   TextDocumentSyncKind,
   type CodeAction,
@@ -25,6 +26,9 @@ import {
   type Range as LspRange,
   type ReferenceParams,
   type RenameParams,
+  type SemanticTokens,
+  type SemanticTokensLegend,
+  type SemanticTokensParams,
   type SignatureHelp,
   type SignatureHelpParams,
   type TextEdit,
@@ -41,6 +45,7 @@ import {
   provideQuickFixes,
   provideReferences,
   provideRename,
+  provideSemanticTokens,
   provideSignatureHelp,
   type CompletionCandidateKind,
   type DiagnosticSeverityName,
@@ -48,6 +53,8 @@ import {
   type DocumentSymbolResult,
   type FeatureContext,
   type LanguageDiagnostic,
+  type SemanticTokenModifier,
+  type SemanticTokenType,
   type TextEditResult,
 } from './features/index.js';
 import {
@@ -66,6 +73,23 @@ const engine = createSemanticEngine(catalog);
 const documents = new DocumentAnalysisService(adapter, engine);
 const pendingAnalyses = new Map<string, Promise<void>>();
 const latestVersions = new Map<string, number>();
+
+const SEMANTIC_TOKEN_TYPES: readonly SemanticTokenType[] = [
+  'function',
+  'method',
+  'variable',
+  'parameter',
+  'number',
+  'operator',
+];
+const SEMANTIC_TOKEN_MODIFIERS: readonly SemanticTokenModifier[] = [
+  'declaration',
+  'defaultLibrary',
+];
+const SEMANTIC_TOKENS_LEGEND: SemanticTokensLegend = {
+  tokenTypes: [...SEMANTIC_TOKEN_TYPES],
+  tokenModifiers: [...SEMANTIC_TOKEN_MODIFIERS],
+};
 
 function guard<T>(fallback: T, operation: () => T): T {
   try {
@@ -202,6 +226,17 @@ function toLspDocumentSymbol(symbol: DocumentSymbolResult): LspDocumentSymbol {
   };
 }
 
+function toSemanticTokenModifiers(modifiers: readonly SemanticTokenModifier[]): number {
+  let bits = 0;
+  for (const modifier of modifiers) {
+    const index = SEMANTIC_TOKEN_MODIFIERS.indexOf(modifier);
+    if (index >= 0) {
+      bits |= 1 << index;
+    }
+  }
+  return bits;
+}
+
 function toCompletionItemKind(kind: CompletionCandidateKind): CompletionItemKind {
   switch (kind) {
     case 'function':
@@ -246,6 +281,11 @@ connection.onInitialize((): InitializeResult => ({
     definitionProvider: true,
     referencesProvider: true,
     documentSymbolProvider: true,
+    semanticTokensProvider: {
+      legend: SEMANTIC_TOKENS_LEGEND,
+      range: false,
+      full: true,
+    },
     renameProvider: { prepareProvider: true },
   },
 }));
@@ -383,6 +423,32 @@ connection.onDocumentSymbol((params: DocumentSymbolParams): Promise<LspDocumentS
       return [];
     }
     return provideDocumentSymbols(contextFor(analyzed, 0)).map(toLspDocumentSymbol);
+  }),
+);
+
+connection.languages.semanticTokens.on((params: SemanticTokensParams): Promise<SemanticTokens> =>
+  guardAsync({ data: [] }, async () => {
+    await awaitDocumentAnalysis(params.textDocument.uri);
+    const analyzed = documents.get(params.textDocument.uri);
+    if (analyzed === undefined) {
+      return { data: [] };
+    }
+
+    const builder = new SemanticTokensBuilder();
+    for (const token of provideSemanticTokens(contextFor(analyzed, 0))) {
+      const tokenType = SEMANTIC_TOKEN_TYPES.indexOf(token.type);
+      if (tokenType < 0) {
+        continue;
+      }
+      builder.push(
+        token.range.start.line,
+        token.range.start.character,
+        token.range.end.character - token.range.start.character,
+        tokenType,
+        toSemanticTokenModifiers(token.modifiers),
+      );
+    }
+    return builder.build();
   }),
 );
 

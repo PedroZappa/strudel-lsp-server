@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: re-implementation roadmap updated with resolved blocker decisions, Phase 6 completion, Phase 7 quick fixes, rename and document symbols, 2026-11-27. Priorities are proposals and remain subject to approval.
+Status: re-implementation roadmap updated with resolved blocker decisions, Phase 6 completion, Phase 7 quick fixes, rename, document symbols and semantic tokens, 2026-11-27. Priorities are proposals and remain subject to approval.
 
 Authority: `AGENTS.md` sections 2–18 and the other documents in `docs/`.
 
@@ -159,7 +159,7 @@ Phase 6 exit criteria:
 
 ## Phase 7 — Extended capabilities
 
-**Status: quick fixes, rename and document symbols implemented and verified; workspace symbols and the other candidates remain under evaluation.**
+**Status: quick fixes, rename, document symbols and semantic tokens implemented and verified; workspace symbols and the other candidates remain under evaluation.**
 
 Dependencies: Phase 6.
 
@@ -169,7 +169,7 @@ Candidate extended capabilities, evaluate and implement only where justified:
 - [x] Rename.
 - [x] Document symbols.
 - [ ] Workspace symbols (deferred; no workspace index exists).
-- [ ] Semantic tokens.
+- [x] Semantic tokens.
 - [ ] Formatting.
 - [ ] Code actions and refactoring.
 
@@ -196,6 +196,14 @@ Document symbol exit criteria:
 - [x] `documentSymbolProvider` is advertised and `textDocument/documentSymbol` is implemented.
 - [x] Feature and stdio tests cover source ranges, inferred type details, function-scope children, catalog-only exclusion and incomplete input.
 - [x] Workspace-symbol deferral is recorded in `docs/DECISIONS.md` and `docs/LSP_FEATURES.md`.
+
+Semantic tokens are emitted only for classifications backed by the semantic model or the pinned mini-notation lexer: resolved user and library symbols, inferred declarations, mini-notation numbers and operators. Unresolved identifiers, ordinary mini-notation steps, syntax errors and unknown characters receive no semantic token. The LSP legend contains only types and modifiers actually used by the provider, and range-based token requests are not advertised.
+
+Semantic token exit criteria:
+
+- [x] `semanticTokensProvider` advertises the exact legend, full-document requests and no range or delta support.
+- [x] Feature and stdio tests cover declaration and default-library modifiers, unresolved names, mini-notation tokens and incomplete input.
+- [x] Tokens use verified UTF-16 ranges and are never inferred from raw text alone.
 
 ## Phase 8 — Performance harness and targets
 
