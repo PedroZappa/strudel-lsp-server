@@ -2,23 +2,32 @@
 
 All notable changes to the `strudel-lsp-server` npm package are documented in this file. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-Version `0.1.0` was published on 2026-11-27 from tag `v0.1.0`; full user-facing notes are in `.github/RELEASE_TEMPLATE.md`.
+Version `0.2.0` is prepared as a release candidate but is not published; `0.1.0` remains the latest published release. Full user-facing notes for the candidate are in `.github/RELEASE_TEMPLATE.md`.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-27
+
 ### Added
 
-- Focused, unreleased diagnostics configuration through standard `workspace/configuration` and `workspace/didChangeConfiguration`: a global enable flag, per-code severity overrides including `off`, and unchanged defaults when no settings are supplied. Quick fixes follow the resulting diagnostics.
+- Focused diagnostics configuration through standard `workspace/configuration` and `workspace/didChangeConfiguration`: a global enable flag, per-code severity overrides including `off`, and unchanged defaults when no settings are supplied. Quick fixes follow the resulting diagnostics.
 - A bounded soak/lifecycle suite covering rapid edits, stale-version suppression, repeated initialize/shutdown cycles and advisory RSS observation, with no production telemetry.
 - A separate advisory installed-binary benchmark that packs and installs the server offline, measures one JSON-RPC document-symbol workload through the installed bin and records p50/p95/p99 in `benchmarks/end-to-end.json` without changing the layer-level baseline.
 - Local VS Code and Neovim LSP smoke clients with all client configuration outside the server core; passing behaviours are recorded in `validation/client-smoke.json` and no editor dependency was added to the published package.
-- The final Phase 14 gate passes 85 tests, including configuration, LSP filesystem, protocol, soak and two-client evidence contract checks.
+- The release-candidate gate passes 85 tests, including configuration, LSP filesystem, protocol, soak and two-client evidence contract checks.
 
 ### Changed
 
-- Hardened unreleased workspace-symbol discovery to reject symlinks, unsafe entry names and paths outside the normalized root, skip unreadable or oversized files, enforce depth and file-count limits, and return locale-independent deterministic results. Open-document overrides remain unchanged.
+- Hardened workspace-symbol discovery to reject symlinks, unsafe entry names and paths outside the normalized root, skip unreadable or oversized files, enforce depth and file-count limits, and return locale-independent deterministic results. Open-document overrides remain unchanged.
 - Removed the repository `.npmrc` after verifying clean consumer and development installs with `legacy-peer-deps=false`; added `npm run verify:consumer` for isolated install and stdio verification.
 - Isolated npm cache writes during package packing so `make verify-all` no longer depends on a writable global cache; added `npm run verify:contents` with the existing tarball allowlist assertion and preserved offline install verification.
+- Bumped the package version to `0.2.0` without changing dependencies, runtime requirements, the published file allowlist or the parser and metadata pins.
+
+### Known issues
+
+- Seven pinned documentation examples expose two upstream `tree-sitter-strudel@2.0.2` grammar gaps: `%` modulo in JavaScript expressions and `//` inside string literals. The grammar is not vendored or patched here.
+- Strudel version selection remains deferred; the narrow configuration surface does not expose internal engine settings.
+- Incremental semantic reuse is statement-level, mini-notation tokenization is lexical rather than a full recovery parser, and platforms outside the validated matrix are best-effort.
 
 ## [0.1.0] - 2026-11-27
 

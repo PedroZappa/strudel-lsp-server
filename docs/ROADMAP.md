@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: re-implementation roadmap complete through Phase 13; Phases 14–15 define the proposed `0.2.0` hardening/configuration increment and controlled release path. `strudel-lsp-server@0.1.0` remains the published release. All Phase 14 tasks are implemented and verified, including the final documentation reconciliation and full validation gate; Phase 15 is not implemented or authorized for publication. ADR-051 records the scope and deferred work, ADR-052 records the configuration contract, ADR-053 records the filesystem boundary, ADR-054 records the `.npmrc` removal, ADR-055 records hermetic pack caching, ADR-056 records the advisory soak/lifecycle design, ADR-057 records the separate advisory benchmark report, and ADR-058 records the independent editor-client smoke evidence. Missing provenance for the operator-managed first publish is recorded in ADR-050. Priorities are proposals and remain subject to approval.
+Status: re-implementation roadmap complete through Phase 14; Phase 15 defines the controlled `0.2.0` release path. `strudel-lsp-server@0.1.0` remains the published release. All Phase 14 tasks are implemented and verified, including the final documentation reconciliation and full validation gate. ADR-059 authorizes release preparation for `strudel-lsp-server@0.2.0` with `pedrozappa` as operator; the version bump, versioned changelog, release notes and exact release-candidate commit are prepared and validated. Tag, publication, provenance verification and GitHub release remain blocked until separate explicit authorization. ADR-051 records the scope and deferred work, ADR-052 records the configuration contract, ADR-053 records the filesystem boundary, ADR-054 records the `.npmrc` removal, ADR-055 records hermetic pack caching, ADR-056 records the advisory soak/lifecycle design, ADR-057 records the separate advisory benchmark report, ADR-058 records the independent editor-client smoke evidence, and ADR-059 records the release-preparation authorization. Missing provenance for the operator-managed first publish is recorded in ADR-050. Priorities are proposals and remain subject to approval.
 
 Authority: `AGENTS.md` sections 2–18 and the other documents in `docs/`.
 
@@ -389,14 +389,14 @@ Exit criteria:
 
 ## Phase 15 — v0.2.0 controlled release
 
-Dependencies: Phase 14, an explicit release authorization naming `0.2.0` and an operator, and the controlled OIDC workflow.
+Dependencies: Phase 14, the release-preparation authorization in ADR-059 naming `0.2.0` and operator `pedrozappa`, and separate publication authorization for the controlled OIDC workflow.
 
-**Status: planned. No tag, publish, deprecation, dist-tag change or GitHub release is authorized by this roadmap entry.**
+**Status: the release candidate is prepared and validated. No tag, publish, deprecation, dist-tag change or GitHub release is authorized by this roadmap entry or ADR-059.**
 
 Tasks:
 
-- [ ] Repeat type checking, linting, formatting, focused suites, full tests, package verification, dependency audit and benchmark check on the exact release commit.
-- [ ] Prepare a versioned `CHANGELOG.md` section and GitHub release notes from `.github/RELEASE_TEMPLATE.md`; state what changed and what remains deferred.
+- [x] Repeat type checking, linting, formatting, focused suites, full tests, package verification, dependency audit and benchmark check on the exact release commit. The candidate gate passed 85/85 tests, all focused suites, package and consumer-install verification, 18/18 benchmarks, corpus validation, audits and both client smoke runs; evidence is in `docs/TESTING_STRATEGY.md`.
+- [x] Prepare a versioned `CHANGELOG.md` section and GitHub release notes from `.github/RELEASE_TEMPLATE.md`; state what changed and what remains deferred. The `0.2.0` changelog section and release notes distinguish the prepared candidate from the published `0.1.0` release.
 - [ ] Tag the validated commit as `v0.2.0` only after explicit authorization and run the controlled workflow with `npm-release` approval; the ADR-049 bootstrap exception does not apply.
 - [ ] Verify the OIDC provenance attestation exists and matches the package, repository, workflow and commit. Record absence or mismatch as a release blocker rather than assuming provenance.
 - [ ] Run the ADR-046 post-publication smoke plan against the public registry and publish the GitHub release only after it passes.
@@ -410,7 +410,7 @@ Exit criteria:
 
 ## Phase 13 release-quality backlog (post-publication status)
 
-These were the recommended, non-blocking items carried out of first publication. Items assigned to v0.2.0 remain open and are restated in Phase 14; all others remain unscheduled and are deferred beyond v0.2.0 unless later authorized.
+These were the recommended, non-blocking items carried out of first publication. Items assigned to v0.2.0 are complete and recorded in Phase 14; all others remain unscheduled and are deferred beyond v0.2.0 unless later authorized.
 
 - [x] **Assigned to Phase 14 and completed.** VS Code and Neovim smoke clients exercise initialization, diagnostics, completion, document symbols, incremental change and shutdown through stdio; client configuration stays in `smoke/` and evidence is in `validation/client-smoke.json`; see ADR-058.
 - [x] Add deterministic stdio error-path tests for malformed input and cancellation; `test/protocolRobustness.test.ts` now covers both at the JSON-RPC transport layer in addition to the semantic-engine suite.

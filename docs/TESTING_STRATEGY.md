@@ -1,6 +1,6 @@
 # Testing Strategy
 
-Status: authoritative. `AGENTS.md` section 9 was completed and approved on 2026-11-25; full Phase 6, Phase 7, Phase 8 and Phase 9 local validation results, including signature help, mini-notation analysis, quick fixes, rename, document and workspace symbols, semantic tokens, formatting, the performance harness and package installation/licence verification, added on 2026-11-27. Phase 11 clean-install matrix, real Strudel documentation corpus validation and protocol robustness results were added on 2026-11-27. The Phase 12 post-publication smoke plan, Phase 13 gate confirmation and first-publish bootstrap exception were added on 2026-11-27. The unreleased Phase 14 diagnostics-configuration suite, workspace-symbol filesystem suite, clean consumer-install verification, hermetic pack-cache verification, bounded soak/lifecycle suite, separate advisory installed-binary benchmark and two independent editor-client smoke runs were added on 2026-11-27. The final combined local gate passed 85/85 tests, including the editor-client evidence contract check.
+Status: authoritative. `AGENTS.md` section 9 was completed and approved on 2026-11-25; full Phase 6, Phase 7, Phase 8 and Phase 9 local validation results, including signature help, mini-notation analysis, quick fixes, rename, document and workspace symbols, semantic tokens, formatting, the performance harness and package installation/licence verification, added on 2026-11-27. Phase 11 clean-install matrix, real Strudel documentation corpus validation and protocol robustness results were added on 2026-11-27. The Phase 12 post-publication smoke plan, Phase 13 gate confirmation and first-publish bootstrap exception were added on 2026-11-27. The Phase 14 diagnostics-configuration suite, workspace-symbol filesystem suite, clean consumer-install verification, hermetic pack-cache verification, bounded soak/lifecycle suite, separate advisory installed-binary benchmark and two independent editor-client smoke runs were added for the prepared `0.2.0` release on 2026-11-27. The final combined local gate passed 85/85 tests, including the editor-client evidence contract check. The same gate was repeated on the exact `0.2.0` release-candidate commit under ADR-059; tag and publication remain unauthorized.
 
 Authority: `AGENTS.md` section 9 and global project requirements.
 
@@ -27,7 +27,7 @@ The prototype declared Mocha and VS Code test tooling, but its test script point
 | Metadata generation        | Pinned source extraction and reproducibility                                                                                                 | Pinned inputs; generated output compared deterministically                     | Missing source package, version drift, known-good snapshot                                                   |
 | Performance                | Latency and regression monitoring                                                                                                            | Dedicated harness; see `docs/PERFORMANCE.md`                                   | Open/edit/request workloads reporting p50/p95/p99                                                            |
 
-The published `0.1.0` had no custom configuration channel. The unreleased Phase 14 diagnostics settings add an isolated `test/configuration/` suite plus feature, protocol robustness and stdio integration coverage. Workspace-symbol filesystem hardening is isolated in `test/lsp/` using an injectable filesystem contract, so symlink and permission cases do not depend on host privileges. Defaults are still tested without configuration capability; Strudel version selection remains deferred and has no settings contract.
+The published `0.1.0` had no custom configuration channel. The Phase 14 diagnostics settings prepared for `0.2.0` add an isolated `test/configuration/` suite plus feature, protocol robustness and stdio integration coverage. Workspace-symbol filesystem hardening is isolated in `test/lsp/` using an injectable filesystem contract, so symlink and permission cases do not depend on host privileges. Defaults are still tested without configuration capability; Strudel version selection remains deferred and has no settings contract.
 
 ## Framework evaluation
 
@@ -268,7 +268,7 @@ Passing local checks were candidate evidence only. CI, `npm run verify:release`,
 
 ### Phase 14 diagnostics configuration (2026-11-27)
 
-The first Phase 14 task added focused diagnostics settings through standard LSP configuration. Evidence is from the unreleased worktree; `0.1.0` remains the published package and no release action was performed.
+The first Phase 14 task added focused diagnostics settings through standard LSP configuration. Evidence is from the prepared `0.2.0` release candidate; `0.1.0` remains the published package and no release action was performed.
 
 | Check                        | Result | Evidence                                                                                                                                                                                                |
 | ---------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -369,3 +369,20 @@ The last Phase 14 task reconciled `docs/LSP_FEATURES.md`, `docs/TESTING_STRATEGY
 | `npm run smoke:clients`   | Pass   | Both local clients passed six behaviours each against the built stdio server.                                                                                        |
 | Dependency audits         | Pass   | Runtime audit, full audit and prototype client audit each reported zero vulnerabilities.                                                                             |
 | `git diff --check`        | Pass   | No whitespace errors in the final documentation diff.                                                                                                                |
+
+### Phase 15 release-candidate validation (2026-11-27)
+
+ADR-059 authorizes release preparation for `strudel-lsp-server@0.2.0` with operator `pedrozappa`, but not a tag, publication or registry mutation. The checks below were run on the exact release-candidate commit produced by that authorization. `0.1.0` remains the published release; exact-tag CI, OIDC provenance verification and post-publication smoke checks are still release-time gates.
+
+| Check                                                       | Result | Evidence                                                                                                                                     |
+| ----------------------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run typecheck`, `npm run lint`, `npm run format:check` | Pass   | Strict TypeScript, ESLint and Prettier verification on the candidate commit.                                                                 |
+| `npm run check`, `npm test`                                 | Pass   | 85/85 tests with a clean build.                                                                                                              |
+| Focused suites                                              | Pass   | Parser 5/5, semantic 7/7, metadata 5/5, configuration 4/4, LSP filesystem 3/3, features 31/31, mini-notation 5/5, protocol 9/9 and soak 1/1. |
+| `npm run verify:contents`, `npm run verify:package`         | Pass   | 138-file tarball preview, unchanged allowlist, clean offline installs and installed stdio handshakes.                                        |
+| `npm run verify:consumer`                                   | Pass   | Both clean consumer install modes passed without inherited npm configuration.                                                                |
+| Dependency audits                                           | Pass   | Runtime, full and prototype-client audits each reported zero vulnerabilities.                                                                |
+| `npm run benchmark:check`, `npm run benchmark:e2e`          | Pass   | All 18 layer workloads stayed within thresholds; the installed-bin workload remains advisory with no baseline change.                        |
+| `npm run validate:corpus`                                   | Pass   | 484 examples, 477 clean parses, seven upstream parser gaps and zero invariant failures.                                                      |
+| `npm run smoke:clients`                                     | Pass   | VS Code and Neovim each exercised six behaviours against the built stdio server.                                                             |
+| `git diff --check`                                          | Pass   | No whitespace errors in the release-candidate diff.                                                                                          |

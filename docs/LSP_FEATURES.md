@@ -1,6 +1,6 @@
 # LSP Features
 
-Status: Phase 6 capabilities, signature help, conservative token-level mini-notation analysis, Phase 7 quick fixes, rename, document and workspace symbols, semantic tokens, formatting and inline-constant refactoring implemented and verified. The unreleased `0.2.0` work adds focused diagnostics configuration (ADR-052), hardened workspace-symbol filesystem discovery (ADR-053), clean consumer-install verification with `.npmrc` removal and hermetic package verification (ADR-054/055), a bounded soak/lifecycle suite (ADR-056), a separate advisory installed-binary benchmark (ADR-057), and two independent editor-client smoke runs (ADR-058). The final gate has 85 tests; remaining candidates are tracked below.
+Status: Phase 6 capabilities, signature help, conservative token-level mini-notation analysis, Phase 7 quick fixes, rename, document and workspace symbols, semantic tokens, formatting and inline-constant refactoring implemented and verified. The prepared `0.2.0` release adds focused diagnostics configuration (ADR-052), hardened workspace-symbol filesystem discovery (ADR-053), clean consumer-install verification with `.npmrc` removal and hermetic package verification (ADR-054/055), a bounded soak/lifecycle suite (ADR-056), a separate advisory installed-binary benchmark (ADR-057), and two independent editor-client smoke runs (ADR-058). It is validated but not published; `0.1.0` remains the published release. The release-candidate gate has 85 tests; remaining candidates are tracked below.
 
 Authority: `AGENTS.md` sections 4 and 5.
 
@@ -21,27 +21,27 @@ None of this behaviour is treated as a specification.
 
 ## Capability matrix
 
-| Capability                         | Status          | Proposed phase  | Notes                                                                                                              |
-| ---------------------------------- | --------------- | --------------- | ------------------------------------------------------------------------------------------------------------------ |
-| Diagnostics                        | Implemented     | Early           | Conservative syntax warnings and unknown-call/method information; focused settings are implemented but unreleased. |
-| Quick fixes                        | Implemented     | Extended        | Safe mini-notation edits only; no fixes for speculative or unknown-name issues.                                    |
-| Completion                         | Implemented     | Early           | Position-aware globals, locals and Pattern methods; `.` trigger.                                                   |
-| Completion resolution              | Not implemented | With completion | Only if additional lazy metadata adds real value.                                                                  |
-| Hover documentation                | Implemented     | Early           | Database descriptions, examples and inferred types.                                                                |
-| Signature help                     | Implemented     | Early           | Database-backed globals and methods; `(`, `,` triggers and active parameter.                                       |
-| Go to definition                   | Implemented     | Early           | Resolved user and local symbols; builtins have no source declaration.                                              |
-| References                         | Implemented     | Early           | Resolved references plus optional declarations.                                                                    |
-| Rename                             | Implemented     | Extended        | Document-scoped user symbols only; prepare and invalid-name checks are implemented.                                |
-| Document symbols                   | Implemented     | Extended        | Declared user symbols from the current semantic snapshot with exact selection ranges.                              |
-| Workspace symbols                  | Implemented     | Extended        | Bounded on-demand folder scan with open-document overrides; no cross-file resolution.                              |
-| Semantic tokens                    | Implemented     | Extended        | Verified symbols and mini-notation tokens only; no unresolved-name guessing.                                       |
-| Formatting                         | Implemented     | Extended        | Conservative indentation only; preferences come from standard LSP formatting options.                              |
-| Refactoring and other code actions | Implemented     | Extended        | Narrow `refactor.inline` for single-use literal constants; broader actions are deferred.                           |
-| Folding ranges                     | Deferred        | Deferred        | Evaluate after core language intelligence is reliable.                                                             |
-| Selection ranges                   | Deferred        | Deferred        | Evaluate editor benefit against implementation cost.                                                               |
-| Inlay hints                        | Deferred        | Deferred        | Evaluate only with concrete, non-noisy use cases.                                                                  |
-| Call hierarchy                     | Deferred        | Deferred        | Depends on robust cross-reference semantics.                                                                       |
-| Mini-notation-aware analysis       | Implemented     | Early           | Parser-independent tokens; conservative structural warnings and operator hover.                                    |
+| Capability                         | Status          | Proposed phase  | Notes                                                                                                        |
+| ---------------------------------- | --------------- | --------------- | ------------------------------------------------------------------------------------------------------------ |
+| Diagnostics                        | Implemented     | Early           | Conservative syntax warnings and unknown-call/method information; focused settings are prepared for `0.2.0`. |
+| Quick fixes                        | Implemented     | Extended        | Safe mini-notation edits only; no fixes for speculative or unknown-name issues.                              |
+| Completion                         | Implemented     | Early           | Position-aware globals, locals and Pattern methods; `.` trigger.                                             |
+| Completion resolution              | Not implemented | With completion | Only if additional lazy metadata adds real value.                                                            |
+| Hover documentation                | Implemented     | Early           | Database descriptions, examples and inferred types.                                                          |
+| Signature help                     | Implemented     | Early           | Database-backed globals and methods; `(`, `,` triggers and active parameter.                                 |
+| Go to definition                   | Implemented     | Early           | Resolved user and local symbols; builtins have no source declaration.                                        |
+| References                         | Implemented     | Early           | Resolved references plus optional declarations.                                                              |
+| Rename                             | Implemented     | Extended        | Document-scoped user symbols only; prepare and invalid-name checks are implemented.                          |
+| Document symbols                   | Implemented     | Extended        | Declared user symbols from the current semantic snapshot with exact selection ranges.                        |
+| Workspace symbols                  | Implemented     | Extended        | Bounded on-demand folder scan with open-document overrides; no cross-file resolution.                        |
+| Semantic tokens                    | Implemented     | Extended        | Verified symbols and mini-notation tokens only; no unresolved-name guessing.                                 |
+| Formatting                         | Implemented     | Extended        | Conservative indentation only; preferences come from standard LSP formatting options.                        |
+| Refactoring and other code actions | Implemented     | Extended        | Narrow `refactor.inline` for single-use literal constants; broader actions are deferred.                     |
+| Folding ranges                     | Deferred        | Deferred        | Evaluate after core language intelligence is reliable.                                                       |
+| Selection ranges                   | Deferred        | Deferred        | Evaluate editor benefit against implementation cost.                                                         |
+| Inlay hints                        | Deferred        | Deferred        | Evaluate only with concrete, non-noisy use cases.                                                            |
+| Call hierarchy                     | Deferred        | Deferred        | Depends on robust cross-reference semantics.                                                                 |
+| Mini-notation-aware analysis       | Implemented     | Early           | Parser-independent tokens; conservative structural warnings and operator hover.                              |
 
 Priorities are proposed by phase in `docs/ROADMAP.md` and remain subject to approval. The parser redistribution licence decision is recorded in ADR-032, and the pinned metadata snapshot is documented in `docs/PARSER_INTEGRATION.md`.
 
@@ -56,7 +56,7 @@ Priorities are proposed by phase in `docs/ROADMAP.md` and remain subject to appr
 - Provide accurate source ranges and actionable messages.
 - Reanalyse documents as they change without unnecessary recomputation.
 
-Current implementation: outermost non-empty syntax error nodes produce warnings; missing nodes and speculative semantic conclusions are suppressed. Unknown calls and pattern methods produce informational diagnostics only when the syntax tree is clean. Unresolved value references are intentionally not reported because runtime globals may be injected outside the document. Mini-notation reports empty groups, unmatched or mismatched closers and missing steps at the start of or between `,` or `|` separators; unclosed groups, trailing separators, other trailing operators and unsupported characters are not reported during live editing. The implemented but unreleased configuration in ADR-052 can globally disable these diagnostics or remap/suppress individual codes through `workspace/configuration` or a settings notification, but never changes which findings the providers consider reliable.
+Current implementation: outermost non-empty syntax error nodes produce warnings; missing nodes and speculative semantic conclusions are suppressed. Unknown calls and pattern methods produce informational diagnostics only when the syntax tree is clean. Unresolved value references are intentionally not reported because runtime globals may be injected outside the document. Mini-notation reports empty groups, unmatched or mismatched closers and missing steps at the start of or between `,` or `|` separators; unclosed groups, trailing separators, other trailing operators and unsupported characters are not reported during live editing. The configuration implemented for the prepared `0.2.0` release in ADR-052 can globally disable these diagnostics or remap/suppress individual codes through `workspace/configuration` or a settings notification, but never changes which findings the providers consider reliable.
 
 ## Quick fix policy
 
@@ -119,7 +119,7 @@ Current implementation: outermost non-empty syntax error nodes produce warnings;
 
 ## Configuration
 
-The published `0.1.0` package has no custom settings. The current development tree adds a narrow diagnostics configuration for the unreleased `0.2.0` work; defaults remain identical to `0.1.0`.
+The published `0.1.0` package has no custom settings. The prepared `0.2.0` release adds a narrow diagnostics configuration; defaults remain identical to `0.1.0`.
 
 When a client advertises `workspace.configuration`, the server requests the `strudelLsp` section through `workspace/configuration`. The supported value is:
 
@@ -179,6 +179,6 @@ Verification evidence:
 - Optional `initialize` fields are validated. `workspace/workspaceFolders` is queried only when the client advertised that capability; otherwise workspace symbol discovery uses the initialized roots or returns no results.
 - A lower document version that arrives after a newer version is not scheduled for analysis. Closing a document cancels pending analysis and clears published diagnostics.
 - `shutdown` followed by `exit` exits with code 0; `exit` without `shutdown` exits with code 1, matching the LSP lifecycle.
-- The unreleased bounded soak suite repeats the clean lifecycle after rapid edits and stale versions, reporting RSS growth as advisory evidence without adding production telemetry (ADR-056).
+- The bounded soak suite prepared for `0.2.0` repeats the clean lifecycle after rapid edits and stale versions, reporting RSS growth as advisory evidence without adding production telemetry (ADR-056).
 
-Deferred: completion resolution, range formatting, broader refactoring, Strudel compatibility/version selection and remaining extended capabilities. The published `0.1.0` has no custom configuration; the unreleased diagnostics settings are documented in ADR-052, while internal engine settings remain unexposed under ADR-034.
+Deferred: completion resolution, range formatting, broader refactoring, Strudel compatibility/version selection and remaining extended capabilities. The published `0.1.0` has no custom configuration; the `0.2.0` diagnostics settings are documented in ADR-052, while internal engine settings remain unexposed under ADR-034.
