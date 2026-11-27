@@ -6,8 +6,20 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
+const NODE = process.execPath;
 const NPM = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const TEMP_ROOT = await mkdtemp(join(tmpdir(), 'strudel-lsp-package-'));
+const PARSER_CHECK = `
+const Parser = require('tree-sitter');
+const language = require('tree-sitter-strudel');
+if (!language) throw new Error('tree-sitter-strudel did not export a language');
+const parser = new Parser();
+parser.setLanguage(language);
+const tree = parser.parse('sound("bd")');
+const root = tree.rootNode.toString();
+if (!root) throw new Error('parser produced an empty tree');
+console.log('Native parser loaded on ' + process.platform + '-' + process.arch + ': ' + root);
+`;
 
 function runNpm(args, cwd) {
   const result = spawnSync(NPM, args, { cwd, encoding: 'utf8' });
@@ -17,6 +29,46 @@ function runNpm(args, cwd) {
     throw new Error(`${NPM} ${args.join(' ')} failed in ${cwd}\n${details}`);
   }
   return result.stdout;
+}
+
+function runNode(args, cwd) {
+  const result = spawnSync(NODE, args, { cwd, encoding: 'utf8' });
+  if (result.error) throw result.error;
+  if (result.status !== 0) {
+    const details = [result.stdout, result.stderr].filter(Boolean).join('\n').trim();
+    throw new Error(`node ${args.join(' ')} failed in ${cwd}\n${details}`);
+  }
+  return result.stdout;
+}
+
+async function exists(path) {
+  try {
+    await access(path);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function checkParserBinding(installDir, scriptsEnabled) {
+  const parserDir = join(installDir, 'node_modules', 'tree-sitter-strudel');
+  const prebuild = join(
+    parserDir,
+    'prebuilds',
+    `${process.platform}-${process.arch}`,
+    'tree-sitter-strudel.node',
+  );
+  await access(prebuild);
+  assert.equal(
+    await exists(join(parserDir, 'build')),
+    false,
+    'install scripts compiled the parser instead of using a prebuild',
+  );
+
+  const output = runNode(['--input-type=commonjs', '-e', PARSER_CHECK], installDir);
+  if (scriptsEnabled) {
+    assert.match(output, /Native parser loaded on /);
+  }
 }
 
 async function withTimeout(promise, milliseconds, message, onTimeout) {
@@ -121,9 +173,42 @@ async function checkStdioServer(executable) {
   }
 }
 
-try {
-  const installDir = join(TEMP_ROOT, 'install');
+async function verifyInstallMode(mode, tarball) {
+  const scriptsEnabled = mode === 'scripts';
+  const scriptFlags = scriptsEnabled ? [] : ['--ignore-scripts'];
+  const installDir = join(TEMP_ROOT, mode);
   await mkdir(installDir, { recursive: true });
+  await copyFile(join(ROOT, 'package.json'), join(installDir, 'package.json'));
+  await copyFile(join(ROOT, 'package-lock.json'), join(installDir, 'package-lock.json'));
+
+  runNpm(['ci', '--offline', '--omit=dev', '--no-audit', '--no-fund', ...scriptFlags], installDir);
+  runNpm(
+    ['install', '--offline', '--omit=dev', '--no-audit', '--no-fund', ...scriptFlags, tarball],
+    installDir,
+  );
+
+  const installedRoot = join(installDir, 'node_modules', 'strudel-lsp-server');
+  const installedManifest = JSON.parse(await readFile(join(installedRoot, 'package.json'), 'utf8'));
+  assert.equal(installedManifest.license, 'AGPL-3.0-only');
+  const installedLicense = await readFile(join(installedRoot, 'LICENSE'), 'utf8');
+  assert.match(installedLicense, /GNU AFFERO GENERAL PUBLIC LICENSE/);
+  assert.match(installedLicense, /version 3 only/);
+
+  await checkParserBinding(installDir, scriptsEnabled);
+
+  const binName = process.platform === 'win32' ? 'strudel-lsp-server.cmd' : 'strudel-lsp-server';
+  await checkStdioServer(join(installDir, 'node_modules', '.bin', binName));
+  console.log(`Clean ${mode} install passed on ${process.platform}-${process.arch}.`);
+}
+
+try {
+  const nodeMajor = process.versions.node.split('.')[0];
+  const npmVersion = runNpm(['--version'], ROOT).trim();
+  console.log(
+    `Environment: ${process.platform}-${process.arch}, Node ${process.version}, npm ${npmVersion}`,
+  );
+  assert.ok(['24', '26'].includes(nodeMajor), `unsupported Node major: ${nodeMajor}`);
+  assert.match(npmVersion, /^11\./, `unsupported npm major: ${npmVersion}`);
 
   const packOutput = runNpm(
     ['pack', '--ignore-scripts', '--json', '--pack-destination', TEMP_ROOT],
@@ -146,37 +231,12 @@ try {
     'packed tarball contains benchmarks',
   );
 
-  await copyFile(join(ROOT, 'package.json'), join(installDir, 'package.json'));
-  await copyFile(join(ROOT, 'package-lock.json'), join(installDir, 'package-lock.json'));
-  runNpm(
-    ['ci', '--offline', '--omit=dev', '--ignore-scripts', '--no-audit', '--no-fund'],
-    installDir,
-  );
-  runNpm(
-    [
-      'install',
-      '--offline',
-      '--omit=dev',
-      '--ignore-scripts',
-      '--no-audit',
-      '--no-fund',
-      join(TEMP_ROOT, packageInfo.filename),
-    ],
-    installDir,
-  );
-
-  const installedRoot = join(installDir, 'node_modules', 'strudel-lsp-server');
-  const installedManifest = JSON.parse(await readFile(join(installedRoot, 'package.json'), 'utf8'));
-  assert.equal(installedManifest.license, 'AGPL-3.0-only');
-  const installedLicense = await readFile(join(installedRoot, 'LICENSE'), 'utf8');
-  assert.match(installedLicense, /GNU AFFERO GENERAL PUBLIC LICENSE/);
-  assert.match(installedLicense, /version 3 only/);
-
-  const binName = process.platform === 'win32' ? 'strudel-lsp-server.cmd' : 'strudel-lsp-server';
-  await checkStdioServer(join(installDir, 'node_modules', '.bin', binName));
+  const tarball = join(TEMP_ROOT, packageInfo.filename);
+  await verifyInstallMode('ignore-scripts', tarball);
+  await verifyInstallMode('scripts', tarball);
 
   console.log(`Verified ${packageInfo.filename}: ${packageInfo.entryCount} files.`);
-  console.log('Clean offline install and stdio initialize/shutdown passed.');
+  console.log('Clean offline installs, native parser prebuild load and stdio handshakes passed.');
 } finally {
   await rm(TEMP_ROOT, { recursive: true, force: true });
 }

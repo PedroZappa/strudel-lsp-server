@@ -122,10 +122,12 @@ Prototype directories remain outside the lint/format/build scopes. The committed
 | `npm run test:mini`       | Pass   | Five mini-notation token tests pass independently of the Tree-sitter adapter.                                                                                                           |
 | `npm run benchmark`       | Pass   | Eighteen deterministic workloads report p50, p95 and p99 in milliseconds over committed synthetic fixtures.                                                                             |
 | `npm run benchmark:check` | Pass   | Current percentiles are within the committed warning thresholds and all workload IDs are present.                                                                                       |
-| `npm run verify:package`  | Pass   | Tarball contains the server, README and licence but no tests or benchmarks; installed licence is AGPL-3.0-only; runtime-only offline install and stdio initialize/shutdown succeeded.   |
+| `npm run verify:package`  | Pass   | Tarball allowlist and AGPL licence verified; both offline install paths, parser prebuild load and installed stdio initialize/shutdown handshake passed locally on Linux x64, Node 26.   |
 | `npm run check`           | Pass   | The combined typecheck, lint, format and test gate passes.                                                                                                                              |
 | `git diff --check`        | Pass   | Working-tree diff has no whitespace errors.                                                                                                                                             |
 | `npm ls --all`            | Pass   | `tree-sitter-strudel@2.0.2` declares `tree-sitter ^0.25.0`; no invalid peer-range warning remains. Only unrelated optional peer notices are reported.                                   |
+
+Phase 11 adds `.github/workflows/compatibility.yml`, a six-job matrix for Linux x64, macOS arm64 and Windows x64 with Node 24 and 26. Each job builds the package and runs the expanded `npm run verify:package` check described in ADR-036. Cross-platform results are recorded below after a workflow run on the release candidate.
 
 The CI workflow was added on 2026-11-27. A GitHub-hosted Node 24 run exposed the bare-directory test discovery failure; test scripts now pass compiled test globs. Node 24 is not installed locally, so glob execution was verified on Node 26 while `test/packageScripts.test.ts` guards the script form for both supported versions and validates the first-release package metadata. ADR-035 defines the declared Node/npm range and required OS matrix; Phase 11 will extend validation beyond this Ubuntu-only CI coverage.
 

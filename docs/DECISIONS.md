@@ -1,6 +1,6 @@
 # Decisions
 
-Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened or superseded; ADR-021 records the Phase 6 deferred-item completion, ADR-022 records Phase 7 quick fixes, ADR-023 records document-scoped rename, ADR-024 records document symbols, ADR-025 records semantic tokens, ADR-026 records conservative formatting, ADR-027 records prototype client dependency remediation, ADR-028 records inline-constant refactoring, ADR-029 records bounded on-demand workspace symbols, ADR-030 records the Phase 8 performance baseline and advisory check, ADR-031 records Phase 9 local packaging verification, ADR-032 records the AGPL-3.0-only project licence decision, ADR-033 records the `0.1.0` release identity and SemVer policy, ADR-034 records the deferred user configuration boundary, and ADR-035 records the `0.1.0` supported runtime and OS matrix.
+Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened or superseded; ADR-021 records the Phase 6 deferred-item completion, ADR-022 records Phase 7 quick fixes, ADR-023 records document-scoped rename, ADR-024 records document symbols, ADR-025 records semantic tokens, ADR-026 records conservative formatting, ADR-027 records prototype client dependency remediation, ADR-028 records inline-constant refactoring, ADR-029 records bounded on-demand workspace symbols, ADR-030 records the Phase 8 performance baseline and advisory check, ADR-031 records Phase 9 local packaging verification, ADR-032 records the AGPL-3.0-only project licence decision, ADR-033 records the `0.1.0` release identity and SemVer policy, ADR-034 records the deferred user configuration boundary, ADR-035 records the `0.1.0` supported runtime and OS matrix, and ADR-036 records the Phase 11 clean-install validation design.
 
 ## ADR-001 — Clean-slate re-implementation
 
@@ -575,3 +575,27 @@ Consequences:
 - Phase 11 must test both Node majors with npm 11 on each required platform, including install paths with and without scripts.
 - Supporting additional OS/architecture combinations or Node majors requires validation and an update to this ADR before advertisement.
 - This ADR records compatibility policy only; it is not publication authorization.
+
+## ADR-036 — Phase 11 clean-install validation design
+
+Status: accepted on 2026-11-27.
+
+Decision: validate the required runtime matrix with a dedicated GitHub-hosted compatibility workflow instead of assuming that the local Linux x64 host covers every supported platform. The matrix is `ubuntu-latest` for Linux x64 with glibc, `macos-15` for macOS arm64, and `windows-latest` for Windows x64, crossed with Node 24 and 26 using each release's bundled npm 11. Every job builds the package and runs `npm run verify:package`.
+
+`verify-package.mjs` now packs the release candidate once, then installs it in two separate temporary projects: one with `--ignore-scripts` and one with install scripts enabled. Both paths run offline from the npm cache, verify the installed manifest and AGPL licence, load `tree-sitter-strudel` with an actual parse to force the native binding to resolve, assert that no local parser `build` directory was produced, and complete an LSP initialize/shutdown handshake through the platform-specific installed bin shim. The script also asserts that the active Node major is 24 or 26 and that npm is major 11.
+
+Evidence:
+
+- GitHub's hosted-runner reference identifies `ubuntu-latest` as Linux x64, `macos-15` as macOS arm64 and `windows-latest` as Windows x64: <https://docs.github.com/en/actions/reference/runners/github-hosted-runners>.
+- Node 24.22.3 and 26.13.1 bundle npm 11.19.1 and 11.20.0 respectively, as recorded in ADR-035.
+- The pinned `tree-sitter-strudel@2.0.2` package ships `linux-x64`, `darwin-arm64` and `win32-x64` prebuilds without needing source compilation.
+- A local Linux x64 run on Node v26.13.1 and npm 11.20.0 passed both install modes, parser binding load and the installed stdio handshake.
+
+Rationale: the working machine has only Node 26 on Linux x64, Docker access is unavailable, and Node 24 is not installed locally. GitHub-hosted runners provide the declared platforms and Node majors without adding a dependency or a standalone binary requirement. Reusing the packaging verifier keeps the compatibility check aligned with the exact artifact that would be published.
+
+Consequences:
+
+- `.github/workflows/compatibility.yml` runs on pushes to `main`, pull requests and manual dispatch; it does not publish anything.
+- The workflow is a blocking correctness matrix, unlike the advisory performance check.
+- Phase 11 clean-install and installed-handshake items require a green run of all six jobs before being marked complete.
+- Changes to runner labels, Node majors or npm majors require an update to this ADR and the workflow together.

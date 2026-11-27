@@ -6,6 +6,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+- Added a cross-platform clean-install compatibility workflow and expanded package verification to cover both install modes, native parser prebuild loading and installed stdio handshakes.
 - Finalized first-release README scope and npm repository/homepage/bugs metadata, with a package metadata contract test.
 - Declared Node 24/26 and npm 11 support in package `engines` and documented the first-release OS validation matrix.
 - Documented the `0.1.0` configuration boundary: no custom settings, with diagnostic overrides and Strudel version selection deferred.

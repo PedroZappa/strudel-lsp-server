@@ -299,11 +299,11 @@ Exit criteria:
 
 Dependencies: Phase 10 runtime and OS matrix.
 
-**Status: not started. The required validation matrix is defined in ADR-035.**
+**Status: in progress. The required matrix is defined in ADR-035; the compatibility workflow and expanded verifier are implemented, with cross-platform results pending.**
 
 Tasks:
 
-- [ ] Perform clean-room installs on every required OS/Node/npm combination from ADR-035. Test both `npm install` with scripts enabled and the existing `--ignore-scripts` path; confirm native parser prebuilds load without requiring a compiler.
+- [ ] Perform clean-room installs on every required OS/Node/npm combination from ADR-035. The six-job workflow and expanded verifier are implemented; both install modes, native parser prebuild loading and a no-compilation check must pass on every job before this item is checked.
 - [ ] Exercise the installed `strudel-lsp-server` executable's stdio handshake on Linux, macOS and Windows, using the platform-specific bin shim where applicable.
 - [ ] Validate the parser and semantic engine against a small corpus of real Strudel compositions from authoritative documentation or examples, without copying those compositions into the package.
 - [ ] Complete a protocol robustness review for stdout purity, malformed JSON-RPC, unknown methods, invalid parameters, `$/cancelRequest`, rapid edits, no-workspace and multi-root initialization, document closure, shutdown and exit codes.
