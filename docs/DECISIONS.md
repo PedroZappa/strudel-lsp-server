@@ -1,6 +1,6 @@
 # Decisions
 
-Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened or superseded; ADR-021 records the Phase 6 deferred-item completion, ADR-022 records Phase 7 quick fixes, ADR-023 records document-scoped rename, ADR-024 records document symbols, ADR-025 records semantic tokens, ADR-026 records conservative formatting, ADR-027 records prototype client dependency remediation, ADR-028 records inline-constant refactoring, ADR-029 records bounded on-demand workspace symbols, ADR-030 records the Phase 8 performance baseline and advisory check, ADR-031 records Phase 9 local packaging verification, and ADR-032 records the AGPL-3.0-only project licence decision.
+Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened or superseded; ADR-021 records the Phase 6 deferred-item completion, ADR-022 records Phase 7 quick fixes, ADR-023 records document-scoped rename, ADR-024 records document symbols, ADR-025 records semantic tokens, ADR-026 records conservative formatting, ADR-027 records prototype client dependency remediation, ADR-028 records inline-constant refactoring, ADR-029 records bounded on-demand workspace symbols, ADR-030 records the Phase 8 performance baseline and advisory check, ADR-031 records Phase 9 local packaging verification, ADR-032 records the AGPL-3.0-only project licence decision, and ADR-033 records the `0.1.0` release identity and SemVer policy.
 
 ## ADR-001 — Clean-slate re-implementation
 
@@ -522,3 +522,19 @@ Consequences:
 - `npm run verify:package` now checks the installed package's AGPL-3.0-only manifest metadata and AGPL licence text in addition to its existing tarball and stdio checks.
 - No `npm publish` has been performed; explicit release authorization is still required.
 - This decision can be reopened if the parser dependency is replaced or relicensed under different terms.
+
+## ADR-033 — Initial release identity and SemVer policy
+
+Status: accepted by explicit user decision on 2026-11-27.
+
+Decision: publish the first public version as `0.1.0`, use Git tags of the form `vX.Y.Z` (therefore `v0.1.0` for the first release), and follow [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html). The root `package.json` and `package-lock.json` now use `0.1.0`; no tag has been created and no package has been published.
+
+While the package is `0.x`, a MINOR increase may introduce breaking changes, and a PATCH increase is reserved for backward-compatible bug fixes. Backward-compatible additions may also use a MINOR increase. The project makes no stable-API commitment before `1.0.0`; that version requires a separate decision defining the supported public API and compatibility obligations. npm versions are immutable, so corrections after publication use a new version rather than replacing an existing artifact.
+
+Rationale: `0.0.1` was a development placeholder and would misrepresent the first public release. `1.0.0` would claim a stability commitment that has not been approved. `0.1.0` follows the convention for an initial usable pre-1.0 release while leaving room for breaking refinements as real editor feedback arrives.
+
+Consequences:
+
+- Phase 10 release identity is approved; the remaining compatibility-metadata tasks still require completion.
+- The release tag, changelog heading and publication authorization must name the same exact version.
+- Releases continue to require all Phase 10–12 gates plus the explicit Phase 13 authorization; this ADR is not publication authorization.

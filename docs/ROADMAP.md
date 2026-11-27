@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: re-implementation roadmap updated with completed Phases 0–9 and proposed Phases 10–13 for release metadata, compatibility validation, release governance and controlled first publication, 2026-11-27. Priorities are proposals and remain subject to approval.
+Status: re-implementation roadmap updated with completed Phases 0–9, the approved `0.1.0` release identity in Phase 10, and the remaining proposed Phase 10–13 work for compatibility metadata, validation, release governance and controlled first publication, 2026-11-27. Priorities are proposals and remain subject to approval.
 
 Authority: `AGENTS.md` sections 2–18 and the other documents in `docs/`.
 
@@ -270,7 +270,7 @@ The following findings define the starting state for Phases 10–13. Each open g
 
 - The package name `strudel-lsp-server` returned 404 from the npm registry on 2026-11-27; availability must be rechecked at release time.
 - The manifest has no `engines.node` field. CI tests Node 24 and 26 on Ubuntu only; no Windows or macOS job exists.
-- The manifest version is still `0.0.1` and the repository has no Git tags.
+- The manifest version is now `0.1.0` under ADR-033, but the repository has no Git tags.
 - `docs/LSP_FEATURES.md` lists diagnostic enablement/severity and Strudel version selection as user-facing configuration, while its implementation status says no custom configuration is exposed.
 - Parser validation still has an unchecked real-Strudel-corpus item; committed benchmark fixtures are synthetic and measure layer boundaries rather than an editor process.
 - CI verifies correctness and package contents but has no controlled publish workflow or provenance/trusted-publishing configuration.
@@ -279,18 +279,18 @@ The following findings define the starting state for Phases 10–13. Each open g
 
 Dependencies: Phase 9 packaging foundation.
 
-**Status: not started.**
+**Status: in progress. The release identity is approved under ADR-033; compatibility metadata remains.**
 
 Tasks:
 
-- [ ] Decide the release identity: initial version, tag format (`vX.Y.Z`) and SemVer policy for a `0.x` package. `0.1.0` is the recommended first public version; `1.0.0` should imply a documented stability commitment.
+- [x] Decide the release identity: the first public version is `0.1.0`, tags use `vX.Y.Z`, and pre-1.0 SemVer is recorded in ADR-033. `1.0.0` remains reserved for a documented stability commitment.
 - [ ] Reconcile configuration documentation with behaviour: either implement a minimal user-facing diagnostics/Strudel-version option or mark those items clearly as deferred before release notes are written.
 - [ ] Define and declare supported runtimes: add `engines.node`, document the supported Node/npm range, and decide whether Node 24 and 26 are both release-supported or whether Node 24 alone is the initial target. Record the intended OS matrix for Phase 11.
 - [ ] Final README and manifest review: installation command, supported versions, known limitations, legacy prototype separation, and accurate `repository`, `homepage` and `bugs` metadata.
 
 Exit criteria:
 
-- [ ] Version, tag format and SemVer policy are recorded and approved.
+- [x] Version, tag format and SemVer policy are recorded and approved in ADR-033.
 - [ ] Configuration documentation matches implemented behaviour or explicitly deferred items.
 - [ ] `engines.node` and the supported runtime/OS matrix are documented.
 - [ ] README and manifest metadata accurately describe the first-release scope.
