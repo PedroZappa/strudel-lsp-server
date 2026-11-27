@@ -64,6 +64,8 @@ export interface CompletionCandidate {
   readonly kind: CompletionCandidateKind;
   readonly detail?: string;
   readonly documentation?: string;
+  /** Set only when pinned metadata marks the item deprecated. */
+  readonly deprecated?: true;
   /** Opaque, versioned token used only by `completionItem/resolve`. */
   readonly data?: CompletionResolveData;
   readonly replacementRange: SemanticRange;
@@ -83,6 +85,7 @@ export interface CompletionResolveInput {
 export interface CompletionResolveResult {
   readonly detail?: string;
   readonly documentation?: string;
+  readonly deprecated?: true;
 }
 
 export interface HoverResult {

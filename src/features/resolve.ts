@@ -134,6 +134,7 @@ export function resolveCompletion(
   return {
     detail: completionDetail(record),
     documentation: completionDocumentation(record),
+    ...(record.deprecated === true ? { deprecated: true } : {}),
   };
 }
 

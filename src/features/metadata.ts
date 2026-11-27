@@ -102,6 +102,10 @@ export function metadataRecordForSymbol(
 export function recordDocumentation(record: LanguageMetadataRecord): string | undefined {
   const sections: string[] = [];
 
+  if (record.deprecated === true) {
+    sections.push('**Deprecated**');
+  }
+
   if (record.description !== undefined && record.description !== '') {
     sections.push(record.description);
   }

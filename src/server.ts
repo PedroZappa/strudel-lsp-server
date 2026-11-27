@@ -618,6 +618,7 @@ connection.onCompletion(
             candidate.documentation === undefined
               ? undefined
               : { kind: MarkupKind.Markdown, value: candidate.documentation },
+          ...(candidate.deprecated === true ? { deprecated: true } : {}),
           data: candidate.data,
           textEdit: {
             range: toLspRange(candidate.replacementRange),
@@ -638,6 +639,7 @@ connection.onCompletionResolve((item: CompletionItem): CompletionItem =>
         result.documentation === undefined
           ? item.documentation
           : { kind: MarkupKind.Markdown, value: result.documentation },
+      ...(result.deprecated === true ? { deprecated: true } : {}),
     };
   }),
 );

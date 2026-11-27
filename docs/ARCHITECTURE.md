@@ -117,7 +117,7 @@ The current `src/server.ts` implements LSP lifecycle, incremental text sync, com
 - Work offline after installation.
 - Support future selection between Strudel versions.
 
-`src/languageDatabase/generated.ts` is committed output of `scripts/generate-metadata.mjs`. It contains 576 named records from `@strudel/reference@1.2.2`, source provenance for all four pinned Strudel packages, and no machine-specific paths. The generator validates versions, tarball integrity, licences and repository URLs before writing output. `manual.ts` supplies curated semantics for common pattern constructors and controls, while `LanguageDatabaseOptions` permits explicit runtime-derived entries and additional Strudel versions.
+`src/languageDatabase/generated.ts` is committed output of `scripts/generate-metadata.mjs`. It contains 576 named records from `@strudel/reference@1.2.2`, source provenance for all four pinned Strudel packages, and no machine-specific paths. The generator validates versions, tarball integrity, licences and repository URLs before writing output. `manual.ts` supplies curated semantics for common pattern constructors and controls, while `LanguageDatabaseOptions` permits explicit runtime-derived entries and additional Strudel versions. Pinned `deprecated` flags are copied into language records and rendered by completion, completion resolve and hover as a flag plus Markdown documentation; no diagnostic code is added for deprecation.
 
 ## Data flow
 

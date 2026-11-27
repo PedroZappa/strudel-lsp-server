@@ -203,6 +203,7 @@ export function provideCompletion(
         kind: 'method',
         detail: record.returnType,
         documentation: recordDocumentation(record),
+        ...(record.deprecated === true ? { deprecated: true } : {}),
         data: completionData(metadataVersion, 'method', record.name),
         replacementRange: offsetsToRange(context.text, prefix.startOffset, offset),
       });
@@ -237,6 +238,7 @@ export function provideCompletion(
       kind: recordKind(record),
       detail: record.returnType,
       documentation: recordDocumentation(record),
+      ...(record.deprecated === true ? { deprecated: true } : {}),
       data: completionData(metadataVersion, 'global', record.name),
       replacementRange: offsetsToRange(context.text, prefix.startOffset, offset),
     });

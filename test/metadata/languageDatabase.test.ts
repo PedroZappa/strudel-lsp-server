@@ -217,3 +217,24 @@ void test('indexes unambiguous generated synonyms and curated signatures', () =>
   assert.equal(database.getMethodRecord('euclid')?.signatures?.[0]?.parameters.length, 2);
   assert.equal(database.getGlobalRecord('stack')?.signatures?.[0]?.parameters[0]?.rest, true);
 });
+
+void test('generated deprecation metadata reaches language records', () => {
+  const database = createDefaultLanguageDatabase();
+  const snapshot = database.getSnapshot();
+
+  assert.deepEqual(
+    snapshot.generated.symbols
+      .filter((symbol) => symbol.deprecated === true)
+      .map((symbol) => symbol.longName),
+    ['cpm'],
+  );
+
+  const deprecated = database.getGlobalRecord('cpm');
+  assert.ok(deprecated !== undefined);
+  assert.equal(deprecated.deprecated, true);
+  assert.match(deprecated.description ?? '', /cycles per minute/);
+
+  const current = database.getGlobalRecord('speed');
+  assert.ok(current !== undefined);
+  assert.equal(current.deprecated, undefined);
+});

@@ -421,6 +421,39 @@ void test('stdio server advertises and serves implemented language capabilities'
     true,
   );
 
+  const deprecatedUri = 'file:///test/deprecated.strudel';
+  const deprecatedText = 'cpm';
+  const deprecatedDiagnostics = client.waitForNotification('textDocument/publishDiagnostics');
+  client.notify('textDocument/didOpen', {
+    textDocument: {
+      uri: deprecatedUri,
+      languageId: 'strudel',
+      version: 1,
+      text: deprecatedText,
+    },
+  });
+  assert.deepEqual(((await deprecatedDiagnostics) as PublishDiagnosticsParams).diagnostics, []);
+
+  const deprecatedCompletion = (await client.request('textDocument/completion', {
+    textDocument: { uri: deprecatedUri },
+    position: { line: 0, character: deprecatedText.length },
+  })) as { label: string; deprecated?: boolean; data?: unknown }[];
+  const cpmItem = deprecatedCompletion.find((item) => item.label === 'cpm');
+  assert.equal(cpmItem?.deprecated, true);
+  const resolvedDeprecated = (await client.request('completionItem/resolve', {
+    label: 'cpm',
+    data: cpmItem?.data,
+  })) as { deprecated?: boolean; documentation?: { value: string } };
+  assert.equal(resolvedDeprecated.deprecated, true);
+  assert.match(resolvedDeprecated.documentation?.value ?? '', /Deprecated/);
+
+  const deprecatedHover = (await client.request('textDocument/hover', {
+    textDocument: { uri: deprecatedUri },
+    position: { line: 0, character: 1 },
+  })) as { contents: { value: string } } | null;
+  assert.ok(deprecatedHover !== null);
+  assert.match(deprecatedHover.contents.value, /Deprecated/);
+
   const signatureHelp = (await client.request('textDocument/signatureHelp', {
     textDocument: { uri },
     position: { line: 0, character: text.indexOf('2') },

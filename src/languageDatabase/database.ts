@@ -52,6 +52,7 @@ function generatedRecord(
     examples: symbol.examples,
     parameters: symbol.parameters,
     returns: symbol.returns,
+    ...(symbol.deprecated === true ? { deprecated: true } : {}),
     sourceFile: symbol.sourceFile,
     sourceLine: symbol.sourceLine,
   };

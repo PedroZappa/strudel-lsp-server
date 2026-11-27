@@ -84,6 +84,8 @@ export interface LanguageMetadataRecord {
   readonly miniNotationArguments?: readonly number[];
   readonly description?: string;
   readonly aliasOf?: string;
+  /** True only when the pinned generated snapshot marks the symbol deprecated. */
+  readonly deprecated?: true;
   readonly signatures?: readonly SemanticSignature[];
   readonly examples: readonly string[];
   readonly parameters: readonly MetadataParameter[];
