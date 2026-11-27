@@ -50,7 +50,7 @@ void test('release workflow uses pinned actions and no npm token', () => {
   }
 });
 
-void test('release verifier is wired into npm and make, and checks dry-run parity', () => {
+void test('release verifier is wired into npm and make, and checks package parity', () => {
   assert.equal(
     packageJson.scripts['verify:release'],
     'npm run build && node scripts/verify-release.mjs',
@@ -61,6 +61,35 @@ void test('release verifier is wired into npm and make, and checks dry-run parit
   assert.match(verifier, /npm.*pack.*--dry-run/);
   assert.match(verifier, /npm.*publish.*--dry-run/);
   assert.match(verifier, /RELEASE_OPERATOR/);
+});
+
+void test('release verifier switches from dry-run parity to published registry parity', () => {
+  assert.match(verifier, /function readPublishedMetadata/);
+  assert.match(verifier, /npm.*view.*--json/);
+  assert.match(verifier, /details\?\.error\?\.code === 'E404'/);
+  assert.match(verifier, /function assertPublishedIdentity/);
+  assert.match(verifier, /const published = readPublishedMetadata\(expectedVersion\)/);
+  assert.match(verifier, /if \(published\)/);
+  assert.match(
+    verifier,
+    /assertPublishedIdentity\(pack, published, expectedVersion, gitState\.head\)/,
+  );
+  for (const field of ['gitHead', 'shasum', 'integrity', 'fileCount']) {
+    assert.match(verifier, new RegExp(field));
+  }
+  assert.match(verifier, /published artifact identity verified; no package was published/);
+  assert.match(
+    workflow,
+    /Version to validate \(X\.Y\.Z\); published versions require an immutable release ref/,
+  );
+  assert.match(
+    workflow,
+    /ref:\s+\$\{\{ github\.event_name == 'workflow_dispatch' && inputs\.ref \|\| github\.ref \}\}/,
+  );
+  assert.match(workflow, /Git ref to check out \(defaults to the dispatch ref\)/);
+  assert.match(verifier, /npm rejects even a publish dry-run/);
+  assert.match(decisions, /^## ADR-062 — Publication-state-aware release verification$/m);
+  assert.match(testingStrategy, /^### Post-publication verification hardening/m);
 });
 
 void test('changelog and GitHub release notes are versioned for the package release', () => {

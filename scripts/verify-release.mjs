@@ -31,6 +31,57 @@ function parseJson(value, label) {
   }
 }
 
+function maybeParseJson(value) {
+  if (typeof value !== 'string' || value.length === 0) return null;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
+
+function readPublishedMetadata(version) {
+  let raw;
+  try {
+    raw = run('npm', ['view', `${packageName}@${version}`, '--json']);
+  } catch (error) {
+    const details = maybeParseJson(error.stdout);
+    if (details?.error?.code === 'E404') return null;
+    throw error;
+  }
+  const record = parseJson(raw, 'npm view');
+  if (record?.error) {
+    throw new Error(`npm view failed: ${record.error.code ?? 'unknown error'}`);
+  }
+  return record;
+}
+
+function assertPublishedIdentity(pack, published, expectedVersion, head) {
+  const expected = {
+    name: packageName,
+    version: expectedVersion,
+    license: 'AGPL-3.0-only',
+    gitHead: head,
+    shasum: pack.shasum,
+    integrity: pack.integrity,
+    fileCount: pack.files.length,
+  };
+  const actual = {
+    name: published.name,
+    version: published.version,
+    license: published.license,
+    gitHead: published.gitHead,
+    shasum: published.dist?.shasum,
+    integrity: published.dist?.integrity,
+    fileCount: published.dist?.fileCount,
+  };
+  for (const [field, value] of Object.entries(expected)) {
+    if (actual[field] !== value) {
+      throw new Error(`published ${field} is ${actual[field]}, expected ${value}`);
+    }
+  }
+}
+
 function compareVersions(left, right) {
   const parse = (value) => value.split('.').map((part) => Number(part));
   const leftParts = parse(left);
@@ -154,8 +205,13 @@ function main() {
   assertManifest(expectedVersion);
   const gitState = assertGitState(tag, expectedVersion);
 
-  // npm publish normalises package.json in place. Run both dry-runs against an
-  // isolated copy so verification cannot alter the release commit.
+  const published = readPublishedMetadata(expectedVersion);
+
+  // npm publish normalises package.json in place. Run dry-runs against an
+  // isolated copy so verification cannot alter the release commit. Once a
+  // version exists, npm rejects even a publish dry-run, so only the pre-publication
+  // path performs pack/publish parity; the post-publication path compares the
+  // locally packed artifact with immutable registry metadata instead.
   const stagingDirectory = mkdtempSync(join(tmpdir(), 'strudel-release-'));
   let pack;
   let publish;
@@ -174,26 +230,32 @@ function main() {
       }),
       'npm pack --dry-run',
     );
-    publish = normalizeDryRun(
-      run('npm', ['publish', '--dry-run', '--ignore-scripts', '--json'], {
-        cwd: stagingDirectory,
-        stdio: ['ignore', 'pipe', 'ignore'],
-      }),
-      'npm publish --dry-run',
-    );
+    if (published) {
+      assertPublishedIdentity(pack, published, expectedVersion, gitState.head);
+    } else {
+      publish = normalizeDryRun(
+        run('npm', ['publish', '--dry-run', '--ignore-scripts', '--json'], {
+          cwd: stagingDirectory,
+          stdio: ['ignore', 'pipe', 'ignore'],
+        }),
+        'npm publish --dry-run',
+      );
+    }
   } finally {
     rmSync(stagingDirectory, { recursive: true, force: true });
   }
 
-  for (const field of ['name', 'version', 'filename', 'size', 'shasum', 'integrity']) {
-    if (pack[field] !== publish[field]) {
-      throw new Error(
-        `pack and publish dry-runs disagree on ${field}: ${pack[field]} vs ${publish[field]}`,
-      );
+  if (!published) {
+    for (const field of ['name', 'version', 'filename', 'size', 'shasum', 'integrity']) {
+      if (pack[field] !== publish[field]) {
+        throw new Error(
+          `pack and publish dry-runs disagree on ${field}: ${pack[field]} vs ${publish[field]}`,
+        );
+      }
     }
-  }
-  if (JSON.stringify(pack.files) !== JSON.stringify(publish.files)) {
-    throw new Error('pack and publish dry-runs disagree on the file list');
+    if (JSON.stringify(pack.files) !== JSON.stringify(publish.files)) {
+      throw new Error('pack and publish dry-runs disagree on the file list');
+    }
   }
   assertFileList(pack.files);
 
@@ -223,8 +285,17 @@ function main() {
   console.log(
     `Executable: dist/src/server.js with node shebang (${packedSizes.get('dist/src/server.js')} bytes)`,
   );
-  console.log(`Dry-run files: ${pack.files.length}; pack and publish agree (${pack.shasum})`);
-  console.log('RELEASE VERIFICATION PASSED: no package was published');
+  if (published) {
+    console.log(
+      `Published registry identity: name, version, licence, gitHead ${gitState.head}, ${pack.files.length} files (${pack.shasum})`,
+    );
+    console.log(
+      'RELEASE VERIFICATION PASSED: published artifact identity verified; no package was published',
+    );
+  } else {
+    console.log(`Dry-run files: ${pack.files.length}; pack and publish agree (${pack.shasum})`);
+    console.log('RELEASE VERIFICATION PASSED: no package was published');
+  }
 }
 
 try {

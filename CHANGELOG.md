@@ -6,6 +6,10 @@ Version `0.2.0` was published on 2026-11-27 through the controlled OIDC workflow
 
 ## [Unreleased]
 
+### Fixed
+
+- Made `npm run verify:release` idempotent after publication: unpublished candidates keep pack/publish dry-run parity, while published versions compare the local tarball with registry identity instead of calling `npm publish --dry-run` again. See ADR-062.
+
 ## [0.2.0] - 2026-11-27
 
 ### Added

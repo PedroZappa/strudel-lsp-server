@@ -408,6 +408,8 @@ Exit criteria:
 - [x] Clean installs, installed stdio handshake, documented launch command, tag and release notes pass smoke checks. The GitHub release is `v0.2.0` with no binary assets.
 - [x] The published release notes state the remaining deferred work, and no unapproved registry mutation occurs. No deprecation, dist-tag change, unpublish or retag was performed.
 
+Post-release hardening: ADR-062 makes `npm run verify:release` publication-state aware. Future tags and workflow dispatches from the updated tree with `ref: v0.2.0` verify registry artifact identity instead of calling `npm publish --dry-run`, which npm rejects for immutable versions; a rerun of the historical tag itself still uses its old workflow. This does not change the published `0.2.0` artifact, tag or GitHub release.
+
 ## Phase 13 release-quality backlog (post-publication status)
 
 These were the recommended, non-blocking items carried out of first publication. Items assigned to v0.2.0 are complete and recorded in Phase 14; all others remain unscheduled and are deferred beyond v0.2.0 unless later authorized.
