@@ -1,6 +1,6 @@
 # Decisions
 
-Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened or superseded; ADR-021 records the Phase 6 deferred-item completion, ADR-022 records Phase 7 quick fixes, ADR-023 records document-scoped rename, ADR-024 records document symbols, ADR-025 records semantic tokens, ADR-026 records conservative formatting, ADR-027 records prototype client dependency remediation, ADR-028 records inline-constant refactoring, ADR-029 records bounded on-demand workspace symbols, ADR-030 records the Phase 8 performance baseline and advisory check, ADR-031 records Phase 9 local packaging verification, ADR-032 records the AGPL-3.0-only project licence decision, ADR-033 records the `0.1.0` release identity and SemVer policy, ADR-034 records the deferred user configuration boundary, ADR-035 records the `0.1.0` supported runtime and OS matrix, and ADR-036 records the Phase 11 clean-install validation design, and ADR-037 records the real documentation corpus validation design.
+Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened or superseded; ADR-021 records the Phase 6 deferred-item completion, ADR-022 records Phase 7 quick fixes, ADR-023 records document-scoped rename, ADR-024 records document symbols, ADR-025 records semantic tokens, ADR-026 records conservative formatting, ADR-027 records prototype client dependency remediation, ADR-028 records inline-constant refactoring, ADR-029 records bounded on-demand workspace symbols, ADR-030 records the Phase 8 performance baseline and advisory check, ADR-031 records Phase 9 local packaging verification, ADR-032 records the AGPL-3.0-only project licence decision, ADR-033 records the `0.1.0` release identity and SemVer policy, ADR-034 records the deferred user configuration boundary, ADR-035 records the `0.1.0` supported runtime and OS matrix, and ADR-036 records the Phase 11 clean-install validation design, ADR-037 records the real documentation corpus validation design, and ADR-038 records the Phase 11 protocol robustness review and transport behaviour.
 
 ## ADR-001 — Clean-slate re-implementation
 
@@ -622,3 +622,25 @@ Consequences:
 - Upstream parser gaps are documented in `docs/PARSER_INTEGRATION.md` rather than patched in this repository; the grammar remains an external AGPL dependency under ADR-032.
 - Unresolved references and conservative mini-notation behaviour are recorded as observations, not new diagnostics.
 - This validation decision is not publication authorization; Phase 13 gates still apply.
+
+## ADR-038 — Protocol robustness review
+
+Status: accepted on 2026-11-27.
+
+Decision: keep the `vscode-languageserver@11.0.1` connection as the sole owner of LSP framing, method dispatch, cancellation tokens and lifecycle exit codes, and validate its observable behaviour with a raw stdio harness rather than introducing a custom JSON-RPC layer. Add only three targeted server hardening changes found by the review: tolerant parsing of optional `initialize` fields, capability-gated workspace-folder queries, and rejection of stale document versions before analysis is scheduled.
+
+Evidence:
+
+- `test/protocolRobustness.test.ts` writes raw LSP frames to a spawned server, parses every stdout response frame and asserts framed stdout, valid JSON-RPC envelopes and empty stderr across eight error-path scenarios.
+- The review confirmed that malformed JSON bodies are ignored, malformed envelopes produce `window/logMessage`, unknown methods return `-32601`, invalid handler parameters return typed fallbacks without stopping the server, `$/cancelRequest` bounds an in-flight workspace scan, and exit codes are 0 after `shutdown` then `exit` and 1 for `exit` without `shutdown`.
+- Before the fix, non-array `workspaceFolders` made `initialize` fail with `-32603`; before capability gating, a minimal no-workspace client could receive `workspace/workspaceFolders`; before the version guard, a version 2 edit following a version 3 edit could be applied after the newer edit. Each case has a regression test.
+- `npm run check` passed 63/63 tests, `npm run test:protocol` passed 8/8, `make test-protocol` passed, `npm run verify:package` passed both offline install modes on darwin-arm64, and `npm run benchmark:check` passed all 18 workloads within thresholds.
+
+Rationale: the library already implements the specification-sensitive parts of stdio transport, so a bespoke parser or lifecycle layer would add risk and maintenance cost without evidence of a defect. The observed defects were all in server-owned policy, and the smallest coherent changes fix them at the boundary where the bad input enters the server.
+
+Consequences:
+
+- `npm run test:protocol` and `make test-protocol` are the isolated gates, and the CI `verify` job runs the suite on Node 24 and 26.
+- `docs/LSP_FEATURES.md` records the observable protocol lifecycle behaviour; `docs/TESTING_STRATEGY.md` records the review evidence.
+- Future transport changes must keep stdout free of non-protocol bytes and extend the raw harness rather than relying only on higher-level feature tests.
+- This decision does not authorize publication; Phase 12 and 13 gates still apply.

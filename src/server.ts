@@ -85,6 +85,7 @@ const documents = new DocumentAnalysisService(adapter, engine);
 const pendingAnalyses = new Map<string, Promise<void>>();
 const latestVersions = new Map<string, number>();
 let workspaceRootUris: readonly string[] = [];
+let workspaceFoldersSupported = false;
 
 const SEMANTIC_TOKEN_TYPES: readonly SemanticTokenType[] = [
   'function',
@@ -124,6 +125,10 @@ async function guardAsync<T>(fallback: T, operation: () => Promise<T>): Promise<
 }
 
 function scheduleDocumentUpdate(uri: string, version: number, update: () => void): void {
+  const latestVersion = latestVersions.get(uri);
+  if (latestVersion !== undefined && version < latestVersion) {
+    return;
+  }
   latestVersions.set(uri, version);
   const task = new Promise<void>((resolveTask) => {
     setImmediate(() => {
@@ -256,21 +261,33 @@ function toLspSymbolInformation(symbol: WorkspaceSymbolResult): SymbolInformatio
   };
 }
 
-function rememberWorkspaceRoots(params: InitializeParams): void {
-  const folders: readonly WorkspaceFolder[] | undefined = params.workspaceFolders ?? undefined;
-  const roots =
-    folders?.map((folder) => folder.uri) ?? (params.rootUri === null ? [] : [params.rootUri]);
-  workspaceRootUris = [...new Set(roots)].filter((uri) => uri.startsWith('file:'));
+function rememberWorkspaceRoots(params: InitializeParams | undefined): void {
+  workspaceFoldersSupported = params?.capabilities?.workspace?.workspaceFolders === true;
+
+  const folders: readonly WorkspaceFolder[] | undefined = Array.isArray(params?.workspaceFolders)
+    ? params.workspaceFolders
+    : undefined;
+  const folderUris = (folders ?? []).flatMap((folder) =>
+    typeof folder?.uri === 'string' ? [folder.uri] : [],
+  );
+  const rootUri = typeof params?.rootUri === 'string' ? [params.rootUri] : [];
+  const candidates = folderUris.length > 0 ? folderUris : rootUri;
+  workspaceRootUris = [...new Set(candidates)].filter((uri) => uri.startsWith('file:'));
 }
 
 async function workspaceRoots(): Promise<readonly string[]> {
   if (workspaceRootUris.length > 0) {
     return workspaceRootUris;
   }
+  if (!workspaceFoldersSupported) {
+    return [];
+  }
   const folders = await connection.workspace.getWorkspaceFolders();
-  return [...new Set((folders ?? []).map((folder) => folder.uri))].filter((uri) =>
-    uri.startsWith('file:'),
-  );
+  return [
+    ...new Set(
+      (folders ?? []).flatMap((folder) => (typeof folder?.uri === 'string' ? [folder.uri] : [])),
+    ),
+  ].filter((uri) => uri.startsWith('file:'));
 }
 
 function toSemanticTokenModifiers(modifiers: readonly SemanticTokenModifier[]): number {

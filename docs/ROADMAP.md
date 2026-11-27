@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: re-implementation roadmap updated with completed Phases 0–10, completed Phase 11 clean-install, platform handshake and real Strudel corpus validation, and remaining Phase 11 protocol robustness work plus Phases 12–13 for release governance and controlled first publication, 2026-11-27. Priorities are proposals and remain subject to approval.
+Status: re-implementation roadmap updated with completed Phases 0–10, completed Phase 11 clean-install, platform handshake, real Strudel corpus and protocol robustness validation, plus Phases 12–13 for release governance and controlled first publication, 2026-11-27. Priorities are proposals and remain subject to approval.
 
 Authority: `AGENTS.md` sections 2–18 and the other documents in `docs/`.
 
@@ -299,14 +299,14 @@ Exit criteria:
 
 Dependencies: Phase 10 runtime and OS matrix.
 
-**Status: clean-install, installed-handshake and real-corpus validation are complete; protocol robustness review remains.**
+**Status: clean-install, installed-handshake, real-corpus and protocol robustness validation are complete.**
 
 Tasks:
 
 - [x] Perform clean-room installs on every required OS/Node/npm combination from ADR-035. The six-job matrix passed both install modes, native parser prebuild loading and a no-compilation check in run `45990023185`.
 - [x] Exercise the installed `strudel-lsp-server` executable's stdio handshake on Linux, macOS and Windows, using the platform-specific bin shim where applicable. Each matrix job completed the installed handshake.
 - [x] Validate the parser and semantic engine against a small corpus of real Strudel compositions from authoritative documentation or examples, without copying those compositions into the package. All 484 non-empty JSDoc examples in pinned `@strudel/reference@1.2.2` were parsed, analyzed and incrementally updated with zero invariant failures; derived evidence is in `validation/real-corpus.json` and findings are in `docs/PARSER_INTEGRATION.md` and ADR-037.
-- [ ] Complete a protocol robustness review for stdout purity, malformed JSON-RPC, unknown methods, invalid parameters, `$/cancelRequest`, rapid edits, no-workspace and multi-root initialization, document closure, shutdown and exit codes.
+- [x] Complete a protocol robustness review for stdout purity, malformed JSON-RPC, unknown methods, invalid parameters, `$/cancelRequest`, rapid edits, no-workspace and multi-root initialization, document closure, shutdown and exit codes. Eight raw stdio tests in `test/protocolRobustness.test.ts` cover every listed path; findings and decisions are in `docs/TESTING_STRATEGY.md` and ADR-038.
 
 Exit criteria:
 
@@ -314,7 +314,7 @@ Exit criteria:
 - [x] Native parser prebuilds work without requiring a local compiler; no parser `build` directory was created in any matrix job.
 - [x] Installed executable handshakes pass on every required platform in ADR-035.
 - [x] Real-corpus validation evidence is recorded in `validation/real-corpus.json` with no copied compositions in the package.
-- [ ] Protocol robustness evidence is recorded.
+- [x] Protocol robustness evidence is recorded in `docs/TESTING_STRATEGY.md` and ADR-038, with the deterministic suite exposed as `npm run test:protocol` and `make test-protocol`.
 
 ## Phase 12 — Release governance and automation
 
@@ -367,9 +367,9 @@ Exit criteria:
 These items may be pulled into Phases 10–12 when capacity allows. Deferring one does not block first publication, but each deferral should be intentional and visible in release notes where user-facing.
 
 - [ ] Perform editor-level smoke tests with at least two independent LSP clients using configuration kept outside the server core. Record which client behaviours were checked, not editor-specific implementation details in the server.
-- [ ] Add deterministic stdio error-path tests for malformed input and cancellation; current cancellation coverage is strongest at the semantic-engine layer.
+- [x] Add deterministic stdio error-path tests for malformed input and cancellation; `test/protocolRobustness.test.ts` now covers both at the JSON-RPC transport layer in addition to the semantic-engine suite.
 - [ ] Add a bounded soak test with rapid edits, repeated initialize/shutdown cycles and memory-growth observation to catch live-coding lifecycle leaks.
-- [ ] Review workspace-symbol discovery for symlinks, path traversal, multi-root folders, unreadable files and size/depth limits; add tests where behaviour is currently assumed.
+- [ ] Review workspace-symbol discovery for symlinks, path traversal, unreadable files and size/depth limits; no-workspace and multi-root protocol paths are now covered, but these filesystem edge cases remain.
 - [ ] Measure at least one end-to-end request path through JSON-RPC and the installed binary. The committed benchmark is deliberately layer-level and should not be presented as full editor latency.
 - [ ] Decide whether to include `CHANGELOG.md`, TypeScript sources or source maps in the npm `files` allowlist. The current allowlist is intentionally minimal; any change must be reflected in package verification.
 - [ ] Record a dependency-update policy for Strudel, the parser and Node: what triggers compatibility retesting and when the pinned metadata snapshot may be regenerated.

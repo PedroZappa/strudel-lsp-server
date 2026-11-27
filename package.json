@@ -41,6 +41,7 @@
     "test:metadata": "npm run build && node --test \"dist/test/metadata/**/*.test.js\"",
     "test:features": "npm run build && node --test \"dist/test/features/**/*.test.js\"",
     "test:mini": "npm run build && node --test \"dist/test/miniNotation/**/*.test.js\"",
+    "test:protocol": "npm run build && node --test \"dist/test/protocolRobustness.test.js\"",
     "validate:corpus": "npm run build && node scripts/validate-corpus.mjs",
     "validate:corpus:write": "npm run build && node scripts/validate-corpus.mjs --write-report",
     "generate:metadata": "node scripts/generate-metadata.mjs",

@@ -145,6 +145,15 @@ Verification evidence:
 
 - `npm run test:features`: twenty-nine provider tests cover conservative diagnostics, malformed input, quick-fix edits and range filtering, inline-constant refactoring and unsafe-binding rejection, position-aware completion, hover content, resolved-symbol navigation, document-symbol ranges and hierarchy, workspace-symbol matching, container names and result limits, formatting indentation and preferences, rename preparation and edits, semantic-token classification, signature help, mini-notation diagnostics and hover, and incremental range shifting.
 - `npm run test:mini`: five isolated token-model tests cover documented operators, token descriptions, structural faults, expected-closer metadata, live-coding suppression and unsupported-character progress.
-- `npm test`: 54 tests include two stdio integration tests that verify capability advertisement, all twelve implemented request types, diagnostic publication, quick-fix and inline-refactor code-action mapping, document-symbol and workspace-symbol, formatting, semantic-token and rename mapping, workspace file scanning with open-document overrides, document closure and rapid-edit version suppression, plus one test-script discovery regression check.
+- `npm run test:protocol`: eight raw stdio tests cover framed stdout purity, malformed JSON-RPC bodies and envelopes, unknown methods, invalid parameters, `$/cancelRequest` during a workspace scan, stale-edit suppression and document closure, no-workspace and multi-root initialization, and shutdown/exit codes.
+- `npm test`: 63 tests include the two stdio integration tests that verify capability advertisement, all twelve implemented request types, diagnostic publication, quick-fix and inline-refactor code-action mapping, document-symbol and workspace-symbol, formatting, semantic-token and rename mapping, workspace file scanning with open-document overrides, document closure and rapid-edit version suppression, the eight protocol robustness tests, plus one test-script discovery regression check.
+
+## Protocol lifecycle behaviour
+
+- Stdout is reserved for framed JSON-RPC messages; diagnostic text and unexpected input are reported through `window/logMessage` notifications or ignored, never as raw stdout output.
+- Malformed JSON bodies are ignored and malformed envelopes receive a framed log notification. Unknown methods return `-32601`, and handler failures return an empty typed fallback without stopping the server.
+- Optional `initialize` fields are validated. `workspace/workspaceFolders` is queried only when the client advertised that capability; otherwise workspace symbol discovery uses the initialized roots or returns no results.
+- A lower document version that arrives after a newer version is not scheduled for analysis. Closing a document cancels pending analysis and clears published diagnostics.
+- `shutdown` followed by `exit` exits with code 0; `exit` without `shutdown` exits with code 1, matching the LSP lifecycle.
 
 Deferred: completion resolution, range formatting, broader refactoring, diagnostic enablement/severity overrides, Strudel compatibility/version selection and remaining extended capabilities. No custom user-facing configuration is exposed in `0.1.0`; see ADR-034.

@@ -51,7 +51,7 @@ _INFO    = [$(BLU)INFO$(D)]
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install install-dev build typecheck lint format format-check test test-parser test-semantic test-metadata test-features test-mini validate-corpus validate-corpus-write generate-metadata benchmark benchmark-check benchmark-baseline pack-check verify-package check verify verify-all ci check-static audit audit-client clean docs docs-open
+.PHONY: help install install-dev build typecheck lint format format-check test test-parser test-semantic test-metadata test-features test-mini test-protocol validate-corpus validate-corpus-write generate-metadata benchmark benchmark-check benchmark-baseline pack-check verify-package check verify verify-all ci check-static audit audit-client clean docs docs-open
 
 #==============================================================================#
 #                                  RULES                                       #
@@ -125,6 +125,11 @@ test-mini:	## Build and run mini-notation analysis tests only
 	@echo "$(YEL)Running mini-notation tests...$(D)"
 	@$(NPM) run test:mini
 	@echo "$(YEL)* $(_SUCCESS) Mini-notation tests completed$(D)"
+
+test-protocol:	## Build and run raw stdio protocol robustness tests only
+	@echo "$(YEL)Running protocol robustness tests...$(D)"
+	@$(NPM) run test:protocol
+	@echo "$(YEL)* $(_SUCCESS) Protocol robustness tests completed$(D)"
 
 validate-corpus:	## Validate syntax and semantics against pinned Strudel documentation examples
 	@echo "$(YEL)Validating real Strudel documentation corpus...$(D)"
