@@ -51,7 +51,7 @@ _INFO    = [$(BLU)INFO$(D)]
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install install-dev build typecheck lint format format-check test test-parser test-semantic test-metadata test-configuration test-lsp test-features test-mini test-protocol test-soak validate-corpus validate-corpus-write generate-metadata benchmark benchmark-check benchmark-baseline pack-check verify-package verify-consumer verify-release check verify verify-all ci check-static audit audit-client clean docs docs-open
+.PHONY: help install install-dev build typecheck lint format format-check test test-parser test-semantic test-metadata test-configuration test-lsp test-features test-mini test-protocol test-soak validate-corpus validate-corpus-write generate-metadata benchmark benchmark-check benchmark-baseline benchmark-e2e benchmark-e2e-write pack-check verify-package verify-consumer verify-release check verify verify-all ci check-static audit audit-client clean docs docs-open
 
 #==============================================================================#
 #                                  RULES                                       #
@@ -175,6 +175,16 @@ benchmark-baseline:	## Regenerate the committed benchmark baseline deliberately
 	@echo "$(YEL)Regenerating benchmark baseline...$(D)"
 	@$(NPM) run benchmark:baseline
 	@echo "$(YEL)* $(_SUCCESS) Benchmark baseline updated$(D)"
+
+benchmark-e2e:	## Run the advisory installed-binary JSON-RPC benchmark
+	@echo "$(YEL)Running end-to-end benchmark...$(D)"
+	@$(NPM) run benchmark:e2e
+	@echo "$(YEL)* $(_SUCCESS) End-to-end benchmark completed$(D)"
+
+benchmark-e2e-write:	## Refresh the committed advisory end-to-end benchmark report
+	@echo "$(YEL)Refreshing end-to-end benchmark report...$(D)"
+	@$(NPM) run benchmark:e2e:write
+	@echo "$(YEL)* $(_SUCCESS) End-to-end benchmark report updated$(D)"
 
 pack-check:	## Preview and verify npm package contents
 	@echo "$(YEL)Checking npm package contents...$(D)"

@@ -1,6 +1,6 @@
 # Performance
 
-Status: Phase 8 benchmark harness, workloads, baseline and advisory regression check implemented on 2026-11-27.
+Status: Phase 8 benchmark harness, workloads, baseline and advisory regression check implemented on 2026-11-27; the separate advisory installed-binary harness was added for unreleased Phase 14 work on 2026-11-27.
 
 Authority: `AGENTS.md` section 6.
 
@@ -21,7 +21,7 @@ Track p50, p95 and p99 latency. Average execution time alone is not sufficient.
 
 ## Workloads
 
-The committed harness is `scripts/benchmark.mjs`. It imports the compiled ESM modules from `dist/src/` and measures transport-independent layer boundaries; it does not spawn a language-server process or include JSON-RPC serialisation. Fixtures are synthetic buffers hand-authored for this repository and described in `benchmarks/fixtures/README.md`.
+The committed layer harness is `scripts/benchmark.mjs`. It imports the compiled ESM modules from `dist/src/` and measures transport-independent layer boundaries; it does not spawn a language-server process or include JSON-RPC serialisation. A second harness, `scripts/benchmark-e2e.mjs`, measures one installed-binary JSON-RPC path and reports it separately in `benchmarks/end-to-end.json`; it has no thresholds and is not part of the layer baseline. Both harnesses share constants and percentile helpers from `scripts/lib/benchmarkStats.mjs`. Fixtures are synthetic buffers hand-authored for this repository and described in `benchmarks/fixtures/README.md`.
 
 | Workload                 | Fixture                      | Operation                                                                      |
 | ------------------------ | ---------------------------- | ------------------------------------------------------------------------------ |
@@ -46,6 +46,16 @@ The committed harness is `scripts/benchmark.mjs`. It imports the compiled ESM mo
 
 The fixtures use syntax representative of Strudel 1.2.6 as pinned by `package.json`; no external composition was copied. The workspace fixture includes a nested directory and a non-Strudel file so extension filtering is exercised.
 
+## End-to-end installed-binary workload
+
+`scripts/benchmark-e2e.mjs` packs the built server with an isolated npm cache, installs the tarball offline from the pinned lockfile into a temporary project, verifies the native parser prebuild, and launches the installed `node_modules/.bin/strudel-lsp-server` shim. The single `jsonrpc-installed-document-symbol` workload sends `textDocument/didChange` followed by a `textDocument/documentSymbol` request, so the timed path includes JSON-RPC framing, IPC, parsing, semantic analysis and response serialisation. Five server processes each perform five warm-up and twenty measured cycles; the same nearest-rank-within-batch and median-across-batches method is used for percentiles.
+
+| Workload                            | Fixture                   | Measured p50 | Measured p95 | Measured p99 | Samples |
+| ----------------------------------- | ------------------------- | -----------: | -----------: | -----------: | ------: |
+| `jsonrpc-installed-document-symbol` | `small-live-edit.strudel` |        0.337 |        0.575 |        0.735 |     100 |
+
+These values are advisory evidence from darwin-arm64 with Node `v26.8.2` and an Apple M4 Pro. The machine-readable report is `benchmarks/end-to-end.json`; it has `advisory: true`, no thresholds and no entry in `benchmarks/baseline.json`. This is not an editor-latency measurement and is not a blocking correctness gate; ADR-057 records the separation from the layer results.
+
 ## Measurement methodology
 
 1. Build with `npm run build`; the benchmark runner consumes compiled modules.
@@ -56,7 +66,7 @@ The fixtures use syntax representative of Strudel 1.2.6 as pinned by `package.js
 6. Store the machine-readable baseline in `benchmarks/baseline.json`, including its generating commit's environment.
 7. Re-run the check on dependency, parser, semantic or feature-provider changes.
 
-Run `npm run benchmark` for current figures, `npm run benchmark:check` to compare them with the committed baseline, and `npm run benchmark:baseline` to deliberately replace that baseline. The Makefile exposes the same commands as `make benchmark`, `make benchmark-check` and `make benchmark-baseline`.
+Run `npm run benchmark` for layer figures, `npm run benchmark:check` to compare them with the committed baseline, and `npm run benchmark:baseline` to deliberately replace that baseline. Run `npm run benchmark:e2e` for the separate installed-binary figures and `npm run benchmark:e2e:write` to refresh its advisory report. The Makefile exposes the same commands as `make benchmark`, `make benchmark-check`, `make benchmark-baseline`, `make benchmark-e2e` and `make benchmark-e2e-write`.
 
 ## Baseline environment
 
@@ -99,12 +109,12 @@ The large incremental edit is currently slower than a full parse and analysis of
 
 ## Regression monitoring
 
-`npm run benchmark:check` fails when a current percentile exceeds the corresponding stored target or when a workload is missing. CI runs this command in the `performance` job with `continue-on-error: true`, so it reports regressions without blocking unrelated correctness failures. The correctness gate remains `npm run check`.
+`npm run benchmark:check` fails when a current layer percentile exceeds the corresponding stored target or when a workload is missing. CI runs this command in the `performance` job with `continue-on-error: true`, so it reports regressions without blocking unrelated correctness failures. The separate installed-binary harness also runs with `continue-on-error: true` and stores no thresholds, so neither benchmark is a correctness gate. The correctness gate remains `npm run check`.
 
 ## Instrumentation plan
 
-- Layer-boundary timing lives only in `scripts/benchmark.mjs`; the harness adds no production timing hooks or user-facing configuration.
-- The runner keeps fixtures, baseline data and results separate from `src/` and the published package.
+- Layer-boundary timing lives in `scripts/benchmark.mjs` and installed-binary timing in `scripts/benchmark-e2e.mjs`; neither adds production timing hooks or user-facing configuration.
+- The runners keep fixtures, baseline data and results separate from `src/` and the published package.
 - Cancellation and superseded-version behaviour are covered by the stdio integration tests rather than by latency samples.
 - The unreleased Phase 14 soak suite samples child-process RSS externally from `ps` and reports growth as advisory test diagnostics. Those samples are not latency measurements, do not enter the baseline and do not add production telemetry.
 - Future instrumentation should capture request cancellation counts only when a concrete latency investigation requires them.
@@ -115,4 +125,6 @@ Phase 8 is implemented. The harness records 18 workloads, the committed baseline
 
 The unreleased Phase 14 diagnostics settings apply a pure default configuration to each diagnostics and quick-fix derivation. The subsequent workspace-file hardening added symlink, containment, unreadable-path and deterministic-order guards. In the final `npm run benchmark:check` on darwin-arm64 with Node 26.8.2, all 18 workloads remained within the committed thresholds; `diagnostics-small` p50/p95/p99 were 0.002/0.003/0.003 ms, `quick-fixes-small` were 0.002/0.003/0.003 ms and `workspace-symbols-scan` was 0.595/0.644/0.666 ms. The committed baseline was not rewritten because these remain layer-level advisory measurements rather than editor latency.
 
-`npm run test:soak` now adds three bounded lifecycle cycles with 64 rapid edits and advisory RSS observation, but it does not measure p50/p95/p99 or change the 18-workload baseline. The full `npm run check` passed 83/83 tests on darwin-arm64 with Node 26.8.2; observed RSS growth of roughly 3.3–3.4 MiB per cycle was treated as warm-up evidence, not a regression threshold. The separate end-to-end JSON-RPC/installed-binary latency workload remains an open Phase 14 item under ADR-051.
+`npm run test:soak` now adds three bounded lifecycle cycles with 64 rapid edits and advisory RSS observation, but it does not measure p50/p95/p99 or change the 18-workload baseline. The full `npm run check` passed 84/84 tests on darwin-arm64 with Node 26.8.2; observed RSS growth of roughly 3.3–3.4 MiB per cycle was treated as warm-up evidence, not a regression threshold.
+
+The separate installed-binary workload is implemented under ADR-057. Its advisory report records 0.337/0.575/0.735 ms p50/p95/p99 over 100 samples, while `npm run benchmark:check` still passed all 18 layer workloads after the shared statistics extraction. Neither result is an editor-latency claim or a blocking gate.

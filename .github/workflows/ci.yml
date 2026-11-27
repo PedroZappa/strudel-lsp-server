@@ -115,6 +115,10 @@ jobs:
         continue-on-error: true
         run: npm run benchmark:check
 
+      - name: Run advisory installed-binary JSON-RPC benchmark
+        continue-on-error: true
+        run: npm run benchmark:e2e
+
   audit:
     name: Dependency audit
     runs-on: ubuntu-latest

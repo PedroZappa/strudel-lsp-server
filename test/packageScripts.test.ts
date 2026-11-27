@@ -71,6 +71,47 @@ void test('verification scripts and clean npm configuration are preserved', () =
   );
 });
 
+void test('end-to-end benchmark is advisory and separate from the layer baseline', () => {
+  assert.match(packageJson.scripts['benchmark:e2e'], /scripts\/benchmark-e2e\.mjs$/);
+  assert.match(packageJson.scripts['benchmark:e2e:write'], /--write-report$/);
+
+  const report = JSON.parse(
+    readFileSync(join(repositoryRoot, 'benchmarks', 'end-to-end.json'), 'utf8'),
+  ) as {
+    schemaVersion: number;
+    advisory: boolean;
+    workload: {
+      id: string;
+      samples: number;
+      batches: number;
+      p50: number;
+      p95: number;
+      p99: number;
+      thresholds?: unknown;
+    };
+  };
+  assert.equal(report.schemaVersion, 1);
+  assert.equal(report.advisory, true);
+  assert.equal(report.workload.id, 'jsonrpc-installed-document-symbol');
+  assert.equal(report.workload.samples, 100);
+  assert.equal(report.workload.batches, 5);
+  for (const percentile of ['p50', 'p95', 'p99'] as const) {
+    assert.ok(
+      Number.isFinite(report.workload[percentile]) && report.workload[percentile] > 0,
+      `${percentile} must be a positive measurement`,
+    );
+  }
+  assert.equal(report.workload.thresholds, undefined);
+
+  const baseline = JSON.parse(
+    readFileSync(join(repositoryRoot, 'benchmarks', 'baseline.json'), 'utf8'),
+  ) as { workloads: { id: string }[] };
+  assert.ok(
+    !baseline.workloads.some((workload) => workload.id === report.workload.id),
+    'the installed-binary workload must not enter the layer-level baseline',
+  );
+});
+
 void test('package metadata describes the published server', () => {
   assert.equal(packageJson.name, 'strudel-lsp-server');
   assert.match(packageJson.version, /^\d+\.\d+\.\d+$/);

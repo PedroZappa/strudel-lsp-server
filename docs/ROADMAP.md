@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: re-implementation roadmap complete through Phase 13; Phases 14–15 define the proposed `0.2.0` hardening/configuration increment and controlled release path. `strudel-lsp-server@0.1.0` remains the published release. The Phase 14 diagnostics-configuration, workspace-symbol filesystem-hardening, clean consumer-install and bounded soak/lifecycle tasks are implemented and verified; the remaining Phase 14–15 work is not implemented or authorized for publication. ADR-051 records the scope and deferred work, ADR-052 records the configuration contract, ADR-053 records the filesystem boundary, ADR-054 records the `.npmrc` removal, ADR-055 records hermetic pack caching, and ADR-056 records the advisory soak/lifecycle design. Missing provenance for the operator-managed first publish is recorded in ADR-050. Priorities are proposals and remain subject to approval.
+Status: re-implementation roadmap complete through Phase 13; Phases 14–15 define the proposed `0.2.0` hardening/configuration increment and controlled release path. `strudel-lsp-server@0.1.0` remains the published release. The Phase 14 diagnostics-configuration, workspace-symbol filesystem-hardening, clean consumer-install, bounded soak/lifecycle and installed-binary end-to-end benchmark tasks are implemented and verified; the remaining Phase 14–15 work is not implemented or authorized for publication. ADR-051 records the scope and deferred work, ADR-052 records the configuration contract, ADR-053 records the filesystem boundary, ADR-054 records the `.npmrc` removal, ADR-055 records hermetic pack caching, ADR-056 records the advisory soak/lifecycle design, and ADR-057 records the separate advisory benchmark report. Missing provenance for the operator-managed first publish is recorded in ADR-050. Priorities are proposals and remain subject to approval.
 
 Authority: `AGENTS.md` sections 2–18 and the other documents in `docs/`.
 
@@ -366,7 +366,7 @@ Exit criteria:
 
 Dependencies: Phase 13 and explicit approval of the v0.2.0 scope recorded in ADR-051. This phase prepares changes; it does not publish a release.
 
-**Status: the diagnostics-configuration, workspace-symbol filesystem-hardening, clean consumer-install and bounded soak/lifecycle tasks are implemented and verified; the remaining tasks are planned. Nothing in this phase is authorized for release.**
+**Status: the diagnostics-configuration, workspace-symbol filesystem-hardening, clean consumer-install, bounded soak/lifecycle and installed-binary end-to-end benchmark tasks are implemented and verified; the remaining tasks are planned. Nothing in this phase is authorized for release.**
 
 Tasks:
 
@@ -374,7 +374,7 @@ Tasks:
 - [x] Harden bounded workspace-symbol discovery for symlinks, path traversal, unreadable files and file-size/depth limits. Preserve open-document overrides and deterministic results; do not introduce a persistent index, file watcher or cross-file module graph. Implemented with normalized roots, explicit symlink and unsafe-name rejection, locale-independent ordering, an injectable filesystem test seam, three `test/lsp/` regression tests and ADR-053.
 - [x] Verify installation in a clean consumer environment that does not inherit this repository's `.npmrc`, especially `legacy-peer-deps=true`. Narrow or remove that setting only after compatibility is demonstrated, and record the decision with evidence. Implemented with `npm run verify:consumer`, `make verify-consumer`, CI coverage, removal of `.npmrc` and ADR-054.
 - [x] Add a bounded soak/lifecycle test covering rapid edits, repeated initialize/shutdown cycles and memory-growth observation. `test/soakLifecycle.test.ts` runs three process cycles with 64 rapid edits each, asserts clean transport, final document state and exit codes, and reports RSS observations from `ps` as advisory diagnostics without production telemetry; see ADR-056.
-- [ ] Add one end-to-end JSON-RPC/installed-binary workload to the benchmark suite. Report p50/p95/p99 separately from layer-level results and keep it advisory, not a blocking correctness gate.
+- [x] Add one end-to-end JSON-RPC/installed-binary workload to the benchmark suite. `scripts/benchmark-e2e.mjs` packs and installs the built tarball offline, drives `textDocument/didChange` plus `textDocument/documentSymbol` through the installed bin, and writes p50/p95/p99 to the separate advisory `benchmarks/end-to-end.json`; see ADR-057.
 - [ ] Execute two independent LSP-client smoke tests with client configuration kept outside the server core. Record the client behaviours exercised and their results; add no editor dependency to the published server.
 - [ ] Update `docs/LSP_FEATURES.md`, `docs/TESTING_STRATEGY.md`, `docs/PERFORMANCE.md`, README and CHANGELOG as each behaviour lands. Do not describe planned behaviour as implemented before verification.
 
@@ -384,7 +384,7 @@ Exit criteria:
 - [x] Workspace-symbol filesystem edge cases have deterministic regression coverage and bounded limits remain enforced.
 - [x] Consumer installation without inherited npm configuration passes, and the `.npmrc` decision is recorded.
 - [ ] Bounded soak evidence is recorded without new core dependencies or production telemetry; two-client editor smoke evidence remains outstanding.
-- [ ] End-to-end benchmark baseline and advisory check include the JSON-RPC path with p50/p95/p99.
+- [x] A separate advisory `benchmarks/end-to-end.json` records JSON-RPC p50/p95/p99 from the installed binary. This refines the earlier "baseline and advisory check" wording: per ADR-051 the result is reported separately and has no thresholds, while `benchmark:check` keeps its 18 layer-level workloads.
 - [ ] Full validation gate passes after the changes, and documentation matches implementation.
 
 ## Phase 15 — v0.2.0 controlled release
@@ -416,7 +416,7 @@ These were the recommended, non-blocking items carried out of first publication.
 - [x] Add deterministic stdio error-path tests for malformed input and cancellation; `test/protocolRobustness.test.ts` now covers both at the JSON-RPC transport layer in addition to the semantic-engine suite.
 - [x] **Assigned to Phase 14 and completed.** A bounded soak test exercises rapid edits and repeated initialize/shutdown cycles, reports advisory RSS observations, and adds no production telemetry; see ADR-056 and `npm run test:soak`.
 - [x] **Assigned to Phase 14 and completed.** Workspace-symbol discovery now rejects symlinks, unsafe entry names and paths outside the normalized root, ignores unreadable or oversized files, enforces depth and file-count limits, and uses deterministic ordering; see ADR-053 and `test/lsp/workspaceFiles.test.ts`.
-- [ ] **Assigned to Phase 14.** Measure at least one end-to-end request path through JSON-RPC and the installed binary. The committed benchmark is deliberately layer-level and should not be presented as full editor latency.
+- [x] **Assigned to Phase 14 and completed.** `npm run benchmark:e2e` measures a rapid edit and document-symbol request through stdio JSON-RPC and the installed bin; `benchmarks/end-to-end.json` reports advisory p50/p95/p99 separately from the layer-level baseline; see ADR-057.
 - [ ] Decide whether to include `CHANGELOG.md`, TypeScript sources or source maps in the npm `files` allowlist. The current allowlist is intentionally minimal; any change must be reflected in package verification.
 - [ ] Record a dependency-update policy for Strudel, the parser and Node: what triggers compatibility retesting and when the pinned metadata snapshot may be regenerated.
 - [ ] Consider a generated SBOM or release attestation. This is optional for the first release and must not introduce a dependency without separate approval.

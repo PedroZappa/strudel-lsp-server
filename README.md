@@ -72,12 +72,13 @@ The unreleased development tree adds focused diagnostics settings under the stan
 npm run check
 npm run test:soak
 npm run benchmark:check
+npm run benchmark:e2e
 npm run verify:contents
 npm run verify:package
 npm run verify:consumer
 ```
 
-The Makefile provides the same workflows through `make check`, `make test-soak`, `make benchmark-check`, `make pack-check`, `make verify-package`, `make verify-consumer` and `make verify-all`. `npm run verify:contents` previews and checks the tarball allowlist with an isolated npm cache. `npm run verify:package` uses the same isolated cache for packing, performs a clean offline installation from that tarball using the surrounding cache, and verifies the installed stdio executable with an initialize/shutdown handshake. `npm run verify:consumer` checks installation without inherited npm configuration or legacy peer dependencies. `npm run test:soak` exercises rapid edits and repeated initialize/shutdown cycles; RSS growth is reported as advisory test diagnostics rather than production telemetry.
+The Makefile provides the same workflows through `make check`, `make test-soak`, `make benchmark-check`, `make benchmark-e2e`, `make pack-check`, `make verify-package`, `make verify-consumer` and `make verify-all`. `npm run verify:contents` previews and checks the tarball allowlist with an isolated npm cache. `npm run verify:package` uses the same isolated cache for packing, performs a clean offline installation from that tarball using the surrounding cache, and verifies the installed stdio executable with an initialize/shutdown handshake. `npm run verify:consumer` checks installation without inherited npm configuration or legacy peer dependencies. `npm run test:soak` exercises rapid edits and repeated initialize/shutdown cycles; RSS growth is reported as advisory test diagnostics rather than production telemetry. `npm run benchmark:e2e` measures one document-symbol request path through stdio JSON-RPC and the installed bin; its p50/p95/p99 are stored in the separate advisory `benchmarks/end-to-end.json` report, not in the layer-level baseline.
 
 ## Repository layout
 

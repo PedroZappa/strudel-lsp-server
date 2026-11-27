@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "advisory": true,
+  "generatedAt": "2026-11-27T15:59:08.180Z",
+  "environment": {
+    "node": "v26.8.2",
+    "platform": "darwin",
+    "architecture": "arm64",
+    "cpuModel": "Apple M4 Pro",
+    "logicalCpus": 12,
+    "totalMemoryGiB": 24,
+    "packageVersion": "0.1.0",
+    "parserVersion": "2.0.2",
+    "strudelCoreVersion": "1.2.6",
+    "typescriptVersion": "6.0.3"
+  },
+  "methodology": {
+    "timer": "node:perf_hooks.performance.now",
+    "transport": "stdio JSON-RPC through the installed npm bin",
+    "request": "textDocument/documentSymbol after textDocument/didChange",
+    "installation": "local tarball packed with isolated npm config, installed offline from the pinned lockfile",
+    "warmupIterations": 5,
+    "batchCount": 5,
+    "samplesPerBatch": 20,
+    "sampleCount": 100,
+    "percentileMethod": "nearest-rank within each batch, then median across batches",
+    "advisory": true
+  },
+  "workload": {
+    "id": "jsonrpc-installed-document-symbol",
+    "description": "Rapid edit and document-symbol request through JSON-RPC and the installed binary",
+    "fixture": "small-live-edit.strudel",
+    "unit": "ms",
+    "samples": 100,
+    "batches": 5,
+    "batchSize": 20,
+    "min": 0.243,
+    "max": 0.947,
+    "p50": 0.337,
+    "p95": 0.575,
+    "p99": 0.735
+  }
+}
