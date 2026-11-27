@@ -1,6 +1,6 @@
 # LSP Features
 
-Status: Phase 6 capabilities, signature help, conservative token-level mini-notation analysis, Phase 7 quick fixes, rename, document symbols and semantic tokens implemented and verified; remaining candidates are tracked below.
+Status: Phase 6 capabilities, signature help, conservative token-level mini-notation analysis, Phase 7 quick fixes, rename, document symbols, semantic tokens and formatting implemented and verified; remaining candidates are tracked below.
 
 Authority: `AGENTS.md` sections 4 and 5.
 
@@ -35,7 +35,7 @@ None of this behaviour is treated as a specification.
 | Document symbols                   | Implemented     | Extended        | Declared user symbols from the current semantic snapshot with exact selection ranges. |
 | Workspace symbols                  | Deferred        | Deferred        | No workspace index exists; open-document-only search would be incomplete.             |
 | Semantic tokens                    | Implemented     | Extended        | Verified symbols and mini-notation tokens only; no unresolved-name guessing.          |
-| Formatting                         | Not implemented | Later           | Needs explicit user-facing preferences and safe, deterministic edits.                 |
+| Formatting                         | Implemented     | Extended        | Conservative indentation only; preferences come from standard LSP formatting options. |
 | Refactoring and other code actions | Not implemented | Later           | Quick fixes tracked separately; broader actions need a usefulness and safety case.    |
 | Folding ranges                     | Deferred        | Deferred        | Evaluate after core language intelligence is reliable.                                |
 | Selection ranges                   | Deferred        | Deferred        | Evaluate editor benefit against implementation cost.                                  |
@@ -91,12 +91,20 @@ Current implementation: outermost non-empty syntax error nodes produce warnings;
 - Unresolved identifiers, syntax errors, ordinary mini-notation steps, unknown characters and stale ranges produce no semantic token.
 - Full-document requests are supported; range requests and incremental token deltas are not advertised.
 
+## Formatting policy
+
+- `textDocument/formatting` rewrites only leading indentation of statements, statement-position comments and block braces identified by the syntax tree.
+- `tabSize` and `insertSpaces` are read from standard LSP formatting options, with two spaces as the fallback and `tabSize` constrained to 1–8.
+- No code token, line break, trailing whitespace, string or template content, multi-line comment body or expression continuation is changed.
+- Documents with syntax errors receive no edits, so incomplete live-coding input is never reshaped mid-edit.
+- Range formatting, on-type formatting and expression reflow are not advertised.
+
 ## Configuration
 
 Configuration stays narrow and user-facing:
 
 - Diagnostic enablement and severity.
-- Formatting preferences where formatting is implemented.
+- Formatting preferences are supplied by the client's standard LSP `tabSize` and `insertSpaces` options; no custom setting exists yet.
 - Strudel compatibility/version selection.
 
 Internal engine settings are not exposed without a concrete user-facing requirement.
@@ -110,6 +118,7 @@ Implemented and advertised in `initialize`:
 - `codeActionProvider` with only the `quickfix` kind and `resolveProvider: false`.
 - `hoverProvider`, `definitionProvider` and `referencesProvider`.
 - `documentSymbolProvider` for `textDocument/documentSymbol`; no workspace-symbol capability is claimed.
+- `documentFormattingProvider` for `textDocument/formatting`; no range or on-type formatting is claimed.
 - `semanticTokensProvider` with the exact legend and `full: true`; no range or delta provider is claimed.
 - `renameProvider` with `prepareProvider: true` for `textDocument/prepareRename` and `textDocument/rename`.
 - `signatureHelpProvider` with `(` and `,` trigger characters.
@@ -117,8 +126,8 @@ Implemented and advertised in `initialize`:
 
 Verification evidence:
 
-- `npm run test:features`: nineteen provider tests cover conservative diagnostics, malformed input, quick-fix edits and range filtering, position-aware completion, hover content, resolved-symbol navigation, document-symbol ranges and hierarchy, rename preparation and edits, semantic-token classification, signature help, mini-notation diagnostics and hover, and incremental range shifting.
+- `npm run test:features`: twenty-three provider tests cover conservative diagnostics, malformed input, quick-fix edits and range filtering, position-aware completion, hover content, resolved-symbol navigation, document-symbol ranges and hierarchy, formatting indentation and preferences, rename preparation and edits, semantic-token classification, signature help, mini-notation diagnostics and hover, and incremental range shifting.
 - `npm run test:mini`: five isolated token-model tests cover documented operators, token descriptions, structural faults, expected-closer metadata, live-coding suppression and unsupported-character progress.
-- `npm test`: 42 tests include a stdio integration test that verifies capability advertisement, all ten implemented request types, diagnostic publication, code-action, document-symbol, semantic-token and rename mapping, document closure and rapid-edit version suppression.
+- `npm test`: 46 tests include a stdio integration test that verifies capability advertisement, all eleven implemented request types, diagnostic publication, code-action, document-symbol, formatting, semantic-token and rename mapping, document closure and rapid-edit version suppression.
 
-Deferred: completion resolution, workspace symbols, formatting and remaining extended capabilities. User-facing configuration for diagnostics and Strudel version selection is not exposed yet.
+Deferred: completion resolution, workspace symbols, range formatting, broader refactoring and remaining extended capabilities. Custom user-facing configuration for diagnostics and Strudel version selection is not exposed yet.

@@ -58,6 +58,6 @@ Once data exists, this document must record:
 
 ## Current status
 
-No benchmark suite, workload, baseline or target exists in the repository. The prototype has no performance instrumentation. Phase 6 added signature-help lookup and a linear token scan per analyzed double-quoted mini-notation string; Phase 7 added code-action computation, document-scoped rename lookup, a scope/symbol traversal for document symbols and a full-document semantic-token pass from the cached semantic snapshot. None has a measured latency figure yet. Phase 8 must include them in representative edit, diagnostic, hover, code-action, document-symbol, semantic-token and rename workloads.
+No benchmark suite, workload, baseline or target exists in the repository. The prototype has no performance instrumentation. Phase 6 added signature-help lookup and a linear token scan per analyzed double-quoted mini-notation string; Phase 7 added code-action computation, document-scoped rename lookup, a scope/symbol traversal for document symbols, a full-document semantic-token pass and a syntax-tree indentation pass for formatting from cached snapshots. None has a measured latency figure yet. Phase 8 must include them in representative edit, diagnostic, hover, code-action, document-symbol, formatting, semantic-token and rename workloads.
 
 CI now executes `npm run benchmark` in a dedicated `performance` job, so future workloads and targets can be wired into the same gate. The job currently reports that no workloads are registered and does not claim or enforce a latency threshold.

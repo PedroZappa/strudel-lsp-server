@@ -16,6 +16,7 @@ import {
   type CompletionParams,
   type DefinitionParams,
   type Diagnostic,
+  type DocumentFormattingParams,
   type DocumentSymbol as LspDocumentSymbol,
   type DocumentSymbolParams,
   type Hover,
@@ -40,6 +41,7 @@ import {
   provideDefinition,
   provideDiagnostics,
   provideDocumentSymbols,
+  provideFormatting,
   prepareRename,
   provideHover,
   provideQuickFixes,
@@ -281,6 +283,7 @@ connection.onInitialize((): InitializeResult => ({
     definitionProvider: true,
     referencesProvider: true,
     documentSymbolProvider: true,
+    documentFormattingProvider: true,
     semanticTokensProvider: {
       legend: SEMANTIC_TOKENS_LEGEND,
       range: false,
@@ -423,6 +426,24 @@ connection.onDocumentSymbol((params: DocumentSymbolParams): Promise<LspDocumentS
       return [];
     }
     return provideDocumentSymbols(contextFor(analyzed, 0)).map(toLspDocumentSymbol);
+  }),
+);
+
+connection.onDocumentFormatting((params: DocumentFormattingParams): Promise<TextEdit[]> =>
+  guardAsync([], async () => {
+    await awaitDocumentAnalysis(params.textDocument.uri);
+    const analyzed = documents.get(params.textDocument.uri);
+    if (analyzed === undefined) {
+      return [];
+    }
+    const result = provideFormatting(contextFor(analyzed, 0), {
+      tabSize: params.options.tabSize,
+      insertSpaces: params.options.insertSpaces,
+    });
+    return result.edits.map((edit): TextEdit => ({
+      range: toLspRange(edit.range),
+      newText: edit.newText,
+    }));
   }),
 );
 

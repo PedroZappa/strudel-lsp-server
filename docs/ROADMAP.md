@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: re-implementation roadmap updated with resolved blocker decisions, Phase 6 completion, Phase 7 quick fixes, rename, document symbols and semantic tokens, 2026-11-27. Priorities are proposals and remain subject to approval.
+Status: re-implementation roadmap updated with resolved blocker decisions, Phase 6 completion, Phase 7 quick fixes, rename, document symbols, semantic tokens and formatting, 2026-11-27. Priorities are proposals and remain subject to approval.
 
 Authority: `AGENTS.md` sections 2–18 and the other documents in `docs/`.
 
@@ -159,7 +159,7 @@ Phase 6 exit criteria:
 
 ## Phase 7 — Extended capabilities
 
-**Status: quick fixes, rename, document symbols and semantic tokens implemented and verified; workspace symbols and the other candidates remain under evaluation.**
+**Status: quick fixes, rename, document symbols, semantic tokens and formatting implemented and verified; workspace symbols and the other candidates remain under evaluation.**
 
 Dependencies: Phase 6.
 
@@ -170,7 +170,7 @@ Candidate extended capabilities, evaluate and implement only where justified:
 - [x] Document symbols.
 - [ ] Workspace symbols (deferred; no workspace index exists).
 - [x] Semantic tokens.
-- [ ] Formatting.
+- [x] Formatting.
 - [ ] Code actions and refactoring.
 
 Quick fixes are limited to validated mini-notation structural diagnostics and produce single-document text edits. Syntax errors, unknown names and incomplete live-coding states do not produce fixes. The LSP adapter advertises only the quick-fix kind and recomputes actions from the current semantic snapshot rather than trusting client-supplied stale diagnostics.
@@ -204,6 +204,14 @@ Semantic token exit criteria:
 - [x] `semanticTokensProvider` advertises the exact legend, full-document requests and no range or delta support.
 - [x] Feature and stdio tests cover declaration and default-library modifiers, unresolved names, mini-notation tokens and incomplete input.
 - [x] Tokens use verified UTF-16 ranges and are never inferred from raw text alone.
+
+Formatting is deliberately narrow: it rewrites only the leading indentation of syntax-verified statements, statement-position comments and block braces. `tabSize` and `insertSpaces` come from standard LSP formatting options, so editor settings provide user preferences without a custom configuration channel. Code text, line breaks, trailing whitespace, string and template contents, multi-line comment bodies and continuation lines are never changed. Documents with syntax errors are left untouched to avoid disrupting live coding; range formatting and whole-expression reflow are not advertised.
+
+Formatting exit criteria:
+
+- [x] `documentFormattingProvider` is advertised and `textDocument/formatting` returns deterministic UTF-16 edits.
+- [x] Feature and stdio tests cover statement and nested-block indentation, tab and space preferences, protected string/template/comment content, clean documents, unchanged documents and syntax errors.
+- [x] Formatting changes no code tokens and makes no edits when the existing indentation is already correct.
 
 ## Phase 8 — Performance harness and targets
 

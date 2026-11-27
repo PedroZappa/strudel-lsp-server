@@ -114,3 +114,12 @@ export interface SemanticTokenResult {
   readonly type: SemanticTokenType;
   readonly modifiers: readonly SemanticTokenModifier[];
 }
+
+export interface FormattingOptions {
+  readonly tabSize: number;
+  readonly insertSpaces: boolean;
+}
+
+export interface FormattingResult {
+  readonly edits: readonly TextEditResult[];
+}

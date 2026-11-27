@@ -249,6 +249,7 @@ void test('stdio server advertises and serves implemented language capabilities'
       definitionProvider: boolean;
       referencesProvider: boolean;
       documentSymbolProvider: boolean;
+      documentFormattingProvider: boolean;
       semanticTokensProvider?: {
         legend: { tokenTypes: string[]; tokenModifiers: string[] };
         range: boolean;
@@ -270,6 +271,7 @@ void test('stdio server advertises and serves implemented language capabilities'
   assert.equal(initializeResult.capabilities.definitionProvider, true);
   assert.equal(initializeResult.capabilities.referencesProvider, true);
   assert.equal(initializeResult.capabilities.documentSymbolProvider, true);
+  assert.equal(initializeResult.capabilities.documentFormattingProvider, true);
   assert.deepEqual(initializeResult.capabilities.semanticTokensProvider?.legend.tokenTypes, [
     'function',
     'method',
@@ -401,6 +403,44 @@ void test('stdio server advertises and serves implemented language capabilities'
     rename.changes[uri]?.every((edit) => edit.newText === 'loop'),
     true,
   );
+
+  const formatUri = 'file:///test/format.strudel';
+  const formatText = 'function f() {\n    return s("bd")\n  }';
+  const formatDiagnostics = client.waitForNotification(
+    'textDocument/publishDiagnostics',
+    (params) => (params as PublishDiagnosticsParams).uri === formatUri,
+  );
+  client.notify('textDocument/didOpen', {
+    textDocument: { uri: formatUri, languageId: 'strudel', version: 1, text: formatText },
+  });
+  await formatDiagnostics;
+
+  const formatting = (await client.request('textDocument/formatting', {
+    textDocument: { uri: formatUri },
+    options: { tabSize: 2, insertSpaces: true },
+  })) as {
+    range: {
+      start: { line: number; character: number };
+      end: { line: number; character: number };
+    };
+    newText: string;
+  }[];
+  assert.deepEqual(formatting, [
+    {
+      range: {
+        start: { line: 1, character: 0 },
+        end: { line: 1, character: 4 },
+      },
+      newText: '  ',
+    },
+    {
+      range: {
+        start: { line: 2, character: 0 },
+        end: { line: 2, character: 2 },
+      },
+      newText: '',
+    },
+  ]);
 
   const miniUri = 'file:///test/mini.strudel';
   const miniText = 's("[]")';

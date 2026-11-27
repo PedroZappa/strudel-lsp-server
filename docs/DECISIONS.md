@@ -1,6 +1,6 @@
 # Decisions
 
-Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened; ADR-021 records the Phase 6 deferred-item completion, ADR-022 records Phase 7 quick fixes, ADR-023 records document-scoped rename, ADR-024 records document symbols with workspace symbols deferred and ADR-025 records semantic tokens.
+Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened; ADR-021 records the Phase 6 deferred-item completion, ADR-022 records Phase 7 quick fixes, ADR-023 records document-scoped rename, ADR-024 records document symbols with workspace symbols deferred, ADR-025 records semantic tokens and ADR-026 records conservative formatting.
 
 ## ADR-001 — Clean-slate re-implementation
 
@@ -285,7 +285,7 @@ Rationale: incremental reuse, deferred analysis and version suppression protect 
 
 Consequences:
 
-- Signature help and mini-notation token analysis were added in ADR-021, quick fixes in ADR-022, document-scoped rename in ADR-023, document symbols in ADR-024 and semantic tokens in ADR-025; completion resolution, workspace symbols, formatting and remaining extended capabilities remain deferred.
+- Signature help and mini-notation token analysis were added in ADR-021, quick fixes in ADR-022, document-scoped rename in ADR-023, document symbols in ADR-024, semantic tokens in ADR-025 and formatting in ADR-026; completion resolution, workspace symbols, broader refactoring and remaining extended capabilities remain deferred.
 - User-facing configuration for diagnostics and Strudel version selection is not exposed yet.
 - The stdio integration test now exercises capability advertisement, all implemented request types, diagnostic publication, document closure and rapid-edit suppression.
 - Performance work in Phase 8 must measure this pipeline; no latency target is claimed here.
@@ -389,3 +389,21 @@ Consequences:
 - `range: false` and `full: true` are advertised; no incremental delta computation is claimed.
 - Feature tests cover classification, unresolved names, mini-notation tokens and incomplete input; the stdio test verifies legend advertisement and encoded response data.
 - Semantic-token computation uses the cached semantic snapshot and has no measured latency figure; Phase 8 must include it in representative request workloads.
+
+## ADR-026 — Conservative indentation formatting
+
+Status: accepted on 2026-11-27.
+
+Decision: implement `textDocument/formatting` as a syntax-guided indentation pass only. No external formatter, new dependency, general JavaScript printer or custom configuration channel is introduced. Range formatting, on-type formatting and expression reflow are deferred.
+
+`src/features/formatting.ts` walks the parser-independent `SyntaxDocument` and rewrites only the leading whitespace of statement-level nodes, statement-position comments and block braces. Indentation depth is derived from enclosing block nodes. `tabSize` and `insertSpaces` come from standard LSP `DocumentFormattingParams.options`, defaulting to two spaces with `tabSize` constrained to 1–8. Code tokens, line breaks, trailing whitespace, string and template contents, multi-line comment bodies and expression continuation lines are never edited. Lines with ambiguous candidates and documents with syntax errors produce no edits.
+
+Rationale: Strudel documents are JavaScript-like but depend on literal mini-notation strings and are edited live. A full printer would require a general JavaScript formatter and would risk changing strings or partial expressions. Indentation is useful, deterministic and verifiable from the syntax tree, while LSP formatting options already give users editor-native preferences. Doing nothing on malformed input protects live coding from disruptive edits.
+
+Consequences:
+
+- Formatting output depends only on the current syntax snapshot and client formatting options.
+- Already-correct documents produce an empty edit list; no edit ever changes non-whitespace source characters.
+- Feature tests cover nested blocks, tab and space preferences, protected strings/templates/comments, blank lines, clean documents and syntax errors; the stdio test verifies capability advertisement and edit mapping.
+- Formatting uses the cached syntax snapshot and has no measured latency figure; Phase 8 must include it in representative request workloads.
+- Broader refactoring and range formatting require separate usefulness and safety cases before implementation.
