@@ -15,12 +15,30 @@ export interface FeatureContext {
   readonly node?: SyntaxNode;
 }
 
+export interface DiagnosticFix {
+  readonly title: string;
+  readonly range: SemanticRange;
+  readonly newText: string;
+}
+
 export interface LanguageDiagnostic {
   readonly range: SemanticRange;
   readonly severity: DiagnosticSeverityName;
   readonly message: string;
   readonly source: string;
   readonly code?: string;
+  readonly fix?: DiagnosticFix;
+}
+
+export interface TextEditResult {
+  readonly range: SemanticRange;
+  readonly newText: string;
+}
+
+export interface QuickFixResult {
+  readonly title: string;
+  readonly diagnostics: readonly LanguageDiagnostic[];
+  readonly edits: readonly TextEditResult[];
 }
 
 export interface CompletionCandidate {

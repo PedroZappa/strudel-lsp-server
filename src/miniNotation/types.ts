@@ -36,6 +36,8 @@ export interface MiniNotationIssue {
   readonly code: MiniNotationIssueCode;
   readonly message: string;
   readonly range: SemanticRange;
+  /** Present for `mismatched-close` so a safe replacement edit can be offered. */
+  readonly expectedClose?: string;
 }
 
 export interface MiniNotationAnalysis {

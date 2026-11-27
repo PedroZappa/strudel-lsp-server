@@ -205,6 +205,7 @@ void test('stdio server advertises and serves implemented language capabilities'
     capabilities: {
       textDocumentSync: number;
       completionProvider: { triggerCharacters?: string[] };
+      codeActionProvider?: { codeActionKinds?: string[]; resolveProvider?: boolean };
       hoverProvider: boolean;
       signatureHelpProvider: { triggerCharacters?: string[] };
       definitionProvider: boolean;
@@ -214,6 +215,8 @@ void test('stdio server advertises and serves implemented language capabilities'
 
   assert.equal(initializeResult.capabilities.textDocumentSync, 2);
   assert.deepEqual(initializeResult.capabilities.completionProvider.triggerCharacters, ['.']);
+  assert.deepEqual(initializeResult.capabilities.codeActionProvider?.codeActionKinds, ['quickfix']);
+  assert.equal(initializeResult.capabilities.codeActionProvider?.resolveProvider, false);
   assert.equal(initializeResult.capabilities.hoverProvider, true);
   assert.deepEqual(initializeResult.capabilities.signatureHelpProvider.triggerCharacters, [
     '(',
@@ -270,6 +273,33 @@ void test('stdio server advertises and serves implemented language capabilities'
     context: { includeDeclaration: true },
   })) as { range: { start: { line: number } } }[];
   assert.equal(references.length, 2);
+
+  const miniUri = 'file:///test/mini.strudel';
+  const miniText = 's("[]")';
+  const miniDiagnostics = client.waitForNotification('textDocument/publishDiagnostics', (params) =>
+    (params as PublishDiagnosticsParams).diagnostics.some(
+      (diagnostic) => diagnostic.code === 'empty-group',
+    ),
+  );
+  client.notify('textDocument/didOpen', {
+    textDocument: { uri: miniUri, languageId: 'strudel', version: 1, text: miniText },
+  });
+  await miniDiagnostics;
+
+  const codeActions = (await client.request('textDocument/codeAction', {
+    textDocument: { uri: miniUri },
+    range: { start: { line: 0, character: 3 }, end: { line: 0, character: 5 } },
+    context: { diagnostics: [] },
+  })) as {
+    title: string;
+    kind: string;
+    diagnostics: { code?: string }[];
+    edit: { changes: Record<string, { newText: string }[]> };
+  }[];
+  assert.equal(codeActions.length, 1);
+  assert.equal(codeActions[0]?.kind, 'quickfix');
+  assert.equal(codeActions[0]?.diagnostics[0]?.code, 'empty-group');
+  assert.equal(codeActions[0]?.edit.changes[miniUri]?.[0]?.newText, '');
 
   const unknownDiagnostics = client.waitForNotification('textDocument/publishDiagnostics');
   client.notify('textDocument/didChange', {

@@ -1,6 +1,6 @@
 # Decisions
 
-Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened; ADR-021 records the Phase 6 deferred-item completion.
+Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened; ADR-021 records the Phase 6 deferred-item completion and ADR-022 records Phase 7 quick fixes.
 
 ## ADR-001 — Clean-slate re-implementation
 
@@ -285,7 +285,7 @@ Rationale: incremental reuse, deferred analysis and version suppression protect 
 
 Consequences:
 
-- Signature help and mini-notation token analysis are now implemented in ADR-021; completion resolution, quick fixes, rename, symbols, semantic tokens, formatting and extended capabilities remain deferred.
+- Signature help and mini-notation token analysis were added in ADR-021 and quick fixes in ADR-022; completion resolution, rename, symbols, semantic tokens, formatting and remaining extended capabilities remain deferred.
 - User-facing configuration for diagnostics and Strudel version selection is not exposed yet.
 - The stdio integration test now exercises capability advertisement, all implemented request types, diagnostic publication, document closure and rapid-edit suppression.
 - Performance work in Phase 8 must measure this pipeline; no latency target is claimed here.
@@ -315,3 +315,22 @@ Consequences:
 - Mini-notation analysis is deliberately not a full AST or haskellish parser; sample-name validation and semantic argument checks remain out of scope.
 - The mini-notation suite runs independently via `npm run test:mini` or `make test-mini`; feature and stdio integration tests cover provider mapping, nested calls, active parameters, conservative diagnostics, operator hover and incremental range shifting.
 - The added linear token scan has no benchmark yet; Phase 8 must include it in latency workloads.
+
+## ADR-022 — Conservative quick fixes for mini notation
+
+Status: accepted on 2026-11-27.
+
+Decision: implement the first Phase 7 extended capability as quick fixes limited to the four validated mini-notation structural diagnostics. No new dependency or general refactoring provider is introduced.
+
+`src/features/codeActions.ts` recomputes actions from the current semantic snapshot and returns a fix only when the diagnostic range intersects the requested LSP range. `LanguageDiagnostic` carries an optional transport-independent `DiagnosticFix` containing the title, replacement range and replacement text. `src/server.ts` advertises `codeActionProvider` with only `CodeActionKind.QuickFix` and `resolveProvider: false`, then maps each fix to a single-document `WorkspaceEdit`. Client-supplied diagnostics are not used to authorize edits because they may be stale.
+
+Mini-notation issues now supply fix metadata: an empty group is deleted, an unmatched closer is deleted, a redundant separator is deleted, and a mismatched closer records `expectedClose` so it can be replaced with the delimiter demanded by the opener. Syntax errors, unknown calls and methods, unresolved values and incomplete live-coding states produce no actions.
+
+Rationale: the Phase 6 diagnostics policy already identified these four structural faults as reliable enough to report. Their issue ranges are exact and their repairs are deterministic text edits. Broader fixes would require sample-name knowledge, a recovery parser or speculative type information, which would conflict with live-coding resilience and the remaining roadmap evaluation policy.
+
+Consequences:
+
+- `textDocument/codeAction` is an implemented and verified request; no source action kinds are advertised.
+- Mismatched-closer fixes use the expected delimiter recorded by the analyzer rather than parsing diagnostic messages.
+- Feature tests cover all four edits, non-actionable diagnostics and range filtering; the stdio test covers capability advertisement and edit mapping.
+- The code-action path recomputes diagnostics from cached syntax and semantic snapshots and has no measured latency figure; Phase 8 must include it in code-action workloads.

@@ -46,9 +46,13 @@ void test('describes replication, list notation and alternation according to pin
 });
 
 void test('reports only structural faults that the grammar rejects', () => {
-  assert.equal(analyze('[]').issues[0]?.code, 'empty-group');
+  const emptyGroup = analyze('[]').issues[0];
+  assert.equal(emptyGroup?.code, 'empty-group');
+  assert.deepEqual([emptyGroup?.range.startOffset, emptyGroup?.range.endOffset], [1, 3]);
   assert.equal(analyze('a)').issues[0]?.code, 'unmatched-close');
-  assert.equal(analyze('[bd>').issues[0]?.code, 'mismatched-close');
+  const mismatch = analyze('[bd>').issues[0];
+  assert.equal(mismatch?.code, 'mismatched-close');
+  assert.equal(mismatch?.expectedClose, ']');
   assert.equal(analyze('a,,b').issues[0]?.code, 'empty-step');
   assert.deepEqual(analyze('bd sd [~ bd] sd,hh*6').issues, []);
 });

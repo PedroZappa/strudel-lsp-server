@@ -1,12 +1,15 @@
 #!/usr/bin/env node
 
 import {
+  CodeActionKind,
   CompletionItemKind,
   createConnection,
   DiagnosticSeverity,
   MarkupKind,
   ProposedFeatures,
   TextDocumentSyncKind,
+  type CodeAction,
+  type CodeActionParams,
   type CompletionItem,
   type CompletionParams,
   type DefinitionParams,
@@ -19,6 +22,7 @@ import {
   type ReferenceParams,
   type SignatureHelp,
   type SignatureHelpParams,
+  type TextEdit,
 } from 'vscode-languageserver/node';
 
 import {
@@ -26,11 +30,13 @@ import {
   provideDefinition,
   provideDiagnostics,
   provideHover,
+  provideQuickFixes,
   provideReferences,
   provideSignatureHelp,
   type CompletionCandidateKind,
   type DiagnosticSeverityName,
   type FeatureContext,
+  type LanguageDiagnostic,
 } from './features/index.js';
 import {
   createDefaultLanguageDatabase,
@@ -129,6 +135,28 @@ function toLspSeverity(severity: DiagnosticSeverityName): DiagnosticSeverity {
   }
 }
 
+function toLspDiagnostic(diagnostic: LanguageDiagnostic): Diagnostic {
+  return {
+    range: toLspRange(diagnostic.range),
+    severity: toLspSeverity(diagnostic.severity),
+    message: diagnostic.message,
+    source: diagnostic.source,
+    code: diagnostic.code,
+  };
+}
+
+function semanticRangeFromLsp(
+  document: AnalyzedDocument['document'],
+  range: LspRange,
+): SemanticRange {
+  return {
+    start: { line: range.start.line, character: range.start.character },
+    end: { line: range.end.line, character: range.end.character },
+    startOffset: document.offsetAt(range.start),
+    endOffset: document.offsetAt(range.end),
+  };
+}
+
 function toCompletionItemKind(kind: CompletionCandidateKind): CompletionItemKind {
   switch (kind) {
     case 'function':
@@ -158,13 +186,7 @@ function contextFor(analyzed: AnalyzedDocument, offset: number): FeatureContext 
 function publishDiagnostics(analyzed: AnalyzedDocument): void {
   guard(undefined, () => {
     const context = contextFor(analyzed, 0);
-    const diagnostics: Diagnostic[] = provideDiagnostics(context).map((diagnostic) => ({
-      range: toLspRange(diagnostic.range),
-      severity: toLspSeverity(diagnostic.severity),
-      message: diagnostic.message,
-      source: diagnostic.source,
-      code: diagnostic.code,
-    }));
+    const diagnostics: Diagnostic[] = provideDiagnostics(context).map(toLspDiagnostic);
     void connection.sendDiagnostics({ uri: analyzed.document.uri, diagnostics });
   });
 }
@@ -173,6 +195,7 @@ connection.onInitialize((): InitializeResult => ({
   capabilities: {
     textDocumentSync: TextDocumentSyncKind.Incremental,
     completionProvider: { triggerCharacters: ['.'] },
+    codeActionProvider: { codeActionKinds: [CodeActionKind.QuickFix], resolveProvider: false },
     hoverProvider: true,
     signatureHelpProvider: { triggerCharacters: ['(', ','] },
     definitionProvider: true,
@@ -223,6 +246,32 @@ connection.onCompletion((params: CompletionParams): Promise<CompletionItem[]> =>
         },
       }),
     );
+  }),
+);
+
+connection.onCodeAction((params: CodeActionParams): Promise<CodeAction[]> =>
+  guardAsync([], async () => {
+    await awaitDocumentAnalysis(params.textDocument.uri);
+    const analyzed = documents.get(params.textDocument.uri);
+    if (analyzed === undefined) {
+      return [];
+    }
+    const offset = analyzed.document.offsetAt(params.range.start);
+    const context = contextFor(analyzed, offset);
+    const range = semanticRangeFromLsp(analyzed.document, params.range);
+    return provideQuickFixes(context, range).map((action): CodeAction => ({
+      title: action.title,
+      kind: CodeActionKind.QuickFix,
+      diagnostics: action.diagnostics.map(toLspDiagnostic),
+      edit: {
+        changes: {
+          [analyzed.document.uri]: action.edits.map((edit): TextEdit => ({
+            range: toLspRange(edit.range),
+            newText: edit.newText,
+          })),
+        },
+      },
+    }));
   }),
 );
 

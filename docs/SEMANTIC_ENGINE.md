@@ -1,6 +1,6 @@
 # Semantic Engine
 
-Status: Phase 4 model, Phase 5 database-backed catalog, Phase 6 provider integration, signature help and mini-notation token analysis implemented on 2026-11-27. The model remains deliberately limited.
+Status: Phase 4 model, Phase 5 database-backed catalog, Phase 6 provider integration, signature help, mini-notation token analysis and Phase 7 quick-fix inputs implemented on 2026-11-27. The model remains deliberately limited.
 
 Authority: `AGENTS.md` sections 3 and 5.
 
@@ -49,7 +49,7 @@ The current discriminated union is:
 
 Inference covers variable initializers, imported bindings, user functions and parameters, calls to catalog globals, chained pattern methods, literal shapes, simple binary/conditional expressions and explicit returns. Unknown JavaScript constructs remain `Unknown` instead of producing speculative diagnostics.
 
-Mini-notation has a dedicated parser-independent submodel in `src/miniNotation/`. A catalog entry still declares which call arguments accept mini-notation; the engine now also scans the content of plain double-quoted literals and records ordered tokens, absolute document ranges and conservative structural issues on each `MiniNotationArgument`. Template substitutions are not analyzed because mapping nested expressions is outside this lightweight model; the pinned transpiler only converts double-quoted literals and template literals to mini notation.
+Mini-notation has a dedicated parser-independent submodel in `src/miniNotation/`. A catalog entry still declares which call arguments accept mini-notation; the engine now also scans the content of plain double-quoted literals and records ordered tokens, absolute document ranges and conservative structural issues on each `MiniNotationArgument`. Template substitutions are not analyzed because mapping nested expressions is outside this lightweight model; the pinned transpiler only converts double-quoted literals and template literals to mini notation. Mismatched closers record the expected closer, allowing the feature layer to offer a deterministic replacement without reparsing the message.
 
 Token boundaries and semantics were validated against pinned sources: `@strudel/mini@1.2.6` `krill.pegjs` defines numbers (lines 61–94), step characters (107–110), group delimiters (113–128), slice operators (132–163), sequences and stacks (166–197), quoted mini notation (205–206) and the haskellish statement layer (210–281). `@strudel/core@1.2.6` JSDoc confirms `*` as `.fast()` (`pattern.mjs:1914`), `/` as `.slow()` (`pattern.mjs:1948`), `:` as list/sample parameters (`controls.mjs:24–31, 97–110`), `~` as silence (`pattern.mjs:1245`) and Euclidean calls (`euclid.mjs:54–69`). `@strudel/reference@1.2.2` supplies the generated JSDoc metadata; it is one minor version behind mini/core, so grammar evidence takes precedence for token boundaries. Descriptions live in `src/miniNotation/documentation.ts`; in particular `!` is replication, not velocity.
 
@@ -71,7 +71,7 @@ Token boundaries and semantics were validated against pinned sources: `@strudel/
 
 ## Diagnostics inputs
 
-The engine exposes semantic facts only. Feature providers will decide which facts become diagnostics and when context is insufficient. Likely categories include unknown identifiers in Strudel-specific contexts, invalid pattern method use, malformed mini-notation and invalid sample identifiers.
+The engine exposes semantic facts only. Feature providers decide which facts become diagnostics, quick fixes and presentation, and suppress them when context is insufficient. Current categories include unknown identifiers in Strudel-specific contexts, invalid pattern method use and validated mini-notation structural faults; invalid sample identifiers remain unimplemented.
 
 ## Current limitations
 

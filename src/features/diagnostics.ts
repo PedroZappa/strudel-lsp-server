@@ -1,7 +1,8 @@
+import type { MiniNotationIssue } from '../miniNotation/index.js';
 import type { SemanticReference } from '../semantic/index.js';
 import type { SyntaxNode } from '../syntax/index.js';
 
-import type { FeatureContext, LanguageDiagnostic } from './types.js';
+import type { DiagnosticFix, FeatureContext, LanguageDiagnostic } from './types.js';
 
 function collectOutermostErrorNodes(node: SyntaxNode, found: SyntaxNode[]): void {
   if (node.isError && node.text.trim() !== '') {
@@ -46,6 +47,37 @@ function unknownDiagnostic(reference: SemanticReference): LanguageDiagnostic | u
   return undefined;
 }
 
+function miniNotationFix(issue: MiniNotationIssue): DiagnosticFix | undefined {
+  switch (issue.code) {
+    case 'empty-group':
+      return {
+        title: 'Remove empty mini-notation group',
+        range: issue.range,
+        newText: '',
+      };
+    case 'unmatched-close':
+      return {
+        title: 'Remove unmatched mini-notation closer',
+        range: issue.range,
+        newText: '',
+      };
+    case 'mismatched-close':
+      return issue.expectedClose === undefined
+        ? undefined
+        : {
+            title: `Replace with '${issue.expectedClose}'`,
+            range: issue.range,
+            newText: issue.expectedClose,
+          };
+    case 'empty-step':
+      return {
+        title: 'Remove redundant mini-notation separator',
+        range: issue.range,
+        newText: '',
+      };
+  }
+}
+
 export function provideDiagnostics(context: FeatureContext): readonly LanguageDiagnostic[] {
   const diagnostics: LanguageDiagnostic[] = [];
   const errorNodes: SyntaxNode[] = [];
@@ -85,6 +117,7 @@ export function provideDiagnostics(context: FeatureContext): readonly LanguageDi
         message: issue.message,
         source: 'strudel-mini',
         code: issue.code,
+        fix: miniNotationFix(issue),
       });
     }
   }

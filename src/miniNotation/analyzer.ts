@@ -133,10 +133,12 @@ export function analyzeMiniNotation(
           range: rangeAt(start, start + 1),
         });
       } else if (OPENERS[opener.character] !== character) {
+        const expectedClose = OPENERS[opener.character];
         issues.push({
           code: 'mismatched-close',
-          message: `Expected '${OPENERS[opener.character]}' but found '${character}' in mini notation`,
+          message: `Expected '${expectedClose}' but found '${character}' in mini notation`,
           range: rangeAt(start, start + 1),
+          expectedClose,
         });
       } else {
         openers.pop();
