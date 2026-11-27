@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: re-implementation roadmap complete through Phase 15, with Phases 16–19 complete. `strudel-lsp-server@0.3.0` was published on 2026-11-27 from tag `v0.3.0` at commit `b3451e283986b576b526534136026adba0bf5217` through the controlled OIDC workflow with `pedrozappa` as operator and is the latest release; `0.2.0` and `0.1.0` remain available. ADR-060 records the exact publication authorization and ADR-061 records the registry, signature, provenance and smoke evidence. ADR-051 records the scope and deferred work, ADR-052 records the configuration contract, ADR-053 records the filesystem boundary, ADR-054 records the `.npmrc` removal, ADR-055 records hermetic pack caching, ADR-056 records the advisory soak/lifecycle design, ADR-057 records the separate advisory benchmark report, ADR-058 records the independent editor-client smoke evidence, ADR-059 records the release-preparation authorization, ADR-062 records publication-state-aware verification, ADR-063 records the initial v1 stability charter, ADR-064 records the Phase 17 package, support and SBOM decisions, and ADR-065 records the Phase 18 parser, metadata and platform compatibility closure, ADR-066 authorizes the exact Phase 19 publication, and ADR-067 records its publication and smoke evidence. Missing provenance for the operator-managed first publish is recorded in ADR-050. The feature-expanded route below describes proposed work through `v1.0.0`, split into `v0.3.0`, `v0.4.0`, `v0.5.0` and `v1.0.0` increments. Phases 16–19 are complete; Phases 20–27 remain proposed and subject to approval.
+Status: re-implementation roadmap complete through Phase 15, with Phases 16–22 complete. `strudel-lsp-server@0.4.0` was published on 2026-11-27 from tag `v0.4.0` at commit `1d39c14cba2152116ce1c2c5d5b827bf6af5c144` through the controlled OIDC workflow with `pedrozappa` as operator and is the latest release; `0.3.0`, `0.2.0` and `0.1.0` remain available. ADR-060 records the exact publication authorization and ADR-061 records the registry, signature, provenance and smoke evidence for `0.2.0`. ADR-051 records the scope and deferred work, ADR-052 records the configuration contract, ADR-053 records the filesystem boundary, ADR-054 records the `.npmrc` removal, ADR-055 records hermetic pack caching, ADR-056 records the advisory soak/lifecycle design, ADR-057 records the separate advisory benchmark report, ADR-058 records the independent editor-client smoke evidence, ADR-059 records the release-preparation authorization, ADR-062 records publication-state-aware verification, ADR-063 records the initial v1 stability charter, ADR-064 records the Phase 17 package, support and SBOM decisions, and ADR-065 records the Phase 18 parser, metadata and platform compatibility closure, ADR-066 authorizes the exact Phase 19 publication, ADR-067 records its publication and smoke evidence, ADR-070 records the registry-visibility wait, ADR-071 authorizes the exact Phase 22 publication and ADR-072 records its publication and smoke evidence. Missing provenance for the operator-managed first publish is recorded in ADR-050. The feature-expanded route below describes proposed work through `v1.0.0`, split into `v0.3.0`, `v0.4.0`, `v0.5.0` and `v1.0.0` increments. Phases 16–22 are complete; Phases 23–27 remain proposed and subject to approval.
 
 Authority: `AGENTS.md` sections 2–18 and the other documents in `docs/`.
 
@@ -412,7 +412,7 @@ Post-release hardening: ADR-062 makes `npm run verify:release` publication-state
 
 ## Proposed feature-expanded route to `v1.0.0`
 
-**Status: Phases 16–18 are complete; Phases 19–27 are proposed only and are not authorized for implementation or release.** This route includes every optional capability identified after `0.2.0` and splits the work into four independently verifiable increments. Each controlled release requires its own ADR naming the exact version, tag and operator; no release below is approved by the roadmap alone.
+**Status: Phases 16–22 are complete; Phases 23–27 are proposed only and are not authorized for implementation or release.** This route includes every optional capability identified after `0.2.0` and splits the work into four independently verifiable increments. Each controlled release requires its own ADR naming the exact version, tag and operator; no release below is approved by the roadmap alone.
 
 | Increment | Phases | Theme                                                  |
 | --------- | ------ | ------------------------------------------------------ |
@@ -544,24 +544,24 @@ Exit criteria:
 
 Evidence: ADR-069 records the Strudel-owned recovery AST, absolute-range reuse, conservative feature extension and deliberate non-goals. The mini suite has nine parser-independent tests, including four AST tests; the feature suite has 35 tests with structured hover, exact operator completion, unchanged host signature help and repeated incremental-edit regressions. Corpus validation records 2,034 AST nodes across the unchanged 364 mini-notation arguments with zero invariant failures. No version bump, tag or publication occurred; Phase 22 remains the first release gate for Phases 20 and 21.
 
-### Phase 22 — `v0.4.0` controlled release (proposed)
+### Phase 22 — `v0.4.0` controlled release (complete)
 
 Dependencies: Phase 21 and an exact publication ADR naming `strudel-lsp-server@0.4.0`, tag `v0.4.0` and the operator.
 
 Tasks:
 
-- [ ] Repeat the full candidate gate, including the new semantic and mini-notation regression suites.
-- [ ] Update the changelog, compatibility evidence and release notes from the exact candidate.
-- [ ] Publish only through the controlled OIDC workflow with `npm-release` approval.
-- [ ] Verify provenance, signatures, tarball identity, clean installs and installed stdio handshake after publication.
+- [x] Repeat the full candidate gate, including the new semantic and mini-notation regression suites.
+- [x] Update the changelog, compatibility evidence and release notes from the exact candidate.
+- [x] Publish only through the controlled OIDC workflow with `npm-release` approval.
+- [x] Verify provenance, signatures, tarball identity, clean installs and installed stdio handshake after publication.
 
 Exit criteria:
 
-- [ ] Exact-tag CI is green and post-publication smoke evidence passes.
-- [ ] Semantic and mini-notation limitations remaining after this release are documented.
-- [ ] No unapproved registry mutation occurs.
+- [x] Exact-tag CI is green and post-publication smoke evidence passes.
+- [x] Semantic and mini-notation limitations remaining after this release are documented.
+- [x] No unapproved registry mutation occurs.
 
-Evidence: ADR-070 hardens `.github/workflows/release.yml` with a bounded registry-visibility wait so the post-publish smoke step cannot repeat the `ETARGET` race observed in `0.3.0`. Phase 22 remains proposed pending exact publication authorization.
+Evidence: ADR-070 hardened `.github/workflows/release.yml` with a bounded registry-visibility wait, and the Phase 22 publish job observed `0.4.0` on attempt 8 before passing its install and signature checks. ADR-071 records the exact authorization; ADR-072 records the green exact-tag run, registry and tarball identity, signatures, SLSA v1 provenance, clean installs, installed stdio handshake and GitHub release. Remaining semantic and mini-notation limitations are documented in `CHANGELOG.md` and `.github/RELEASE_NOTES_v0.4.0.md`.
 
 ### Phase 23 — Editor ergonomics and navigation (proposed, `v0.5.0`)
 

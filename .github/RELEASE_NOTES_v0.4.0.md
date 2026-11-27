@@ -58,7 +58,11 @@ Details and evidence are in `docs/SEMANTIC_ENGINE.md`, `docs/PARSER_INTEGRATION.
 
 The candidate gate passed on linux-x64 with Node `v26.13.1` and npm `11.20.0`: strict typecheck, lint, Prettier verification and 112/112 tests; focused suites of 5 parser, 11 semantic, 6 metadata, 4 configuration, 3 LSP, 35 feature, 9 mini-notation, 9 protocol and 1 soak test; a 141-file tarball preview with offline installed-server verification; all 18 advisory layer benchmarks within the committed thresholds; clean-consumer installs with and without lifecycle scripts; corpus validation over 484 examples with 477 clean parses, seven accepted upstream parser gaps and zero invariant failures; and zero runtime or client dependency vulnerabilities. The advisory installed-binary JSON-RPC workload produced p50/p95/p99 of 0.486/1.052/1.188 ms over 100 samples; the committed cross-platform report remains the darwin-arm64 baseline.
 
-Neovim `0.12.6` passed all six editor-client behaviours locally on this linux-x64 runner. VS Code was not installed on the runner, so the local VS Code smoke could not be executed here; the committed `validation/client-smoke.json` evidence records VS Code `1.148.0` and Neovim `0.12.6` each passing six behaviours on darwin-arm64 with Node `v26.8.2`. Exact-tag CI and the controlled publication are the remaining gates. Details are in `docs/TESTING_STRATEGY.md`.
+Neovim `0.12.6` passed all six editor-client behaviours locally on this linux-x64 runner. VS Code was not installed on the runner, so the local VS Code smoke could not be executed here; the committed `validation/client-smoke.json` evidence records VS Code `1.148.0` and Neovim `0.12.6` each passing six behaviours on darwin-arm64 with Node `v26.8.2`. Details are in `docs/TESTING_STRATEGY.md`.
+
+## Post-publication verification
+
+Exact-tag workflow run `46063508701` passed validation job `140723175749` and publish job `140723461085`. The publish job waited through seven failed fresh-metadata checks and observed the version on attempt 8, then completed the clean install and signature check without the `ETARGET` failure seen after `0.3.0`. Registry metadata reported `dist-tags.latest` as `0.4.0`, no deprecation, `fileCount` 141, shasum `cf6a8eff2b4dc1c3cbbb110b1605d6c871229173` and integrity `sha512-vneHfd0M/nl1QdEP3F6nra4+BMODFiz0kAtUs6m78uNiYDzaY9xIwFCzmQlD6F3dXV0CWUhvvCyhkhABIWvtfA==`; an independently downloaded tarball reproduced both digests. Fresh-cache local and isolated global installs produced the expected manifest, AGPL notice and PATH shim, and the installed shim completed an `initialize`/`initialized`/`shutdown`/`exit` JSON-RPC handshake. `npm audit signatures --include-attestations` reported no invalid or missing signatures. Two attestations were present, including SLSA v1 with subject digest matching the published integrity and workflow ref `refs/tags/v0.4.0`, repository `PedroZappa/strudel-lsp-server` and path `.github/workflows/release.yml`. Evidence is in ADR-072 and `docs/TESTING_STRATEGY.md`.
 
 ## Corrections and rollback
 
@@ -66,7 +70,7 @@ npm versions are immutable. If a defect is found, the fix is published as a new 
 
 ## Publication record
 
-Controlled publication is pending. ADR-071 authorizes exactly `strudel-lsp-server@0.4.0`, tag `v0.4.0` and operator `pedrozappa` through the OIDC workflow with `npm-release` approval. No local publish, republish, deprecation, dist-tag change, unpublish or retag is authorized.
+Published by operator `pedrozappa` from tag `v0.4.0` at commit `1d39c14cba2152116ce1c2c5d5b827bf6af5c144` through the controlled OIDC workflow run `46063508701`. Validation job `140723175749` passed; publish job `140723461085` ran `npm publish --access public`, waited for registry visibility on attempt 8 and passed the post-publish install and signature checks. ADR-071 authorized and ADR-072 records the exact publication and smoke evidence. No local publish, republish, deprecation, dist-tag change, unpublish or retag was performed. The GitHub release is <https://github.com/PedroZappa/strudel-lsp-server/releases/tag/v0.4.0>.
 
 ## Links
 

@@ -2,7 +2,7 @@
 
 All notable changes to the `strudel-lsp-server` npm package are documented in this file. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-Version `0.3.0` was published on 2026-11-27 from tag `v0.3.0` at commit `b3451e283986b576b526534136026adba0bf5217` through the controlled OIDC workflow with `pedrozappa` as operator. ADR-067 records the publication and smoke evidence, including the transient workflow-verification race. Version `0.4.0` is prepared from the exact Phase 20 and Phase 21 candidate under ADR-071 and is not yet published. Full user-facing notes for `0.4.0` are in `.github/RELEASE_NOTES_v0.4.0.md`; the published `0.2.0` body remains immutable in `.github/RELEASE_TEMPLATE.md`.
+Version `0.3.0` was published on 2026-11-27 from tag `v0.3.0` at commit `b3451e283986b576b526534136026adba0bf5217` through the controlled OIDC workflow with `pedrozappa` as operator. ADR-067 records the publication and smoke evidence, including the transient workflow-verification race. Version `0.4.0` was published on 2026-11-27 from tag `v0.4.0` at commit `1d39c14cba2152116ce1c2c5d5b827bf6af5c144` through the controlled OIDC workflow with `pedrozappa` as operator and is the latest published release; `0.3.0`, `0.2.0` and `0.1.0` remain available. ADR-072 records the exact publication and smoke evidence. Full user-facing notes for `0.4.0` are in `.github/RELEASE_NOTES_v0.4.0.md`; the published `0.2.0` body remains immutable in `.github/RELEASE_TEMPLATE.md`.
 
 ## [Unreleased]
 

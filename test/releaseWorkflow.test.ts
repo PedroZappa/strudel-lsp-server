@@ -219,7 +219,28 @@ void test('Phase 22 authorization records the exact version tag and operator', (
   assert.match(authorization, /controlled OIDC workflow/);
   assert.match(authorization, /RELEASE_NOTES_v0\.4\.0\.md/);
   assert.match(authorization, /does not permit a local publish/);
-  assert.match(roadmap, /^### Phase 22 — `v0\.4\.0` controlled release \(proposed\)$/m);
+  assert.match(roadmap, /^### Phase 22 — `v0\.4\.0` controlled release \(complete\)$/m);
+});
+
+void test('Phase 22 publication evidence records the exact release and completed phase', () => {
+  const marker = '## ADR-072 — Phase 22 publication and smoke evidence';
+  const start = decisions.indexOf(marker);
+  assert.notEqual(start, -1);
+  const evidence = decisions.slice(start);
+  assert.match(evidence, /1d39c14cba2152116ce1c2c5d5b827bf6af5c144/);
+  assert.match(evidence, /46063508701/);
+  assert.match(evidence, /140723175749/);
+  assert.match(evidence, /140723461085/);
+  assert.match(evidence, /visible \(attempt 8\)/);
+  assert.match(evidence, /cf6a8eff2b4dc1c3cbbb110b1605d6c871229173/);
+  assert.match(
+    evidence,
+    /sha512-vneHfd0M\/nl1QdEP3F6nra4\+BMODFiz0kAtUs6m78uNiYDzaY9xIwFCzmQlD6F3dXV0CWUhvvCyhkhABIWvtfA==/,
+  );
+  assert.match(evidence, /SLSA v1/);
+  assert.match(evidence, /No local publish, republish/);
+  assert.match(roadmap, /^### Phase 22 — `v0\.4\.0` controlled release \(complete\)$/m);
+  assert.match(changelog, /Version `0\.4\.0` was published on 2026-11-27/);
 });
 
 void test('first-publish bootstrap exception is version-limited and blocks workflow publishing', () => {
