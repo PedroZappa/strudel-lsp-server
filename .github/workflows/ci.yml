@@ -79,10 +79,13 @@ jobs:
         run: npm run build
 
       - name: Check package contents
-        run: npm pack --dry-run --ignore-scripts
+        run: npm run verify:contents
 
       - name: Verify offline installation and stdio launch
         run: npm run verify:package
+
+      - name: Verify clean consumer installation without inherited npm configuration
+        run: npm run verify:consumer
 
   performance:
     name: Advisory benchmark check

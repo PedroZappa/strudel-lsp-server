@@ -71,7 +71,7 @@ The user approved installation of the pinned root dependencies on 2026-11-25:
 - Runtime: `tree-sitter@0.25.1`, `tree-sitter-strudel@2.0.2` (upgraded from 1.1.8 on 2026-11-26), `vscode-languageserver@11.0.1`, `vscode-languageserver-textdocument@1.0.16`
 - Development: `@eslint/js@9.33.0`, `@strudel/core@1.2.6`, `@strudel/mini@1.2.6`, `@strudel/reference@1.2.2`, `@strudel/transpiler@1.2.6`, `@stylistic/eslint-plugin@2.13.0`, `@types/node@26.6.10`, `eslint@9.33.0`, `prettier@3.10.1`, `typescript@6.0.3`, `typescript-eslint@8.74.0`
 
-`.npmrc` sets `legacy-peer-deps=true`. The original rationale was `tree-sitter-strudel@1.1.8`'s stale `tree-sitter ^0.22.4` peer range; 2.0.2 now declares an accurate `^0.25.0` peer. The setting remains until all dependencies are confirmed compatible without it. See `docs/DECISIONS.md`, `docs/PARSER_INTEGRATION.md` and `docs/TESTING_STRATEGY.md`.
+The repository `.npmrc` was removed on 2026-11-27 after clean consumer and development installs were verified with `legacy-peer-deps=false`. The original setting covered `tree-sitter-strudel@1.1.8`'s stale `tree-sitter ^0.22.4` peer range; 2.0.2 declares an accurate `^0.25.0` peer. See `docs/DECISIONS.md`, `docs/PARSER_INTEGRATION.md` and `docs/TESTING_STRATEGY.md`.
 
 ## Authoritative metadata source set
 

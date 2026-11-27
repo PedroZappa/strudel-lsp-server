@@ -25,6 +25,8 @@ Install the package and configure an LSP client to launch `strudel-lsp-server` o
 npm install --global strudel-lsp-server@0.1.0
 ```
 
+Installation uses default npm peer resolution; `legacy-peer-deps=true` is not required.
+
 ```json
 {
   "command": "strudel-lsp-server"
@@ -69,10 +71,12 @@ The unreleased development tree adds focused diagnostics settings under the stan
 ```bash
 npm run check
 npm run benchmark:check
+npm run verify:contents
 npm run verify:package
+npm run verify:consumer
 ```
 
-The Makefile provides the same workflows through `make check`, `make benchmark-check`, `make verify-package` and `make verify-all`. `npm run verify:package` packs the built server, performs a clean offline installation from that tarball, and verifies the installed stdio executable with an initialize/shutdown handshake.
+The Makefile provides the same workflows through `make check`, `make benchmark-check`, `make pack-check`, `make verify-package`, `make verify-consumer` and `make verify-all`. `npm run verify:contents` previews and checks the tarball allowlist with an isolated npm cache. `npm run verify:package` uses the same isolated cache for packing, performs a clean offline installation from that tarball using the surrounding cache, and verifies the installed stdio executable with an initialize/shutdown handshake. `npm run verify:consumer` checks installation without inherited npm configuration or legacy peer dependencies.
 
 ## Repository layout
 

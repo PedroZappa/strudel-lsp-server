@@ -1,6 +1,6 @@
 # Decisions
 
-Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened or superseded; ADR-021 records the Phase 6 deferred-item completion, ADR-022 records Phase 7 quick fixes, ADR-023 records document-scoped rename, ADR-024 records document symbols, ADR-025 records semantic tokens, ADR-026 records conservative formatting, ADR-027 records prototype client dependency remediation, ADR-028 records inline-constant refactoring, ADR-029 records bounded on-demand workspace symbols, ADR-030 records the Phase 8 performance baseline and advisory check, ADR-031 records Phase 9 local packaging verification, ADR-032 records the AGPL-3.0-only project licence decision, ADR-033 records the `0.1.0` release identity and SemVer policy, ADR-034 records the deferred user configuration boundary, ADR-035 records the `0.1.0` supported runtime and OS matrix, ADR-036 records the Phase 11 clean-install validation design, ADR-037 records the real documentation corpus validation design, ADR-038 records the Phase 11 protocol robustness review and transport behaviour, ADR-039 records the npm namespace and publication access review, ADR-040 records the Phase 12 licensing and provenance sign-off, ADR-041 records the Phase 12 dependency and secret audit, ADR-042 records the controlled release workflow design, ADR-043 records the publish/pack dry-run comparison, ADR-044 records the changelog and GitHub release notes preparation, ADR-045 records the rollback and correction policy, ADR-046 records the post-publication smoke plan, ADR-047 records the Phase 13 release authorization, ADR-048 records the Phase 13 gate confirmation, ADR-049 records the first-publish bootstrap exception, ADR-050 records the Phase 13 publication evidence and provenance limitation, ADR-051 records the proposed `0.2.0` scope and deferred work, ADR-052 records the focused diagnostics configuration contract, and ADR-053 records the workspace-symbol filesystem boundary.
+Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened or superseded; ADR-021 records the Phase 6 deferred-item completion, ADR-022 records Phase 7 quick fixes, ADR-023 records document-scoped rename, ADR-024 records document symbols, ADR-025 records semantic tokens, ADR-026 records conservative formatting, ADR-027 records prototype client dependency remediation, ADR-028 records inline-constant refactoring, ADR-029 records bounded on-demand workspace symbols, ADR-030 records the Phase 8 performance baseline and advisory check, ADR-031 records Phase 9 local packaging verification, ADR-032 records the AGPL-3.0-only project licence decision, ADR-033 records the `0.1.0` release identity and SemVer policy, ADR-034 records the deferred user configuration boundary, ADR-035 records the `0.1.0` supported runtime and OS matrix, ADR-036 records the Phase 11 clean-install validation design, ADR-037 records the real documentation corpus validation design, ADR-038 records the Phase 11 protocol robustness review and transport behaviour, ADR-039 records the npm namespace and publication access review, ADR-040 records the Phase 12 licensing and provenance sign-off, ADR-041 records the Phase 12 dependency and secret audit, ADR-042 records the controlled release workflow design, ADR-043 records the publish/pack dry-run comparison, ADR-044 records the changelog and GitHub release notes preparation, ADR-045 records the rollback and correction policy, ADR-046 records the post-publication smoke plan, ADR-047 records the Phase 13 release authorization, ADR-048 records the Phase 13 gate confirmation, ADR-049 records the first-publish bootstrap exception, ADR-050 records the Phase 13 publication evidence and provenance limitation, ADR-051 records the proposed `0.2.0` scope and deferred work, ADR-052 records the focused diagnostics configuration contract, ADR-053 records the workspace-symbol filesystem boundary, ADR-054 records the clean consumer install and `.npmrc` removal, and ADR-055 records hermetic npm cache handling for package verification.
 
 ## ADR-001 — Clean-slate re-implementation
 
@@ -126,7 +126,7 @@ Compatibility finding:
 
 Consequences:
 
-- `.npmrc` still sets `legacy-peer-deps=true` as a general setting. The parser-specific rationale no longer applies; narrowing or removing it is deferred until all dependencies are confirmed compatible without it.
+- `.npmrc` originally set `legacy-peer-deps=true` as a general workaround. The parser-specific rationale no longer applied; ADR-054 removes the file after compatibility was demonstrated without it.
 - Phase 3 parser integration tests validate loading, parse structure, non-ASCII ranges, incremental edits and malformed-input recovery with 2.0.2. Results are recorded in `docs/PARSER_INTEGRATION.md`.
 - 2.0.2 declares `AGPL-3.0-only` consistently in both `package.json` and its bundled `LICENSE`. The earlier MIT-authoritative decision applied only to 1.1.8 metadata and was superseded by ADR-032 for the adopted parser.
 
@@ -951,7 +951,7 @@ In scope for v0.2.0:
 
 - A focused diagnostics configuration through standard `workspace/configuration`: global enablement, per-code severity overrides with suppression, and unchanged defaults when the client has no configuration capability. The codes are `syntax-error`, `unknown-global`, `unknown-pattern-method`, `empty-group`, `unmatched-close`, `mismatched-close` and `empty-step`. `workspace/didChangeConfiguration` is covered. No internal engine settings are exposed. This follows ADR-034 without adding a broad settings surface.
 - Bounded workspace-symbol hardening for symlinks, path traversal, unreadable files and file-size/depth limits, retaining open-document overrides and deterministic results. No persistent index, file watcher or cross-file module graph is introduced.
-- Clean consumer installation evidence without inheriting this repository's `.npmrc`, especially `legacy-peer-deps=true`. Any narrowing or removal of that setting requires demonstrated compatibility and a recorded decision under ADR-031/ADR-041 evidence.
+- Clean consumer installation evidence without inheriting this repository's `.npmrc`, especially `legacy-peer-deps=true`. Completed under ADR-054: compatibility was demonstrated and the setting removed with `npm run verify:consumer` evidence.
 - A deterministic bounded soak/lifecycle test for rapid edits, repeated initialize/shutdown cycles and memory-growth observation. If timing proves environment-sensitive, the result is advisory; no production timing hooks or telemetry are added.
 - One end-to-end JSON-RPC/installed-binary benchmark workload with p50/p95/p99, reported separately from layer-level results and kept advisory under ADR-030.
 - Two independent LSP-client smoke tests with all client configuration outside the server core. Results are recorded as client behaviours exercised, and no editor dependency enters the published package.
@@ -1017,3 +1017,37 @@ Consequences:
 - `test/lsp/workspaceFiles.test.ts` is an isolated suite exposed through `npm run test:lsp`, `make test-lsp` and CI.
 - The pre-change locale ordering was observed as `_a.strudel,a.strudel,B.strudel`; the new contract returns code-unit order.
 - Published `0.1.0` behaviour is unchanged in the registry; these updates remain unreleased until separately authorized.
+
+## ADR-054 — Clean consumer install and `.npmrc` removal
+
+Status: accepted on 2026-11-27 for the unreleased `0.2.0` work. This decision implements the selected Phase 14 consumer-install task; it does not authorize a version bump, tag or publication.
+
+Decision: remove the repository `.npmrc` and require `legacy-peer-deps=false` for both consumer and development installs. A new `npm run verify:consumer` script (`make verify-consumer`, also run in CI) packs the built server, creates a consumer directory outside the repository, empties user and global npm configuration into isolated files, uses a fresh npm cache, installs the tarball with `--legacy-peer-deps=false`, and checks the installed manifest, licence, native parser prebuild, `.bin` shim and stdio initialize/shutdown in both `--ignore-scripts` and default-script modes. Existing package verification remains unchanged for offline installs from the committed lockfile.
+
+Rationale: ADR-013 kept the workaround until compatibility was demonstrated. `tree-sitter-strudel@2.0.2` declares `tree-sitter ^0.25.0`, which matches the pinned runtime, and no other direct dependency has an unmet peer range. Leaving a repository-wide legacy-peer setting would hide real resolution failures from consumers and from CI.
+
+Evidence: on darwin-arm64 with Node `v26.8.2`, npm `11.19.1`, registry `https://registry.npmjs.org/` and isolated `legacy-peer-deps=false`, both consumer install modes passed for the 138-file tarball. The installed manifest matched name, version, licence, `bin` and `engines`; the AGPL `LICENSE` text, native parser prebuild and stdio handshake passed. A development `npm ci --dry-run` with the same isolated configuration resolved all 137 pinned packages. No npm credential, token, password, OTP or recovery code was read or recorded.
+
+Consequences:
+
+- `.npmrc` is deleted; default npm peer resolution applies in the repository and CI.
+- `scripts/lib/installVerification.mjs` shares npm/stdio verification helpers between `verify-package.mjs` and `verify-consumer.mjs`.
+- `test/packageScripts.test.ts` guards the verification scripts and the absence of a repository `.npmrc`.
+- Published `0.1.0` remains unchanged; these changes are unreleased until separately authorized.
+
+## ADR-055 — Hermetic npm cache for package verification
+
+Status: accepted on 2026-11-27 for the unreleased `0.2.0` work. This decision fixes local verification reliability; it does not authorize a version bump, tag or publication.
+
+Decision: isolate only npm's cache writes during `npm pack`. `scripts/verify-package.mjs` now uses a temporary npm cache and empty user/global npm configuration for packing, while its `npm ci --offline` and tarball installs continue to use the surrounding cache populated by the normal development install. The package-content preview moves from a raw `npm pack --dry-run --ignore-scripts` in CI and `make pack-check` to `npm run verify:contents`, which performs the same hermetic pack and asserts the full tarball allowlist without installing. `npm run verify:package` keeps both offline install modes, the parser prebuild check, AGPL metadata checks and the installed stdio initialize/shutdown handshake.
+
+Evidence: before the change, the local default cache contained a pre-existing root-owned `content-v2/sha512/0d/3b` directory, and `npm pack --dry-run --ignore-scripts` failed with `EEXIST`/`EACCES` before any project verification ran. After the change, `npm run verify:contents`, `npm run verify:package`, `npm run verify:consumer`, `npm run benchmark:check`, `npm run check` (82/82 tests) and a complete `make verify-all` all passed with the default global cache on darwin-arm64 with Node `v26.8.2` and npm `11.19.1`. The pack reported the expected 138 files. No global cache file or permission was changed.
+
+Rationale: a pack operation need not consume or mutate the dependency cache, so a corrupt or unwritable global cache should not mask the correctness of the package. Isolating the entire verification, including installs, would weaken the offline-install guarantee; keeping installs on the ambient cache preserves that check while removing only the unrelated cache-write dependency.
+
+Consequences:
+
+- `scripts/lib/installVerification.mjs` owns the shared isolated-environment helper; `scripts/verify-package.mjs` and `scripts/verify-consumer.mjs` reuse it.
+- `npm run verify:contents`, `make pack-check` and the CI package-content step replace the bare `npm pack --dry-run` preview while retaining its allowlist assertion.
+- `test/packageScripts.test.ts` guards the new script entry; published `0.1.0` and its release dry-run evidence are unchanged.
+- `npm run verify:release` still performs direct `npm pack --dry-run` and `npm publish --dry-run` comparisons under ADR-043 and is not part of `make verify-all`; a local damaged cache may still require operator cache remediation for that release-specific gate.

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { globSync, readFileSync } from 'node:fs';
+import { existsSync, globSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
@@ -56,6 +56,18 @@ void test('test scripts use glob patterns supported by Node 24 and 26', () => {
 
   assert.ok(compiledTests.length > 0, 'compiled test files must be present');
   assert.deepEqual(suiteFiles, compiledTests);
+});
+
+void test('verification scripts and clean npm configuration are preserved', () => {
+  assert.match(packageJson.scripts['verify:package'], /verify-package\.mjs$/);
+  assert.match(packageJson.scripts['verify:contents'], /--contents-only$/);
+  assert.match(packageJson.scripts['verify:consumer'], /verify-consumer\.mjs$/);
+  assert.match(packageJson.scripts['verify:release'], /verify-release\.mjs$/);
+  assert.equal(
+    existsSync(join(repositoryRoot, '.npmrc')),
+    false,
+    'repository npm configuration must not reintroduce legacy-peer-deps',
+  );
 });
 
 void test('package metadata describes the published server', () => {

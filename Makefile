@@ -51,7 +51,7 @@ _INFO    = [$(BLU)INFO$(D)]
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install install-dev build typecheck lint format format-check test test-parser test-semantic test-metadata test-configuration test-lsp test-features test-mini test-protocol validate-corpus validate-corpus-write generate-metadata benchmark benchmark-check benchmark-baseline pack-check verify-package verify-release check verify verify-all ci check-static audit audit-client clean docs docs-open
+.PHONY: help install install-dev build typecheck lint format format-check test test-parser test-semantic test-metadata test-configuration test-lsp test-features test-mini test-protocol validate-corpus validate-corpus-write generate-metadata benchmark benchmark-check benchmark-baseline pack-check verify-package verify-consumer verify-release check verify verify-all ci check-static audit audit-client clean docs docs-open
 
 #==============================================================================#
 #                                  RULES                                       #
@@ -171,15 +171,20 @@ benchmark-baseline:	## Regenerate the committed benchmark baseline deliberately
 	@$(NPM) run benchmark:baseline
 	@echo "$(YEL)* $(_SUCCESS) Benchmark baseline updated$(D)"
 
-pack-check:	## Preview npm package contents
+pack-check:	## Preview and verify npm package contents
 	@echo "$(YEL)Checking npm package contents...$(D)"
-	@$(NPM) pack --dry-run --ignore-scripts
+	@$(NPM) run verify:contents
 	@echo "$(YEL)* $(_SUCCESS) Package contents previewed$(D)"
 
 verify-package:	## Verify offline install and stdio launch from the npm tarball
 	@echo "$(YEL)Verifying packaged server...$(D)"
 	@$(NPM) run verify:package
 	@echo "$(YEL)* $(_SUCCESS) Packaged server verification passed$(D)"
+
+verify-consumer:	## Verify install without repository npm configuration or legacy peer deps
+	@echo "$(YEL)Verifying clean consumer install...$(D)"
+	@$(NPM) run verify:consumer
+	@echo "$(YEL)* $(_SUCCESS) Clean consumer install verification passed$(D)"
 
 verify-release:	## Verify release identity, immutable tag and matching publish/pack dry-runs
 	@echo "$(YEL)Verifying release candidate...$(D)"

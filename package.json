@@ -51,6 +51,8 @@
     "benchmark:check": "npm run build && node scripts/benchmark.mjs --check",
     "benchmark:baseline": "npm run build && node scripts/benchmark.mjs --write-baseline",
     "verify:package": "npm run build && node scripts/verify-package.mjs",
+    "verify:contents": "npm run build && node scripts/verify-package.mjs --contents-only",
+    "verify:consumer": "npm run build && node scripts/verify-consumer.mjs",
     "verify:release": "npm run build && node scripts/verify-release.mjs",
     "check": "npm run typecheck && npm run lint && npm run format:check && npm test"
   },

@@ -89,7 +89,7 @@ New named node types in 2.0.2 include `arguments`, `assignment_pattern`, `await_
 
 `tree-sitter@0.22.4` was tested first against 1.1.8 and failed at `Parser.setLanguage` with `TypeError: Cannot read properties of undefined (reading 'length')` while initialising node-type metadata. The generated parser declares `LANGUAGE_VERSION 15`, which aligns with the 0.25 runtime family.
 
-`tree-sitter@0.25.1` is pinned. With 2.0.2, the parser's peer range (`^0.25.0`) matches the runtime, so the earlier `legacy-peer-deps` rationale no longer applies to the parser. `.npmrc` retains `legacy-peer-deps=true` as a general setting; removing or narrowing it is deferred until all dependencies are confirmed compatible without it.
+`tree-sitter@0.25.1` is pinned. With 2.0.2, the parser's peer range (`^0.25.0`) matches the runtime, so the earlier `legacy-peer-deps` rationale no longer applies. The repository `.npmrc` was removed on 2026-11-27 after clean consumer and development installs were verified with `legacy-peer-deps=false`; evidence is in `docs/TESTING_STRATEGY.md` and ADR-054.
 
 ## Compatibility validation
 
@@ -97,14 +97,14 @@ New named node types in 2.0.2 include `arguments`, `assignment_pattern`, `await_
 
 A temporary CommonJS smoke script loaded both packages through the project's `node_modules` and produced:
 
-| Check                    | Result                                                                                                       |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| Load and set language    | Pass with `tree-sitter-strudel@1.1.8` and `tree-sitter@0.25.1`.                                              |
-| Initial parse            | `note("bd sd")` produced root `source_file`, `hasError: false`, indices `0..13`, child type `expression`.    |
-| Incremental edit/reparse | Inserting `" cp"` and reparsing produced `note("bd sd cp")`, `hasError: false`, indices `0..16`.             |
-| Malformed input          | `note("bd sd"` produced root `source_file` with `hasError: true` and did not throw.                          |
-| Clean install            | `npm install --ignore-scripts` succeeded with `.npmrc`; `npm ls --depth=0` showed the exact pinned versions. |
-| Runtime audit            | `npm audit --omit=dev` reported zero vulnerabilities.                                                        |
+| Check                    | Result                                                                                                                                                                     |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Load and set language    | Pass with `tree-sitter-strudel@1.1.8` and `tree-sitter@0.25.1`.                                                                                                            |
+| Initial parse            | `note("bd sd")` produced root `source_file`, `hasError: false`, indices `0..13`, child type `expression`.                                                                  |
+| Incremental edit/reparse | Inserting `" cp"` and reparsing produced `note("bd sd cp")`, `hasError: false`, indices `0..16`.                                                                           |
+| Malformed input          | `note("bd sd"` produced root `source_file` with `hasError: true` and did not throw.                                                                                        |
+| Clean install            | `npm install --ignore-scripts` succeeded with the then-current `.npmrc`; `npm ls --depth=0` showed the exact pinned versions. The setting was later removed under ADR-054. |
+| Runtime audit            | `npm audit --omit=dev` reported zero vulnerabilities.                                                                                                                      |
 
 ### Phase 3 upgrade validation (2026-11-26, `tree-sitter-strudel@2.0.2`)
 
@@ -122,6 +122,10 @@ After the upgrade, the dedicated parser integration suite under `test/parser/` w
 | Dependency audit         | `npm audit --omit=dev` and `npm audit` report zero vulnerabilities.                                                                   |
 
 The temporary Phase 1 smoke script has been replaced by the persistent `test/parser/` suite.
+
+### Phase 14 dependency configuration validation (2026-11-27)
+
+`npm run verify:consumer` packs the built server, installs it into an isolated consumer directory with empty user/global npm configuration, a fresh cache and `--legacy-peer-deps=false`, then verifies the installed manifest, AGPL licence, native parser prebuild, `.bin` shim and stdio initialize/shutdown. Both `--ignore-scripts` and default-script modes pass. A development `npm ci --dry-run` from the same isolated configuration also resolves all 137 pinned packages without legacy peer deps. The repository `.npmrc` was therefore removed; see ADR-054.
 
 ## Adapter integration (2026-11-26)
 

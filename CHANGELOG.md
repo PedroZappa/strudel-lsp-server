@@ -13,6 +13,8 @@ Version `0.1.0` was published on 2026-11-27 from tag `v0.1.0`; full user-facing 
 ### Changed
 
 - Hardened unreleased workspace-symbol discovery to reject symlinks, unsafe entry names and paths outside the normalized root, skip unreadable or oversized files, enforce depth and file-count limits, and return locale-independent deterministic results. Open-document overrides remain unchanged.
+- Removed the repository `.npmrc` after verifying clean consumer and development installs with `legacy-peer-deps=false`; added `npm run verify:consumer` for isolated install and stdio verification.
+- Isolated npm cache writes during package packing so `make verify-all` no longer depends on a writable global cache; added `npm run verify:contents` with the existing tarball allowlist assertion and preserved offline install verification.
 
 ## [0.1.0] - 2026-11-27
 
