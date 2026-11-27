@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: re-implementation roadmap complete through Phase 13. `strudel-lsp-server@0.1.0` was published by operator `pedrozappa` from `v0.1.0`, the GitHub release is published, and post-publication smoke checks passed on 2026-11-27. Missing provenance for the operator-managed first publish is recorded as a limitation in ADR-050. Priorities are proposals and remain subject to approval.
+Status: re-implementation roadmap complete through Phase 13; Phases 14–15 define the proposed `0.2.0` hardening/configuration increment and controlled release path. `strudel-lsp-server@0.1.0` remains the published release. Phase 14–15 tasks are planned, not implemented or authorized for publication; ADR-051 records the proposed scope and the work deferred beyond it. Missing provenance for the operator-managed first publish is recorded in ADR-050. Priorities are proposals and remain subject to approval.
 
 Authority: `AGENTS.md` sections 2–18 and the other documents in `docs/`.
 
@@ -362,22 +362,70 @@ Exit criteria:
 - [x] Public registry metadata, licence, tarball identity, signatures and installed executable smoke checks pass (ADR-050).
 - [x] Git tag `v0.1.0`, published GitHub release and versioned changelog section are present.
 
-## Release-quality backlog (recommended, not blocking)
+## Phase 14 — v0.2.0 hardening and configuration
 
-These items may be pulled into Phases 10–12 when capacity allows. Deferring one does not block first publication, but each deferral should be intentional and visible in release notes where user-facing.
+Dependencies: Phase 13 and explicit approval of the v0.2.0 scope recorded in ADR-051. This phase prepares changes; it does not publish a release.
 
-- [ ] Perform editor-level smoke tests with at least two independent LSP clients using configuration kept outside the server core. Record which client behaviours were checked, not editor-specific implementation details in the server.
+**Status: planned. No task in this phase is implemented or authorized for release.**
+
+Tasks:
+
+- [ ] Add a focused diagnostics configuration through standard `workspace/configuration`: a global enable flag, optional per-code severity overrides including suppression, and defaults unchanged from `0.1.0` when the client has no configuration capability. Cover `syntax-error`, `unknown-global`, `unknown-pattern-method` and the four mini-notation issue codes. Do not expose internal engine settings, and cover dynamic changes through `workspace/didChangeConfiguration`.
+- [ ] Harden bounded workspace-symbol discovery for symlinks, path traversal, unreadable files and file-size/depth limits. Preserve open-document overrides and deterministic results; do not introduce a persistent index, file watcher or cross-file module graph.
+- [ ] Verify installation in a clean consumer environment that does not inherit this repository's `.npmrc`, especially `legacy-peer-deps=true`. Narrow or remove that setting only after compatibility is demonstrated, and record the decision with evidence.
+- [ ] Add a bounded soak/lifecycle test covering rapid edits, repeated initialize/shutdown cycles and memory-growth observation. Keep it deterministic and advisory if measurement proves environment-sensitive; do not add production telemetry.
+- [ ] Add one end-to-end JSON-RPC/installed-binary workload to the benchmark suite. Report p50/p95/p99 separately from layer-level results and keep it advisory, not a blocking correctness gate.
+- [ ] Execute two independent LSP-client smoke tests with client configuration kept outside the server core. Record the client behaviours exercised and their results; add no editor dependency to the published server.
+- [ ] Update `docs/LSP_FEATURES.md`, `docs/TESTING_STRATEGY.md`, `docs/PERFORMANCE.md`, README and CHANGELOG as each behaviour lands. Do not describe planned behaviour as implemented before verification.
+
+Exit criteria:
+
+- [ ] Diagnostics configuration is implemented, documented and covered by feature, protocol and stdio tests; default behaviour remains unchanged.
+- [ ] Workspace-symbol filesystem edge cases have deterministic regression coverage and bounded limits remain enforced.
+- [ ] Consumer installation without inherited npm configuration passes, and the `.npmrc` decision is recorded.
+- [ ] Soak and two-client editor smoke evidence are recorded without new core dependencies or production telemetry.
+- [ ] End-to-end benchmark baseline and advisory check include the JSON-RPC path with p50/p95/p99.
+- [ ] Full validation gate passes after the changes, and documentation matches implementation.
+
+## Phase 15 — v0.2.0 controlled release
+
+Dependencies: Phase 14, an explicit release authorization naming `0.2.0` and an operator, and the controlled OIDC workflow.
+
+**Status: planned. No tag, publish, deprecation, dist-tag change or GitHub release is authorized by this roadmap entry.**
+
+Tasks:
+
+- [ ] Repeat type checking, linting, formatting, focused suites, full tests, package verification, dependency audit and benchmark check on the exact release commit.
+- [ ] Prepare a versioned `CHANGELOG.md` section and GitHub release notes from `.github/RELEASE_TEMPLATE.md`; state what changed and what remains deferred.
+- [ ] Tag the validated commit as `v0.2.0` only after explicit authorization and run the controlled workflow with `npm-release` approval; the ADR-049 bootstrap exception does not apply.
+- [ ] Verify the OIDC provenance attestation exists and matches the package, repository, workflow and commit. Record absence or mismatch as a release blocker rather than assuming provenance.
+- [ ] Run the ADR-046 post-publication smoke plan against the public registry and publish the GitHub release only after it passes.
+
+Exit criteria:
+
+- [ ] Exact-tag CI is green and the publish job runs through the controlled workflow, not an operator-managed local publish.
+- [ ] Published `0.2.0` metadata, tarball identity, signatures and provenance attestation are verified and recorded.
+- [ ] Clean installs, installed stdio handshake, documented launch command, tag and release notes pass smoke checks.
+- [ ] The published release notes state the remaining deferred work, and no unapproved registry mutation occurs.
+
+## Phase 13 release-quality backlog (post-publication status)
+
+These were the recommended, non-blocking items carried out of first publication. Items assigned to v0.2.0 remain open and are restated in Phase 14; all others remain unscheduled and are deferred beyond v0.2.0 unless later authorized.
+
+- [ ] **Assigned to Phase 14.** Perform editor-level smoke tests with at least two independent LSP clients using configuration kept outside the server core. Record which client behaviours were checked, not editor-specific implementation details in the server.
 - [x] Add deterministic stdio error-path tests for malformed input and cancellation; `test/protocolRobustness.test.ts` now covers both at the JSON-RPC transport layer in addition to the semantic-engine suite.
-- [ ] Add a bounded soak test with rapid edits, repeated initialize/shutdown cycles and memory-growth observation to catch live-coding lifecycle leaks.
-- [ ] Review workspace-symbol discovery for symlinks, path traversal, unreadable files and size/depth limits; no-workspace and multi-root protocol paths are now covered, but these filesystem edge cases remain.
-- [ ] Measure at least one end-to-end request path through JSON-RPC and the installed binary. The committed benchmark is deliberately layer-level and should not be presented as full editor latency.
+- [ ] **Assigned to Phase 14.** Add a bounded soak test with rapid edits, repeated initialize/shutdown cycles and memory-growth observation to catch live-coding lifecycle leaks.
+- [ ] **Assigned to Phase 14.** Review workspace-symbol discovery for symlinks, path traversal, unreadable files and size/depth limits; no-workspace and multi-root protocol paths are now covered, but these filesystem edge cases remain.
+- [ ] **Assigned to Phase 14.** Measure at least one end-to-end request path through JSON-RPC and the installed binary. The committed benchmark is deliberately layer-level and should not be presented as full editor latency.
 - [ ] Decide whether to include `CHANGELOG.md`, TypeScript sources or source maps in the npm `files` allowlist. The current allowlist is intentionally minimal; any change must be reflected in package verification.
 - [ ] Record a dependency-update policy for Strudel, the parser and Node: what triggers compatibility retesting and when the pinned metadata snapshot may be regenerated.
 - [ ] Consider a generated SBOM or release attestation. This is optional for the first release and must not introduce a dependency without separate approval.
 - [ ] Add issue templates or a support section that tells users which diagnostics and server logs to include, while preserving privacy and avoiding secret disclosure.
-- [ ] Verify installation when the consumer does not inherit this repository's `.npmrc`, especially the `legacy-peer-deps=true` setting.
+- [ ] **Assigned to Phase 14.** Verify installation when the consumer does not inherit this repository's `.npmrc`, especially the `legacy-peer-deps=true` setting.
 
-## Deferred until after the first release
+## Deferred beyond v0.2.0
+
+These items were deferred after the first release and are not selected for `0.2.0` in ADR-051. The unassigned items in the Phase 13 release-quality backlog above also remain deferred unless later authorized.
 
 - [ ] Replace synthetic benchmark fixtures with representative real-world workloads once provenance and redistribution terms are confirmed.
 - [ ] Optimise incremental semantic reuse; current large-document updates rebuild the semantic snapshot and are documented in `docs/PERFORMANCE.md`.

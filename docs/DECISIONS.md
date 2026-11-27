@@ -1,6 +1,6 @@
 # Decisions
 
-Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened or superseded; ADR-021 records the Phase 6 deferred-item completion, ADR-022 records Phase 7 quick fixes, ADR-023 records document-scoped rename, ADR-024 records document symbols, ADR-025 records semantic tokens, ADR-026 records conservative formatting, ADR-027 records prototype client dependency remediation, ADR-028 records inline-constant refactoring, ADR-029 records bounded on-demand workspace symbols, ADR-030 records the Phase 8 performance baseline and advisory check, ADR-031 records Phase 9 local packaging verification, ADR-032 records the AGPL-3.0-only project licence decision, ADR-033 records the `0.1.0` release identity and SemVer policy, ADR-034 records the deferred user configuration boundary, ADR-035 records the `0.1.0` supported runtime and OS matrix, ADR-036 records the Phase 11 clean-install validation design, ADR-037 records the real documentation corpus validation design, ADR-038 records the Phase 11 protocol robustness review and transport behaviour, ADR-039 records the npm namespace and publication access review, ADR-040 records the Phase 12 licensing and provenance sign-off, ADR-041 records the Phase 12 dependency and secret audit, ADR-042 records the controlled release workflow design, ADR-043 records the publish/pack dry-run comparison, ADR-044 records the changelog and GitHub release notes preparation, ADR-045 records the rollback and correction policy, ADR-046 records the post-publication smoke plan, ADR-047 records the Phase 13 release authorization, and ADR-048 records the Phase 13 gate confirmation, and ADR-049 records the first-publish bootstrap exception.
+Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened or superseded; ADR-021 records the Phase 6 deferred-item completion, ADR-022 records Phase 7 quick fixes, ADR-023 records document-scoped rename, ADR-024 records document symbols, ADR-025 records semantic tokens, ADR-026 records conservative formatting, ADR-027 records prototype client dependency remediation, ADR-028 records inline-constant refactoring, ADR-029 records bounded on-demand workspace symbols, ADR-030 records the Phase 8 performance baseline and advisory check, ADR-031 records Phase 9 local packaging verification, ADR-032 records the AGPL-3.0-only project licence decision, ADR-033 records the `0.1.0` release identity and SemVer policy, ADR-034 records the deferred user configuration boundary, ADR-035 records the `0.1.0` supported runtime and OS matrix, ADR-036 records the Phase 11 clean-install validation design, ADR-037 records the real documentation corpus validation design, ADR-038 records the Phase 11 protocol robustness review and transport behaviour, ADR-039 records the npm namespace and publication access review, ADR-040 records the Phase 12 licensing and provenance sign-off, ADR-041 records the Phase 12 dependency and secret audit, ADR-042 records the controlled release workflow design, ADR-043 records the publish/pack dry-run comparison, ADR-044 records the changelog and GitHub release notes preparation, ADR-045 records the rollback and correction policy, ADR-046 records the post-publication smoke plan, ADR-047 records the Phase 13 release authorization, ADR-048 records the Phase 13 gate confirmation, ADR-049 records the first-publish bootstrap exception, ADR-050 records the Phase 13 publication evidence and provenance limitation, and ADR-051 records the proposed `0.2.0` scope and deferred work.
 
 ## ADR-001 — Clean-slate re-implementation
 
@@ -940,3 +940,39 @@ Consequences:
 - `0.1.0` remains the only authorized published version; a correction requires a new explicit decision under ADR-045.
 - Trusted publishing is operator-confirmed for later controlled releases, but its exact-tag provenance is not yet independently verified by the agent.
 - No registry mutation, tag change, deprecation, unpublish or manual dist-tag change was performed by the smoke run.
+
+## ADR-051 — Proposed v0.2.0 scope and deferred work
+
+Status: accepted on 2026-11-27 as roadmap planning only. It approves the recorded scope and its deferred boundary; it does not authorize implementation, a version bump, a tag, a publication, a registry mutation or a GitHub release. A release authorization naming the exact version and operator remains required before Phase 15.
+
+Decision: `0.2.0` is a consolidation release focused on configuration, robustness, consumer-install evidence and the normal controlled publication path. It is not a feature-count release. Phase 14 implements and verifies the selected work; Phase 15 prepares and performs the controlled release only after separate explicit authorization.
+
+In scope for v0.2.0:
+
+- A focused diagnostics configuration through standard `workspace/configuration`: global enablement, per-code severity overrides with suppression, and unchanged defaults when the client has no configuration capability. The codes are `syntax-error`, `unknown-global`, `unknown-pattern-method`, `empty-group`, `unmatched-close`, `mismatched-close` and `empty-step`. `workspace/didChangeConfiguration` is covered. No internal engine settings are exposed. This follows ADR-034 without adding a broad settings surface.
+- Bounded workspace-symbol hardening for symlinks, path traversal, unreadable files and file-size/depth limits, retaining open-document overrides and deterministic results. No persistent index, file watcher or cross-file module graph is introduced.
+- Clean consumer installation evidence without inheriting this repository's `.npmrc`, especially `legacy-peer-deps=true`. Any narrowing or removal of that setting requires demonstrated compatibility and a recorded decision under ADR-031/ADR-041 evidence.
+- A deterministic bounded soak/lifecycle test for rapid edits, repeated initialize/shutdown cycles and memory-growth observation. If timing proves environment-sensitive, the result is advisory; no production timing hooks or telemetry are added.
+- One end-to-end JSON-RPC/installed-binary benchmark workload with p50/p95/p99, reported separately from layer-level results and kept advisory under ADR-030.
+- Two independent LSP-client smoke tests with all client configuration outside the server core. Results are recorded as client behaviours exercised, and no editor dependency enters the published package.
+- Documentation updates as behaviour lands, plus the decision-header correction that adds ADR-050 to the ADR index.
+
+Deferred beyond v0.2.0:
+
+- Strudel compatibility/version selection and multiple metadata snapshots: needs an authoritative multi-version metadata design, not merely another setting.
+- Incremental semantic reuse optimization: the current large incremental edit remains slower than full parse/analysis, but complexity is not justified without real editing evidence.
+- Replacement of synthetic benchmark fixtures with real-world workloads: requires provenance and redistribution terms.
+- Completion resolution, range/on-type formatting, folding ranges, selection ranges, inlay hints, call hierarchy, broader refactorings and cross-file navigation: each remains subject to the usefulness/correctness/cost evaluation in `docs/LSP_FEATURES.md`.
+- Packaging allowlist changes, a dependency-update policy, SBOM generation, issue/support templates and any other unassigned item in the Phase 13 release-quality backlog: not selected for this increment.
+- Additional release attestations beyond the OIDC provenance to be verified in Phase 15.
+
+Phase 15 boundary: unlike ADR-049, this release uses the controlled OIDC workflow with `npm-release` approval and no bootstrap exception. Provenance absence or mismatch is a blocker, not an assumption. The exact tag, operator and publication time require a new explicit authorization.
+
+Rationale: `0.1.0` established the core language server and exposed a finite set of concrete follow-up gaps. Addressing those gaps and proving the normal trusted-publish path gives more user value than partially implementing several deferred capabilities. Keeping the deferred list explicit prevents roadmap entries from becoming implicit commitments.
+
+Consequences:
+
+- `docs/ROADMAP.md` now has Phases 14–15 as planned work and marks selected backlog items as assigned to Phase 14.
+- No source, manifest, lockfile, test, benchmark, release note or registry state was changed by this decision.
+- Phase 14 implementation requires its own task authorization; Phase 15 publication requires a separate authorization naming `0.2.0` and the operator.
+- `0.1.0` remains the only published version, and its provenance limitation remains recorded in ADR-050.
