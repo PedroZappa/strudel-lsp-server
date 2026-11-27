@@ -25,7 +25,7 @@ Install the package and configure an LSP client to launch `strudel-lsp-server` o
 npm install --global strudel-lsp-server
 ```
 
-The latest published version is `0.4.0`; pin `@0.4.0` for a reproducible install. Installation uses default npm peer resolution; `legacy-peer-deps=true` is not required.
+The latest published version is `0.4.0`; pin `@0.4.0` for a reproducible install. The candidate manifest is `0.5.0` but unpublished; draft ADR-075 records that no publication is authorized. Installation uses default npm peer resolution; `legacy-peer-deps=true` is not required.
 
 ```json
 {
@@ -47,7 +47,7 @@ The core server does not provide a TCP mode. Editor-specific clients and configu
 
 The published `0.4.0` artifact advertises only capabilities that were implemented and verified for that release: incremental text document sync, diagnostics, completion, hover, signature help, definition, references, document symbols, workspace symbols, rename, whole-document formatting, semantic tokens, and `quickfix` and `refactor.inline` code actions.
 
-The unreleased `v0.5.0` development tree additionally advertises completion resolution, `refactor.extract`, call hierarchy, `workspaceSymbol/resolve`, range formatting, folding ranges, selection ranges and opt-in inlay hints. Definition and references can also resolve bounded cross-file targets from explicit relative `.strudel` imports in files supplied by the on-demand workspace scan. Workspace symbols still use a bounded `.strudel` scan with symlink, path-traversal and unreadable-file guards; nothing in this tree is published and no persistent workspace index or file watcher is created.
+The unreleased `v0.5.0` candidate additionally advertises completion resolution, `refactor.extract`, call hierarchy, `workspaceSymbol/resolve`, range formatting, folding ranges, selection ranges and opt-in inlay hints. Definition and references can also resolve bounded cross-file targets from explicit relative `.strudel` imports in files supplied by the on-demand workspace scan. Workspace symbols still use a bounded `.strudel` scan with symlink, path-traversal and unreadable-file guards; nothing in this tree is published and no persistent workspace index or file watcher is created. Phase 24 adds internal real-corpus benchmarks, incremental semantic reuse and opt-in local timing; it adds no new LSP capability and produces no production telemetry.
 
 See [LSP_FEATURES.md](https://github.com/PedroZappa/strudel-lsp-server/blob/main/docs/LSP_FEATURES.md) for exact capability details and [PERFORMANCE.md](https://github.com/PedroZappa/strudel-lsp-server/blob/main/docs/PERFORMANCE.md) for measured latency baselines.
 

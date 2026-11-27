@@ -115,8 +115,9 @@ void test('release verifier switches from dry-run parity to published registry p
   assert.match(testingStrategy, /^### Post-publication verification hardening/m);
 });
 
-void test('changelog and current release notes are versioned for the package release', () => {
+void test('changelog and current release notes match the candidate manifest without claiming publication', () => {
   const version = packageJson.version.replaceAll('.', '\\.');
+  assert.equal(packageJson.version, '0.5.0');
   assert.match(changelog, new RegExp(`^## \\[${version}\\] - \\d{4}-\\d{2}-\\d{2}$`, 'm'));
   assert.match(changelog, /^## \[Unreleased\]$/m);
   assert.match(changelog, /^### Known issues$/m);
@@ -126,6 +127,7 @@ void test('changelog and current release notes are versioned for the package rel
   assert.match(currentReleaseNotes, /^## Explicit limitations and known issues$/m);
   assert.match(currentReleaseNotes, /^## Installed-package verification$/m);
   assert.match(currentReleaseNotes, /^## Corrections and rollback$/m);
+  assert.match(currentReleaseNotes, /candidate only; not published/);
 });
 
 void test('post-publication smoke plan covers registry, installed launch and release record', () => {
@@ -203,9 +205,9 @@ void test('Phase 19 publication evidence records the exact release and completed
   assert.match(evidence, /No local publish, republish/);
   assert.match(roadmap, /^### Phase 19 — `v0\.3\.0` controlled release \(complete\)$/m);
   assert.match(changelog, /Version `0\.3\.0` was published on 2026-11-27/);
-  // The README is live documentation; ADR-067 retains the historical 0.3.0 record.
-  const latestVersion = packageJson.version.replaceAll('.', '\\.');
-  assert.match(readme, new RegExp(`latest published version is \`${latestVersion}\``));
+  // The README is live documentation and must name the registry release, not the unpublished candidate.
+  assert.match(readme, /latest published version is `0\.4\.0`/);
+  assert.match(readme, /candidate manifest is `0\.5\.0`/);
 });
 
 void test('Phase 22 authorization records the exact version tag and operator', () => {
@@ -254,6 +256,32 @@ void test('first-publish bootstrap exception is version-limited and blocks workf
   assert.match(section, /provenance attestation for `0\.1\.0` is not assumed/);
   assert.match(workflow, /github\.ref_name != 'v0\.1\.0'/);
   assert.equal(workflow.match(/npm publish --access public/g)?.length, 1);
+});
+
+void test('Phase 25 candidate artifacts do not claim an unpublished release', () => {
+  const candidateNotes = readFileSync(
+    join(repositoryRoot, '.github', 'RELEASE_NOTES_v0.5.0.md'),
+    'utf8',
+  );
+  assert.match(candidateNotes, /^Draft release notes for `strudel-lsp-server@0\.5\.0`/m);
+  assert.match(candidateNotes, /candidate only; not published/m);
+  assert.match(candidateNotes, /^## Publication status$/m);
+  assert.match(candidateNotes, /No publication is authorized/);
+
+  const marker = '## ADR-075 — Phase 25 controlled publication authorization (draft)';
+  const start = decisions.indexOf(marker);
+  assert.notEqual(start, -1);
+  const section = decisions.slice(start);
+  assert.match(section, /Status: draft/);
+  assert.match(section, /No publication is authorized/);
+  assert.match(section, /named operator stated in that authorization/);
+  assert.match(section, /explicit user authorization/);
+  assert.match(section, /The manifest declares `0\.5\.0` as a candidate/);
+
+  assert.match(
+    roadmap,
+    /^### Phase 25 — `v0\.5\.0` controlled release \(candidate prepared, awaiting publication authorization\)$/m,
+  );
 });
 
 void test('Phase 17 records the package, support and SBOM readiness decisions', () => {

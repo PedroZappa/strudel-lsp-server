@@ -1,6 +1,6 @@
 # Performance
 
-Status: Phase 24 scale and responsiveness work is complete in the unreleased `v0.5.0` development tree. The layer baseline contains 20 measured workloads, including two real-corpus workloads; opt-in local timing is available; performance thresholds remain advisory. Phase 25 owns the release.
+Status: Phase 24 scale and responsiveness work is complete and committed as `0f30fe5` in the unreleased `v0.5.0` candidate tree. The layer baseline contains 20 measured workloads, including two real-corpus workloads; opt-in local timing is available; performance thresholds remain advisory. Phase 25 candidate artifacts are prepared, but publication requires exact authorization.
 
 Authority: `AGENTS.md` section 6.
 
@@ -131,4 +131,4 @@ The records include `semantic.statements.reused`, `semantic.statements.analyzed`
 
 ## Current status
 
-Phase 24 is complete in the development tree. The harness records 20 workloads, the committed baseline contains measured p50/p95/p99 values and numeric warning thresholds, both real workloads verify pinned provenance before running, and CI reports advisory regressions. The final installed-binary report records 0.443/0.921/1.120 ms p50/p95/p99 over 100 samples. No performance target is a blocking correctness gate, and no version bump, tag, publication or registry mutation was performed; Phase 25 owns the `v0.5.0` release.
+Phase 24 is complete and committed as `0f30fe5`. The harness records 20 workloads, the committed baseline contains measured p50/p95/p99 values and numeric warning thresholds, both real workloads verify pinned provenance before running, and CI reports advisory regressions. The final installed-binary report records 0.443/0.921/1.120 ms p50/p95/p99 over 100 samples. No performance target is a blocking correctness gate. Phase 25 candidate artifacts are prepared in `CHANGELOG.md`, `docs/LSP_FEATURES.md` and `.github/RELEASE_NOTES_v0.5.0.md`. The manifest declares `0.5.0` as an unpublished candidate; the advisory installed-binary rerun on that tree recorded 0.441/0.689/1.009 ms p50/p95/p99 over 100 samples. No tag, publication or registry mutation has been performed, and draft ADR-075 records the exact authorization still required.

@@ -2,9 +2,32 @@
 
 All notable changes to the `strudel-lsp-server` npm package are documented in this file. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-Version `0.3.0` was published on 2026-11-27 from tag `v0.3.0` at commit `b3451e283986b576b526534136026adba0bf5217` through the controlled OIDC workflow with `pedrozappa` as operator. ADR-067 records the publication and smoke evidence, including the transient workflow-verification race. Version `0.4.0` was published on 2026-11-27 from tag `v0.4.0` at commit `1d39c14cba2152116ce1c2c5d5b827bf6af5c144` through the controlled OIDC workflow with `pedrozappa` as operator and is the latest published release; `0.3.0`, `0.2.0` and `0.1.0` remain available. ADR-072 records the exact publication and smoke evidence. Full user-facing notes for `0.4.0` are in `.github/RELEASE_NOTES_v0.4.0.md`; the published `0.2.0` body remains immutable in `.github/RELEASE_TEMPLATE.md`.
+Version `0.3.0` was published on 2026-11-27 from tag `v0.3.0` at commit `b3451e283986b576b526534136026adba0bf5217` through the controlled OIDC workflow with `pedrozappa` as operator. ADR-067 records the publication and smoke evidence, including the transient workflow-verification race. Version `0.4.0` was published on 2026-11-27 from tag `v0.4.0` at commit `1d39c14cba2152116ce1c2c5d5b827bf6af5c144` through the controlled OIDC workflow with `pedrozappa` as operator and is the latest published release; `0.3.0`, `0.2.0` and `0.1.0` remain available. ADR-072 records the exact publication and smoke evidence. The working-tree candidate manifest declares `0.5.0` but is unpublished; draft ADR-075 records that exact publication authorization is pending. Full user-facing notes for `0.4.0` are in `.github/RELEASE_NOTES_v0.4.0.md`; the draft `0.5.0` notes are in `.github/RELEASE_NOTES_v0.5.0.md`; the published `0.2.0` body remains immutable in `.github/RELEASE_TEMPLATE.md`.
 
 ## [Unreleased]
+
+## [0.5.0] - 2026-11-27
+
+Candidate only; not published. The manifest declares `0.5.0`, while `0.4.0` remains the latest registry release. Exact publication authorization is pending under draft ADR-075.
+
+### Added
+
+- Phase 23 editor ergonomics and navigation under ADR-073: folding ranges, selection ranges, opt-in type inlay hints, completion resolution, range formatting, call hierarchy, `workspaceSymbol/resolve`, conservative `refactor.extract` and bounded cross-file definition and references from explicit relative `.strudel` imports.
+- Phase 24 real-corpus benchmark workloads under ADR-074, using a deterministic sample of pinned `@strudel/reference@1.2.2` JSDoc examples with verified tarball, integrity, repository, licence and corpus hash. No example text is copied into the package.
+- Opt-in local timing under `src/performance/` for tests and benchmarks, with a no-op production default and no telemetry, user-facing setting, environment variable, network call or stored log.
+- Focused semantic and rapid-edit regression coverage for declaration-identity reuse, type-preserving initializer edits, type-changing rebuilds and timing counts.
+
+### Changed
+
+- Global declaration symbol IDs now depend on declaration identity and order instead of statement text. Unchanged statements are reused only when a changed declaration's inferred type and signature remain the same; inferred-type or signature changes, multiple changed declarations, declaration identity/order changes and catalog-version changes force a conservative rebuild.
+- The layer benchmark baseline now records 20 workloads, including two real-corpus workloads, with p50/p95/p99 targets derived from the recorded linux-x64 environment.
+- Performance thresholds remain advisory in CI. The recorded hardware-specific baseline and installed-binary report are documented in `docs/PERFORMANCE.md`; correctness remains gated by the normal validation suite.
+
+### Known issues
+
+- The accepted upstream `tree-sitter-strudel@2.0.2` grammar gaps and conservative unresolved-reference baseline from `0.4.0` remain unchanged.
+- Phase 24 timing and benchmark evidence are advisory local measurements, not editor-latency guarantees or production telemetry.
+- No `v0.5.0` publication, tag, provenance or registry identity exists yet; exact-tag and post-publication verification remain pending.
 
 ## [0.4.0] - 2026-11-27
 

@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: re-implementation roadmap complete through Phase 15, with Phases 16–22 complete. `strudel-lsp-server@0.4.0` was published on 2026-11-27 from tag `v0.4.0` at commit `1d39c14cba2152116ce1c2c5d5b827bf6af5c144` through the controlled OIDC workflow with `pedrozappa` as operator and is the latest release; `0.3.0`, `0.2.0` and `0.1.0` remain available. ADR-060 records the exact publication authorization and ADR-061 records the registry, signature, provenance and smoke evidence for `0.2.0`. ADR-051 records the scope and deferred work, ADR-052 records the configuration contract, ADR-053 records the filesystem boundary, ADR-054 records the `.npmrc` removal, ADR-055 records hermetic pack caching, ADR-056 records the advisory soak/lifecycle design, ADR-057 records the separate advisory benchmark report, ADR-058 records the independent editor-client smoke evidence, ADR-059 records the release-preparation authorization, ADR-062 records publication-state-aware verification, ADR-063 records the initial v1 stability charter, ADR-064 records the Phase 17 package, support and SBOM decisions, and ADR-065 records the Phase 18 parser, metadata and platform compatibility closure, ADR-066 authorizes the exact Phase 19 publication, ADR-067 records its publication and smoke evidence, ADR-070 records the registry-visibility wait, ADR-071 authorizes the exact Phase 22 publication and ADR-072 records its publication and smoke evidence. Missing provenance for the operator-managed first publish is recorded in ADR-050. The feature-expanded route below describes proposed work through `v1.0.0`, split into `v0.3.0`, `v0.4.0`, `v0.5.0` and `v1.0.0` increments. Phases 16–23 are complete; Phase 24 is complete in the development tree; Phases 25–27 remain proposed and subject to approval.
+Status: re-implementation roadmap complete through Phase 15, with Phases 16–22 complete. `strudel-lsp-server@0.4.0` was published on 2026-11-27 from tag `v0.4.0` at commit `1d39c14cba2152116ce1c2c5d5b827bf6af5c144` through the controlled OIDC workflow with `pedrozappa` as operator and is the latest release; `0.3.0`, `0.2.0` and `0.1.0` remain available. ADR-060 records the exact publication authorization and ADR-061 records the registry, signature, provenance and smoke evidence for `0.2.0`. ADR-051 records the scope and deferred work, ADR-052 records the configuration contract, ADR-053 records the filesystem boundary, ADR-054 records the `.npmrc` removal, ADR-055 records hermetic pack caching, ADR-056 records the advisory soak/lifecycle design, ADR-057 records the separate advisory benchmark report, ADR-058 records the independent editor-client smoke evidence, ADR-059 records the release-preparation authorization, ADR-062 records publication-state-aware verification, ADR-063 records the initial v1 stability charter, ADR-064 records the Phase 17 package, support and SBOM decisions, and ADR-065 records the Phase 18 parser, metadata and platform compatibility closure, ADR-066 authorizes the exact Phase 19 publication, ADR-067 records its publication and smoke evidence, ADR-070 records the registry-visibility wait, ADR-071 authorizes the exact Phase 22 publication and ADR-072 records its publication and smoke evidence. Missing provenance for the operator-managed first publish is recorded in ADR-050. The feature-expanded route below describes proposed work through `v1.0.0`, split into `v0.3.0`, `v0.4.0`, `v0.5.0` and `v1.0.0` increments. Phases 16–24 are complete; Phase 24 was committed as `0f30fe5` and pushed; the Phase 25 candidate is prepared but publication awaits exact authorization under draft ADR-075; Phases 26–27 remain proposed and subject to approval.
 
 Authority: `AGENTS.md` sections 2–18 and the other documents in `docs/`.
 
@@ -586,7 +586,7 @@ Exit criteria:
 
 Evidence: ADR-073 defines the transport-independent provider boundary, opt-in inlay-hint semantics, validated resolve tokens, bounded cross-file rules and negative capability policy. `docs/TESTING_STRATEGY.md` records the 140/140 gate, focused suites, protocol/live-coding coverage, corpus validation, package and consumer checks, audits and benchmark percentiles. The work was committed as `46b2cd7 feat(lsp): add editor ergonomics and navigation` and pushed, but remains unpublished; Phase 25 owns the `v0.5.0` release.
 
-### Phase 24 — Scale and responsiveness (complete in development tree, unreleased `v0.5.0`)
+### Phase 24 — Scale and responsiveness (complete and committed, unreleased `v0.5.0`)
 
 Dependencies: Phase 23.
 
@@ -604,24 +604,26 @@ Exit criteria:
 - [x] Soak and rapid-edit tests continue to pass with incremental reuse enabled.
 - [x] The performance promise in `docs/PERFORMANCE.md` matches the measured evidence and the declared advisory/blocking policy.
 
-Evidence: ADR-074 records the real-corpus provenance, incremental identity model, opt-in timing boundary and advisory threshold decision. The 20-workload layer baseline and separate JSON-RPC report are recorded in `docs/PERFORMANCE.md`; `docs/TESTING_STRATEGY.md` records the final validation gate. The large incremental workload improved from the Phase 18 7.018/7.237/7.590 ms to 6.532/6.668/6.918 ms p50/p95/p99. The work remains uncommitted and unpublished; Phase 25 owns the `v0.5.0` release.
+Evidence: ADR-074 records the real-corpus provenance, incremental identity model, opt-in timing boundary and advisory threshold decision. The 20-workload layer baseline and separate JSON-RPC report are recorded in `docs/PERFORMANCE.md`; `docs/TESTING_STRATEGY.md` records the final validation gate. The large incremental workload improved from the Phase 18 7.018/7.237/7.590 ms to 6.532/6.668/6.918 ms p50/p95/p99. The work was committed as `0f30fe5 perf: add real corpus, reuse and timing` and pushed, but remains unpublished; Phase 25 owns the `v0.5.0` release.
 
-### Phase 25 — `v0.5.0` controlled release (proposed)
+### Phase 25 — `v0.5.0` controlled release (candidate prepared, awaiting publication authorization)
 
 Dependencies: Phase 24 and an exact publication ADR naming `strudel-lsp-server@0.5.0`, tag `v0.5.0` and the operator.
 
 Tasks:
 
-- [ ] Repeat the full candidate gate, including folding, selection ranges, inlay hints, completion resolution, range formatting, navigation and incremental-semantics suites.
-- [ ] Update the changelog, capability matrix, performance report and release notes from the exact candidate.
+- [x] Repeat the full candidate gate, including folding, selection ranges, inlay hints, completion resolution, range formatting, navigation and incremental-semantics suites.
+- [x] Update the changelog, capability matrix, performance report and release notes from the exact candidate.
 - [ ] Publish only through the controlled OIDC workflow with `npm-release` approval.
 - [ ] Verify provenance, signatures, registry metadata, tarball identity, clean installs and installed stdio handshake after publication.
 
 Exit criteria:
 
 - [ ] Exact-tag CI is green and post-publication smoke evidence passes.
-- [ ] All capability additions are reflected in documentation and negative capability tests.
-- [ ] No unapproved registry mutation occurs.
+- [x] All capability additions are reflected in documentation and negative capability tests.
+- [x] No unapproved registry mutation has occurred during candidate preparation.
+
+Evidence: the `0.5.0` manifest and versioned artifacts are prepared but unpublished. The candidate gate passed 145/145 tests, `make ci`, focused suites, corpus validation, package and consumer verification, runtime and client audits, the advisory installed-binary rerun and the local Neovim smoke. VS Code was unavailable on the linux-x64 runner. Draft ADR-075 records the exact version, tag and named operator authorization still required before publication; no tag or registry mutation was performed.
 
 ### Phase 26 — v1 readiness freeze (proposed, `v1.0.0`)
 
@@ -681,9 +683,9 @@ These were the recommended, non-blocking items carried out of first publication.
 
 These items were deferred after the first release and are not selected for `0.2.0` in ADR-051. The earlier blanket deferral is superseded by the proposed route above for planning purposes only; implementation still requires phase authorization.
 
-- [x] **Assigned to Phase 24 and completed in the development tree.** Real benchmark workloads derive from pinned `@strudel/reference@1.2.2` documentation examples with verified AGPL provenance and no copied example text.
-- [x] **Assigned to Phase 24 and completed in the development tree.** Incremental semantic reuse preserves global declaration identity across initializer edits and avoids full semantic snapshots where correctness permits; see `docs/PERFORMANCE.md`.
-- [x] **Assigned to Phase 24 and completed in the development tree.** Opt-in local timing is available to tests and benchmarks with a no-op production default; see ADR-074.
+- [x] **Assigned to Phase 24 and committed as `0f30fe5`.** Real benchmark workloads derive from pinned `@strudel/reference@1.2.2` documentation examples with verified AGPL provenance and no copied example text.
+- [x] **Assigned to Phase 24 and committed as `0f30fe5`.** Incremental semantic reuse preserves global declaration identity across type-preserving initializer edits and avoids full semantic snapshots where correctness permits; see `docs/PERFORMANCE.md`.
+- [x] **Assigned to Phase 24 and committed as `0f30fe5`.** Opt-in local timing is available to tests and benchmarks with a no-op production default; see ADR-074.
 - [x] **Assigned to Phase 23 and committed as `46b2cd7`.** Folding, selection ranges, opt-in inlay hints, call hierarchy, completion resolution, range formatting, conservative extract refactoring and bounded cross-file navigation have feature, protocol and live-coding coverage with negative capability assertions; publication is deferred to Phase 25.
 
 ## Standing non-goals (not proposed for v1)
