@@ -7,6 +7,7 @@ import {
   DiagnosticSeverity,
   MarkupKind,
   ProposedFeatures,
+  SymbolKind,
   TextDocumentSyncKind,
   type CodeAction,
   type CodeActionParams,
@@ -14,6 +15,8 @@ import {
   type CompletionParams,
   type DefinitionParams,
   type Diagnostic,
+  type DocumentSymbol as LspDocumentSymbol,
+  type DocumentSymbolParams,
   type Hover,
   type HoverParams,
   type InitializeResult,
@@ -32,6 +35,7 @@ import {
   provideCompletion,
   provideDefinition,
   provideDiagnostics,
+  provideDocumentSymbols,
   prepareRename,
   provideHover,
   provideQuickFixes,
@@ -40,6 +44,8 @@ import {
   provideSignatureHelp,
   type CompletionCandidateKind,
   type DiagnosticSeverityName,
+  type DocumentSymbolKind,
+  type DocumentSymbolResult,
   type FeatureContext,
   type LanguageDiagnostic,
   type TextEditResult,
@@ -174,6 +180,28 @@ function toWorkspaceEdit(uri: string, edits: readonly TextEditResult[]): Workspa
   };
 }
 
+function toLspSymbolKind(kind: DocumentSymbolKind): SymbolKind {
+  switch (kind) {
+    case 'function':
+      return SymbolKind.Function;
+    case 'variable':
+    case 'parameter':
+    case 'import':
+      return SymbolKind.Variable;
+  }
+}
+
+function toLspDocumentSymbol(symbol: DocumentSymbolResult): LspDocumentSymbol {
+  return {
+    name: symbol.name,
+    kind: toLspSymbolKind(symbol.kind),
+    detail: symbol.detail,
+    range: toLspRange(symbol.range),
+    selectionRange: toLspRange(symbol.selectionRange),
+    children: symbol.children.map(toLspDocumentSymbol),
+  };
+}
+
 function toCompletionItemKind(kind: CompletionCandidateKind): CompletionItemKind {
   switch (kind) {
     case 'function':
@@ -217,6 +245,7 @@ connection.onInitialize((): InitializeResult => ({
     signatureHelpProvider: { triggerCharacters: ['(', ','] },
     definitionProvider: true,
     referencesProvider: true,
+    documentSymbolProvider: true,
     renameProvider: { prepareProvider: true },
   },
 }));
@@ -343,6 +372,17 @@ connection.onReferences((params: ReferenceParams): Promise<Location[]> =>
       uri: analyzed.document.uri,
       range: toLspRange(reference.range),
     }));
+  }),
+);
+
+connection.onDocumentSymbol((params: DocumentSymbolParams): Promise<LspDocumentSymbol[]> =>
+  guardAsync([], async () => {
+    await awaitDocumentAnalysis(params.textDocument.uri);
+    const analyzed = documents.get(params.textDocument.uri);
+    if (analyzed === undefined) {
+      return [];
+    }
+    return provideDocumentSymbols(contextFor(analyzed, 0)).map(toLspDocumentSymbol);
   }),
 );
 

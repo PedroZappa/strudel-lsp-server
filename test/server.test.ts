@@ -4,6 +4,8 @@ import { once } from 'node:events';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
+import { SymbolKind } from 'vscode-languageserver/node';
+
 interface JsonRpcRequest {
   jsonrpc: '2.0';
   id: number;
@@ -210,6 +212,7 @@ void test('stdio server advertises and serves implemented language capabilities'
       signatureHelpProvider: { triggerCharacters?: string[] };
       definitionProvider: boolean;
       referencesProvider: boolean;
+      documentSymbolProvider: boolean;
       renameProvider?: { prepareProvider?: boolean };
     };
   };
@@ -225,6 +228,7 @@ void test('stdio server advertises and serves implemented language capabilities'
   ]);
   assert.equal(initializeResult.capabilities.definitionProvider, true);
   assert.equal(initializeResult.capabilities.referencesProvider, true);
+  assert.equal(initializeResult.capabilities.documentSymbolProvider, true);
   assert.equal(initializeResult.capabilities.renameProvider?.prepareProvider, true);
 
   client.notify('initialized', {});
@@ -275,6 +279,24 @@ void test('stdio server advertises and serves implemented language capabilities'
     context: { includeDeclaration: true },
   })) as { range: { start: { line: number } } }[];
   assert.equal(references.length, 2);
+
+  const documentSymbols = (await client.request('textDocument/documentSymbol', {
+    textDocument: { uri },
+  })) as {
+    name: string;
+    kind: number;
+    range: { start: { line: number; character: number }; end: { line: number; character: number } };
+    selectionRange: {
+      start: { line: number; character: number };
+      end: { line: number; character: number };
+    };
+  }[];
+  assert.equal(documentSymbols.length, 1);
+  assert.equal(documentSymbols[0]?.name, 'pat');
+  assert.equal(documentSymbols[0]?.kind, SymbolKind.Variable);
+  assert.equal(documentSymbols[0]?.selectionRange.start.character, 6);
+  assert.equal(documentSymbols[0]?.selectionRange.end.character, 9);
+  assert.equal(documentSymbols[0]?.range.start.line, 0);
 
   const preparedRename = (await client.request('textDocument/prepareRename', {
     textDocument: { uri },

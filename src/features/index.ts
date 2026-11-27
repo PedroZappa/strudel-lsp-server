@@ -1,6 +1,7 @@
 export { provideQuickFixes } from './codeActions.js';
 export { provideCompletion } from './completion.js';
 export { provideDiagnostics } from './diagnostics.js';
+export { provideDocumentSymbols } from './documentSymbols.js';
 export { provideHover } from './hover.js';
 export { provideDefinition, provideReferences } from './navigation.js';
 export { prepareRename, provideRename } from './rename.js';
@@ -11,6 +12,8 @@ export type {
   DefinitionResult,
   DiagnosticFix,
   DiagnosticSeverityName,
+  DocumentSymbolKind,
+  DocumentSymbolResult,
   FeatureContext,
   HoverResult,
   LanguageDiagnostic,

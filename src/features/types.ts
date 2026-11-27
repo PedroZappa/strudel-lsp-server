@@ -90,3 +90,16 @@ export interface PrepareRenameResult {
 export interface RenameResult {
   readonly edits: readonly TextEditResult[];
 }
+
+export type DocumentSymbolKind = 'variable' | 'function' | 'parameter' | 'import';
+
+export interface DocumentSymbolResult {
+  readonly name: string;
+  readonly kind: DocumentSymbolKind;
+  readonly detail?: string;
+  /** Full extent of the declaration, including an owned function body. */
+  readonly range: SemanticRange;
+  /** Exact name token used as the outline selection. */
+  readonly selectionRange: SemanticRange;
+  readonly children: readonly DocumentSymbolResult[];
+}

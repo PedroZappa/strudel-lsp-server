@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: re-implementation roadmap updated with resolved blocker decisions, Phase 6 completion, Phase 7 quick fixes and rename, 2026-11-27. Priorities are proposals and remain subject to approval.
+Status: re-implementation roadmap updated with resolved blocker decisions, Phase 6 completion, Phase 7 quick fixes, rename and document symbols, 2026-11-27. Priorities are proposals and remain subject to approval.
 
 Authority: `AGENTS.md` sections 2–18 and the other documents in `docs/`.
 
@@ -159,7 +159,7 @@ Phase 6 exit criteria:
 
 ## Phase 7 — Extended capabilities
 
-**Status: quick fixes and rename implemented and verified; the other candidates remain under evaluation.**
+**Status: quick fixes, rename and document symbols implemented and verified; workspace symbols and the other candidates remain under evaluation.**
 
 Dependencies: Phase 6.
 
@@ -167,7 +167,8 @@ Candidate extended capabilities, evaluate and implement only where justified:
 
 - [x] Quick fixes.
 - [x] Rename.
-- [ ] Document/workspace symbols.
+- [x] Document symbols.
+- [ ] Workspace symbols (deferred; no workspace index exists).
 - [ ] Semantic tokens.
 - [ ] Formatting.
 - [ ] Code actions and refactoring.
@@ -187,6 +188,14 @@ Rename exit criteria:
 - [x] Rename edits use resolved declarations and references with verified source text.
 - [x] `renameProvider` advertises `prepareProvider` and both requests are implemented.
 - [x] Feature and stdio tests cover declaration and reference edits, non-user symbols, invalid names and incomplete input.
+
+Document symbols are derived from the current semantic snapshot: declared variables, functions, parameters and import bindings are returned with exact selection ranges, and a named function owns the declarations in its function scope as children. Catalog-only symbols and declarations whose recorded range no longer matches the source are omitted. Workspace symbols are deferred because there is no workspace index or authoritative cross-file module graph; searching only open documents would be incomplete and misleading to clients.
+
+Document symbol exit criteria:
+
+- [x] `documentSymbolProvider` is advertised and `textDocument/documentSymbol` is implemented.
+- [x] Feature and stdio tests cover source ranges, inferred type details, function-scope children, catalog-only exclusion and incomplete input.
+- [x] Workspace-symbol deferral is recorded in `docs/DECISIONS.md` and `docs/LSP_FEATURES.md`.
 
 ## Phase 8 — Performance harness and targets
 

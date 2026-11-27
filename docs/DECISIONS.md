@@ -1,6 +1,6 @@
 # Decisions
 
-Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened; ADR-021 records the Phase 6 deferred-item completion, ADR-022 records Phase 7 quick fixes and ADR-023 records document-scoped rename.
+Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened; ADR-021 records the Phase 6 deferred-item completion, ADR-022 records Phase 7 quick fixes, ADR-023 records document-scoped rename and ADR-024 records document symbols with workspace symbols deferred.
 
 ## ADR-001 — Clean-slate re-implementation
 
@@ -285,7 +285,7 @@ Rationale: incremental reuse, deferred analysis and version suppression protect 
 
 Consequences:
 
-- Signature help and mini-notation token analysis were added in ADR-021, quick fixes in ADR-022 and document-scoped rename in ADR-023; completion resolution, symbols, semantic tokens, formatting and remaining extended capabilities remain deferred.
+- Signature help and mini-notation token analysis were added in ADR-021, quick fixes in ADR-022, document-scoped rename in ADR-023 and document symbols in ADR-024; completion resolution, workspace symbols, semantic tokens, formatting and remaining extended capabilities remain deferred.
 - User-facing configuration for diagnostics and Strudel version selection is not exposed yet.
 - The stdio integration test now exercises capability advertisement, all implemented request types, diagnostic publication, document closure and rapid-edit suppression.
 - Performance work in Phase 8 must measure this pipeline; no latency target is claimed here.
@@ -353,3 +353,21 @@ Consequences:
 - Import binding renames change the local binding only; external module exports are outside this model.
 - Feature tests cover declaration and reference edits, parameter rename, prepare ranges, builtin and method rejection, invalid names and incomplete input; the stdio test covers capability advertisement and both requests.
 - Rename uses the cached semantic snapshot and has no measured latency figure; Phase 8 must include it in representative request workloads.
+
+## ADR-024 — Document symbols without workspace indexing
+
+Status: accepted on 2026-11-27.
+
+Decision: implement `textDocument/documentSymbol` from the current semantic snapshot and defer `workspace/symbol`. No workspace index, file watcher, new dependency or general JavaScript symbol engine is introduced.
+
+`src/features/documentSymbols.ts` walks scopes and symbols from the semantic document. Only declarations whose source text still matches their recorded range are returned; catalog-only builtins, methods and samples have no declaration and are omitted. A named function owns the declarations in its function scope as children, giving outline hierarchy where the semantic model supports it. Scopes without a declared owner are flattened into the enclosing level. `src/server.ts` advertises `documentSymbolProvider`, handles `textDocument/documentSymbol` and maps the result to hierarchical LSP `DocumentSymbol` values.
+
+Rationale: the semantic model already contains accurate local declarations, scopes and types. Exposing them is useful and deterministic. There is no workspace index or authoritative cross-file module graph, so a workspace-symbol request over open documents only would be incomplete and could mislead clients. Adding an index would be a separate architectural decision with file discovery, persistence and invalidation concerns.
+
+Consequences:
+
+- Document symbols are read-only and work on incomplete live-coding documents; malformed declaration ranges are skipped instead of crashing.
+- `detail` reflects the limited Strudel type model, not a JavaScript type checker.
+- Feature tests cover function-scope children, type details, catalog-only exclusion, imports and incomplete input; the stdio test covers capability advertisement and response mapping.
+- Document-symbol traversal uses the cached semantic snapshot and has no measured latency figure; Phase 8 must include it in representative request workloads.
+- `workspace/symbol` is not advertised until a workspace indexing strategy is approved.
