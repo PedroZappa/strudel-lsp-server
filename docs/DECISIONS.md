@@ -1,6 +1,6 @@
 # Decisions
 
-Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened; ADR-021 records the Phase 6 deferred-item completion, ADR-022 records Phase 7 quick fixes, ADR-023 records document-scoped rename, ADR-024 records document symbols, ADR-025 records semantic tokens, ADR-026 records conservative formatting, ADR-027 records prototype client dependency remediation, ADR-028 records inline-constant refactoring, ADR-029 records bounded on-demand workspace symbols, ADR-030 records the Phase 8 performance baseline and advisory check, and ADR-031 records Phase 9 local packaging verification.
+Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened or superseded; ADR-021 records the Phase 6 deferred-item completion, ADR-022 records Phase 7 quick fixes, ADR-023 records document-scoped rename, ADR-024 records document symbols, ADR-025 records semantic tokens, ADR-026 records conservative formatting, ADR-027 records prototype client dependency remediation, ADR-028 records inline-constant refactoring, ADR-029 records bounded on-demand workspace symbols, ADR-030 records the Phase 8 performance baseline and advisory check, ADR-031 records Phase 9 local packaging verification, and ADR-032 records the AGPL-3.0-only project licence decision.
 
 ## ADR-001 — Clean-slate re-implementation
 
@@ -16,11 +16,11 @@ Status: accepted.
 
 Detailed requirements live in the ten documents under `docs/`; `AGENTS.md` defines agent behaviour and development rules. Conflicts are identified and resolved explicitly rather than by selecting a convenient interpretation.
 
-## ADR-003 — Parser licence
+## ADR-003 — Parser licence (historical 1.1.8 decision)
 
-Status: resolved by user decision on 2026-11-25.
+Status: superseded by ADR-032 on 2026-11-27; retained as evidence for the earlier decision.
 
-Decision: treat **MIT** as the authoritative licence for the parser dependency. This is based on the MIT metadata in the published npm package and in both repositories' `package.json` files, together with the user's confirmation.
+Historical decision: treat **MIT** as the authoritative licence for the 1.1.8-era parser packages. This was based on the MIT metadata in the published npm packages and in both repositories' `package.json` files, together with the user's confirmation. It does not govern the adopted `tree-sitter-strudel@2.0.2` dependency or the published server.
 
 Verified source facts:
 
@@ -33,9 +33,9 @@ Verified source facts:
 
 Consequences:
 
-- The AGPL `LICENSE` files remain inconsistent with the project's MIT decision. The user stated on 2026-11-25 that they will correct the licence in the original `PedroZappa/tree-sitter-strdl` repository. No issue or pull request was opened, and no action was taken against the fork. The project blocker is marked solved as an owner-owned upstream follow-up; this does not claim the upstream file has already changed.
+- The AGPL `LICENSE` files contradicted the historical MIT metadata. The user planned an owner-owned upstream correction; no issue or pull request was opened, and no action was taken against the fork. That plan is no longer a release gate.
 - The exact parser package and runtime are pinned in ADR-013, and compatibility validation passed.
-- The already-published `tree-sitter-strudel@1.1.8` npm tarball still contains an AGPL `LICENSE`. A corrected npm release from the original repository remains a release gate before redistribution, separate from the project licence-policy decision.
+- The already-published `tree-sitter-strudel@1.1.8` npm tarball contains an AGPL `LICENSE`. The 2.0.2 metadata and licence are consistent, which prompted the re-evaluation recorded in ADR-032.
 
 ## ADR-004 — Complete `AGENTS.md` section 9
 
@@ -71,9 +71,9 @@ Vitest remains a documented alternative if richer ergonomics become necessary. P
 
 ## ADR-009 — Repository licence metadata
 
-Status: resolved on 2026-11-25.
+Status: resolved on 2026-11-25; licence identifier amended by ADR-032 on 2026-11-27.
 
-Root `LICENSE` previously carried the Microsoft MIT template notice while manifests identified `Zedro`. It is now MIT with `Copyright (c) 2025-present Zedro`. Repository identity, Git history and ownership information remain preserved.
+Root `LICENSE` previously carried the Microsoft MIT template notice while manifests identified `Zedro`. It was corrected to MIT with `Copyright (c) 2025-present Zedro`; ADR-032 now replaces the MIT identifier with AGPL-3.0-only while retaining that copyright notice. Repository identity, Git history and ownership information remain preserved.
 
 ## ADR-010 — Measured performance targets
 
@@ -128,7 +128,7 @@ Consequences:
 
 - `.npmrc` still sets `legacy-peer-deps=true` as a general setting. The parser-specific rationale no longer applies; narrowing or removing it is deferred until all dependencies are confirmed compatible without it.
 - Phase 3 parser integration tests validate loading, parse structure, non-ASCII ranges, incremental edits and malformed-input recovery with 2.0.2. Results are recorded in `docs/PARSER_INTEGRATION.md`.
-- 2.0.2 declares `AGPL-3.0-only` consistently in both `package.json` and its bundled `LICENSE`. The earlier MIT-authoritative decision applied to 1.1.8 metadata and needs re-confirmation before redistributing the 2.0.2 parser package.
+- 2.0.2 declares `AGPL-3.0-only` consistently in both `package.json` and its bundled `LICENSE`. The earlier MIT-authoritative decision applied only to 1.1.8 metadata and was superseded by ADR-032 for the adopted parser.
 
 ## ADR-014 — Strudel metadata source versions
 
@@ -252,7 +252,7 @@ Metadata is layered:
 
 `createCatalogFromLanguageDatabase` adapts any registered Strudel version to the Phase 4 `SemanticCatalog` boundary. `LanguageDatabaseOptions.versions` permits additional generated snapshots in future without changing semantic-engine code. Catalog versions include a deterministic hash of manual and runtime layers so semantic caches invalidate when those layers change.
 
-Rationale: the design satisfies the offline requirement, avoids direct Node imports of packages with incompatible browser packaging, and preserves provenance for AGPL-3.0-or-later sources. Generated descriptions and examples are included for future hover and signature features; the repository licence remains MIT while source obligations are documented rather than assumed away.
+Rationale: the design satisfies the offline requirement, avoids direct Node imports of packages with incompatible browser packaging, and preserves provenance for AGPL-3.0-or-later sources. Generated descriptions and examples are included for future hover and signature features; the project licence is AGPL-3.0-only under ADR-032, with source obligations documented rather than assumed away.
 
 Consequences:
 
@@ -416,7 +416,7 @@ Decision: clear all GitHub Dependabot advisories in the preserved prototype VS C
 
 Root `npm audit` and `npm audit --omit=dev` already reported zero vulnerabilities. All 17 open Dependabot alerts were confined to `client/package-lock.json`: high advisories in `brace-expansion`, `@isaacs/brace-expansion`, `minimatch` and `glob`, and moderate advisories in `glob` and `minimatch`. A non-breaking lockfile refresh cleared the high alerts but left the moderate alerts because both vulnerable ranges extend through the versions allowed by `glob@11`. `glob@14.0.6` uses `minimatch@11`, which is outside those ranges. `npm audit fix --package-lock-only` then patched the remaining nested `minimatch@5` and `brace-expansion` advisories without further direct dependency changes.
 
-Licence: `glob@14.0.6` is `BlueOak-1.0.0`, an OSI-approved permissive licence with an express patent grant and a notice-retention requirement. It is compatible with the project's MIT licence; no `glob` source is copied into this repository, and npm lockfile metadata retains the licence identifier. Sources: [OSI approval](https://opensource.org/license/blueoak-1-0-0) and [licence steward](https://blueoakcouncil.org/license/1.0.0).
+Licence: `glob@14.0.6` is `BlueOak-1.0.0`, an OSI-approved permissive licence with an express patent grant and a notice-retention requirement. It remains compatible with the project's AGPL-3.0-only licence; no `glob` source is copied into the published server, and npm lockfile metadata retains the licence identifier. Sources: [OSI approval](https://opensource.org/license/blueoak-1-0-0) and [licence steward](https://blueoakcouncil.org/license/1.0.0).
 
 Compatibility: the `glob.glob(...)` call in `client/src/test/index.ts` remains exported by `glob@14`, and the package supports Node `18 || 20 || >=22`. The prototype client is not part of the published server package.
 
@@ -478,7 +478,7 @@ Consequences:
 
 ## ADR-031 — Phase 9 local packaging verification
 
-Status: accepted for local preparation on 2026-11-27; publication remains blocked.
+Status: accepted for local preparation on 2026-11-27; publication awaits explicit release authorization.
 
 Decision: keep the package as a single ESM npm package with a stdio executable at `dist/src/server.js`, replace the stale prototype README with authoritative package documentation, and verify the distributable with `scripts/verify-package.mjs`. The script packs the built tarball, checks the `LICENSE`, `README.md` and compiled server are present while tests and benchmarks are absent, performs a runtime-only `npm ci --offline` followed by an offline install of the tarball, and runs an LSP initialize/shutdown handshake against the installed binary. It is exposed as `npm run verify:package`, `make verify-package` and a CI validation step, and is included in `make verify-all`.
 
@@ -487,6 +487,38 @@ Rationale: a package can pass source-level checks while still shipping the wrong
 Consequences:
 
 - No `npm publish` has been performed; explicit release authorization is still required.
-- The parser redistribution gate remains open: `tree-sitter-strudel@2.0.2` declares and bundles AGPL-3.0-only, which conflicts with the MIT parser decision in ADR-003 and the MIT-corrected release requirement in `docs/ROADMAP.md`.
+- The parser redistribution gate was resolved by ADR-032: the project and the pinned `tree-sitter-strudel@2.0.2` parser are both AGPL-3.0-only. Publication still requires explicit release authorization.
 - The offline verification depends on a populated npm cache from the committed lockfile; it is a packaging check, not a claim that arbitrary machines can install without a cache or registry mirror.
-- If the package is released, the README and roadmap release status must be revisited so they do not describe a blocked local pre-release state.
+- If the package is released, the README and roadmap release status must be revisited so they no longer describe an unpublished pre-release state.
+
+## ADR-032 — AGPL-3.0-only project licence
+
+Status: accepted by explicit user decision on 2026-11-27; supersedes ADR-003.
+
+Decision: license the root npm package and re-implemented server source under the GNU Affero General Public License, version 3 only (`AGPL-3.0-only`). The root `LICENSE`, root package manifest, committed lockfile metadata and README now use that identifier. Generated Strudel metadata continues to record the accurate `AGPL-3.0-or-later` provenance of its upstream packages. The legacy prototype manifests remain outside the published package and are not changed by this decision.
+
+Rationale: the user asked whether the parser should match "the tree sitter parser and Strudel itself" and whether that licence is GPL-3.0. Verified evidence shows that the exact family is AGPL, not plain GPL, and that the components are not identical:
+
+- Strudel's repository `LICENSE` is AGPL-3.0; `@strudel/core@1.2.6` declares `AGPL-3.0-or-later` in npm and repository metadata.
+- The pinned `tree-sitter-strudel@2.0.2` parser declares `AGPL-3.0-only` and bundles an AGPL-3.0 `LICENSE`; its metadata and licence file are consistent.
+- The Tree-sitter runtime `tree-sitter@0.25.1` and upstream Tree-sitter repository are MIT, so one identifier cannot match every component named in the question.
+- `AGPL-3.0-only` matches the Strudel AGPL family and respects the pinned parser's `-only` term. It is therefore the conservative identifier for the combined project. `AGPL-3.0-or-later` would more literally match Strudel package metadata but would not respect the parser's `-only` term.
+
+Evidence:
+
+- <https://codeberg.org/uzu/strudel/raw/branch/main/LICENSE>
+- <https://registry.npmjs.org/@strudel/core/1.2.6>
+- <https://registry.npmjs.org/tree-sitter-strudel/2.0.2>
+- <https://raw.githubusercontent.com/PedroZappa/tree-sitter-strdl/main/package.json>
+- <https://raw.githubusercontent.com/PedroZappa/tree-sitter-strdl/main/LICENSE>
+- <https://registry.npmjs.org/tree-sitter/0.25.1>
+- <https://raw.githubusercontent.com/tree-sitter/tree-sitter/master/LICENSE>
+
+This is a project-governance and dependency-metadata decision, not legal advice.
+
+Consequences:
+
+- The MIT-authoritative parser decision in ADR-003 and the MIT-corrected parser release gate in `docs/ROADMAP.md` are superseded.
+- `npm run verify:package` now checks the installed package's AGPL-3.0-only manifest metadata and AGPL licence text in addition to its existing tarball and stdio checks.
+- No `npm publish` has been performed; explicit release authorization is still required.
+- This decision can be reopened if the parser dependency is replaced or relicensed under different terms.

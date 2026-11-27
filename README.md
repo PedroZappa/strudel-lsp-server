@@ -116,4 +116,4 @@ The prototype TCP mode listens on port `5007`. The packaged server does not prov
 
 ## License
 
-MIT. See `LICENSE`. Parser dependency licensing and the redistribution gate are documented in `docs/PARSER_INTEGRATION.md`.
+AGPL-3.0-only. See `LICENSE`. The pinned `tree-sitter-strudel@2.0.2` parser is also AGPL-3.0-only, Strudel packages are AGPL-3.0-or-later, and the Tree-sitter runtime is MIT. Dependency provenance and licensing decisions are documented in `docs/PARSER_INTEGRATION.md` and `docs/DECISIONS.md`.

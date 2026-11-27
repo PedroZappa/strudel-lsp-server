@@ -23,17 +23,17 @@ Exit criteria:
 
 ## Phase 1 — Resolve blockers
 
-**Status: complete.** All blocker decisions are resolved. The corrected parser npm tarball remains a packaging release gate rather than a development blocker.
+**Status: complete.** All blocker decisions are resolved. The adopted parser is AGPL-3.0-only and ADR-032 aligns the project licence with it; npm publication remains a Phase 9 authorization gate.
 
 Tasks:
 
-- [x] Resolve the parser licence policy described in `docs/PARSER_INTEGRATION.md`: MIT is authoritative by user decision.
+- [x] Resolve the parser licence policy described in `docs/PARSER_INTEGRATION.md`: adopted AGPL-3.0-only by user decision in ADR-032, superseding the earlier MIT plan.
 - [x] Obtain approval for a complete `AGENTS.md` section 9.
 - [x] Resolve the repository `LICENSE` mismatch described in `docs/DECISIONS.md`.
 - [x] Select and approve the test tooling; install the pinned scaffold dependencies.
 - [x] Select the exact parser npm version, record provenance and validate compatibility.
 - [x] Select and pin authoritative Strudel source versions for metadata generation.
-- [x] Close the upstream parser licence blocker as an owner-owned follow-up; user will correct the original repository, with no action against the fork.
+- [x] Record the historical upstream parser licence contradiction; no MIT-corrected release is needed after the AGPL-3.0-only project decision.
 
 Exit criteria:
 
@@ -250,18 +250,18 @@ Phase 8 exit criteria:
 
 Dependencies: validated core capabilities and performance baseline.
 
-**Status: local packaging preparation is complete; publication remains blocked by the parser redistribution licence gate and explicit release authorization.**
+**Status: local packaging preparation is complete; publication awaits explicit release authorization.**
 
-The package is already ESM with a stdio executable at `dist/src/server.js`, an `MIT` project licence and a controlled `files` allowlist. Phase 9 replaces the stale prototype README with authoritative package documentation and adds `scripts/verify-package.mjs`, exposed as `npm run verify:package` and `make verify-package`. That check packs the built server, verifies the tarball contents, performs a clean runtime-only offline installation from a temporary project with the committed lockfile, and exercises the installed executable with an LSP initialize/shutdown handshake. The same command now runs in CI after the package-contents preview.
+The package is already ESM with a stdio executable at `dist/src/server.js`, an `AGPL-3.0-only` project licence and a controlled `files` allowlist. Phase 9 replaces the stale prototype README with authoritative package documentation and adds `scripts/verify-package.mjs`, exposed as `npm run verify:package` and `make verify-package`. That check packs the built server, verifies the tarball contents, performs a clean runtime-only offline installation from a temporary project with the committed lockfile, checks the installed licence metadata and text, and exercises the installed executable with an LSP initialize/shutdown handshake. The same command now runs in CI after the package-contents preview.
 
 Tasks:
 
 - [ ] Publish the server as an npm package with stdio as the primary transport.
 - [x] Keep editor-specific examples separate.
-- [ ] Verify that an MIT-corrected parser npm release is available before redistribution.
+- [x] Verify AGPL-compatible parser licensing before redistribution: the project and pinned parser are both `AGPL-3.0-only` under ADR-032.
 - [x] Verify a clean offline installation with `npm run verify:package`.
 
-The pinned `tree-sitter-strudel@2.0.2` declares `AGPL-3.0-only` and bundles an AGPL licence, so the MIT-corrected release requirement is still open. No `npm publish` has been performed or authorized.
+The pinned `tree-sitter-strudel@2.0.2` declares `AGPL-3.0-only` and bundles a matching AGPL licence, so the earlier MIT-corrected release requirement is superseded. No `npm publish` has been performed or authorized.
 
 ## Deferred / explicitly not planned
 

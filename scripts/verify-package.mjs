@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
-import { access, copyFile, mkdir, mkdtemp, rm } from 'node:fs/promises';
+import { access, copyFile, mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -164,6 +164,13 @@ try {
     ],
     installDir,
   );
+
+  const installedRoot = join(installDir, 'node_modules', 'strudel-lsp-server');
+  const installedManifest = JSON.parse(await readFile(join(installedRoot, 'package.json'), 'utf8'));
+  assert.equal(installedManifest.license, 'AGPL-3.0-only');
+  const installedLicense = await readFile(join(installedRoot, 'LICENSE'), 'utf8');
+  assert.match(installedLicense, /GNU AFFERO GENERAL PUBLIC LICENSE/);
+  assert.match(installedLicense, /version 3 only/);
 
   const binName = process.platform === 'win32' ? 'strudel-lsp-server.cmd' : 'strudel-lsp-server';
   await checkStdioServer(join(installDir, 'node_modules', '.bin', binName));

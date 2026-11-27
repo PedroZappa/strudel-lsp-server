@@ -6,6 +6,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+- Changed the project licence to AGPL-3.0-only to align with the pinned AGPL-only parser and the Strudel AGPL family, and extended package verification to check the installed licence.
 - Replaced the stale prototype README with authoritative npm package documentation and added offline tarball/stdio verification via `npm run verify:package`.
 - Added a deterministic performance harness with 18 representative workloads, p50/p95/p99 baseline targets and an advisory regression check.
 - Added bounded on-demand workspace symbols with open-document overrides.

@@ -2,7 +2,7 @@
   "name": "strudel-lsp-server",
   "description": "Editor-agnostic Language Server Protocol implementation for Strudel",
   "author": "Zedro",
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "version": "0.0.1",
   "type": "module",
   "repository": {
