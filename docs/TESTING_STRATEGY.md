@@ -22,6 +22,8 @@ The prototype declared Mocha and VS Code test tooling, but its test script point
 | Metadata generation        | Pinned source extraction and reproducibility                                                                                                 | Pinned inputs; generated output compared deterministically                     | Missing source package, version drift, known-good snapshot                     |
 | Performance                | Latency and regression monitoring                                                                                                            | Dedicated harness; see `docs/PERFORMANCE.md`                                   | Open/edit/request workloads reporting p50/p95/p99                              |
 
+Version `0.1.0` has no custom configuration channel, so transport tests cover default behaviour only. If diagnostic overrides or Strudel version selection are implemented later, they require configuration contract tests before the settings are advertised.
+
 ## Framework evaluation
 
 | Option                    | Strengths                                                                                       | Costs                                                                                                       | Assessment                                     |

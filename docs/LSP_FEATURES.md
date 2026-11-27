@@ -118,13 +118,13 @@ Current implementation: outermost non-empty syntax error nodes produce warnings;
 
 ## Configuration
 
-Configuration stays narrow and user-facing:
+Version `0.1.0` has no custom configuration channel and does not request `workspace/configuration`. Behaviour uses fixed, conservative defaults:
 
-- Diagnostic enablement and severity.
-- Formatting preferences are supplied by the client's standard LSP `tabSize` and `insertSpaces` options; no custom setting exists yet.
-- Strudel compatibility/version selection.
+- Diagnostics are enabled with provider-defined severities. Enablement and severity overrides are deferred.
+- Formatting preferences are supplied by the client's standard LSP `tabSize` and `insertSpaces` options; two spaces are the fallback when the client omits them. No custom formatting setting exists.
+- Language metadata is pinned to the committed Strudel snapshot. Compatibility/version selection is deferred until more than one metadata snapshot is supported.
 
-Internal engine settings are not exposed without a concrete user-facing requirement.
+Editor-specific settings remain outside the server package. Internal engine settings are not exposed without a concrete user-facing requirement. ADR-034 records why the custom diagnostic and Strudel-version options are deferred for the first release.
 
 ## Implementation status
 
@@ -147,4 +147,4 @@ Verification evidence:
 - `npm run test:mini`: five isolated token-model tests cover documented operators, token descriptions, structural faults, expected-closer metadata, live-coding suppression and unsupported-character progress.
 - `npm test`: 54 tests include two stdio integration tests that verify capability advertisement, all twelve implemented request types, diagnostic publication, quick-fix and inline-refactor code-action mapping, document-symbol and workspace-symbol, formatting, semantic-token and rename mapping, workspace file scanning with open-document overrides, document closure and rapid-edit version suppression, plus one test-script discovery regression check.
 
-Deferred: completion resolution, range formatting, broader refactoring and remaining extended capabilities. Custom user-facing configuration for diagnostics and Strudel version selection is not exposed yet.
+Deferred: completion resolution, range formatting, broader refactoring, diagnostic enablement/severity overrides, Strudel compatibility/version selection and remaining extended capabilities. No custom user-facing configuration is exposed in `0.1.0`; see ADR-034.

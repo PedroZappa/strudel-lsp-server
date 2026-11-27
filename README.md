@@ -37,6 +37,10 @@ The server advertises only capabilities that are implemented and verified: incre
 
 See `docs/LSP_FEATURES.md` in the repository for exact capability details and `docs/PERFORMANCE.md` for measured latency baselines.
 
+## Configuration
+
+The `0.1.0` server has no custom settings. Diagnostics are enabled by default with conservative provider-defined severities. Formatting follows the client's standard LSP `tabSize` and `insertSpaces` options, falling back to two spaces when omitted. Language metadata uses the pinned Strudel snapshot; diagnostic enablement/severity overrides and Strudel version selection are deferred. Client-specific configuration remains outside this package.
+
 ## Development
 
 ```bash
@@ -80,7 +84,7 @@ The original prototype directories and editor files are retained but are not aut
 
 4. **Test hover**: Press `K` on a function name
 
-### Configuration Options
+### Legacy prototype configuration options
 
 The prototype supported two modes:
 

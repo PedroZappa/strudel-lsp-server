@@ -1,6 +1,6 @@
 # Decisions
 
-Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened or superseded; ADR-021 records the Phase 6 deferred-item completion, ADR-022 records Phase 7 quick fixes, ADR-023 records document-scoped rename, ADR-024 records document symbols, ADR-025 records semantic tokens, ADR-026 records conservative formatting, ADR-027 records prototype client dependency remediation, ADR-028 records inline-constant refactoring, ADR-029 records bounded on-demand workspace symbols, ADR-030 records the Phase 8 performance baseline and advisory check, ADR-031 records Phase 9 local packaging verification, ADR-032 records the AGPL-3.0-only project licence decision, and ADR-033 records the `0.1.0` release identity and SemVer policy.
+Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened or superseded; ADR-021 records the Phase 6 deferred-item completion, ADR-022 records Phase 7 quick fixes, ADR-023 records document-scoped rename, ADR-024 records document symbols, ADR-025 records semantic tokens, ADR-026 records conservative formatting, ADR-027 records prototype client dependency remediation, ADR-028 records inline-constant refactoring, ADR-029 records bounded on-demand workspace symbols, ADR-030 records the Phase 8 performance baseline and advisory check, ADR-031 records Phase 9 local packaging verification, ADR-032 records the AGPL-3.0-only project licence decision, ADR-033 records the `0.1.0` release identity and SemVer policy, and ADR-034 records the deferred user configuration boundary.
 
 ## ADR-001 — Clean-slate re-implementation
 
@@ -286,7 +286,7 @@ Rationale: incremental reuse, deferred analysis and version suppression protect 
 Consequences:
 
 - Signature help and mini-notation token analysis were added in ADR-021, quick fixes in ADR-022, document-scoped rename in ADR-023, document symbols in ADR-024, semantic tokens in ADR-025 and formatting in ADR-026; completion resolution, workspace symbols, broader refactoring and remaining extended capabilities remain deferred.
-- User-facing configuration for diagnostics and Strudel version selection is not exposed yet.
+- User-facing configuration for diagnostics and Strudel version selection is not exposed; ADR-034 records the explicit first-release deferral.
 - The stdio integration test now exercises capability advertisement, all implemented request types, diagnostic publication, document closure and rapid-edit suppression.
 - Performance work in Phase 8 must measure this pipeline; no latency target is claimed here.
 
@@ -538,3 +538,18 @@ Consequences:
 - Phase 10 release identity is approved; the remaining compatibility-metadata tasks still require completion.
 - The release tag, changelog heading and publication authorization must name the same exact version.
 - Releases continue to require all Phase 10–12 gates plus the explicit Phase 13 authorization; this ADR is not publication authorization.
+
+## ADR-034 — Deferred user configuration for `0.1.0`
+
+Status: accepted on 2026-11-27 for the first release.
+
+Decision: do not add a custom configuration channel in `0.1.0`. Diagnostics remain enabled with their provider-defined severities; formatting uses only standard LSP `tabSize` and `insertSpaces` options; language metadata remains pinned to the committed Strudel snapshot. Diagnostic enablement/severity overrides and Strudel compatibility/version selection are deferred.
+
+Rationale: `docs/LSP_FEATURES.md` described diagnostic and Strudel-version options as configuration while the server advertises no dynamic configuration support and the language database contains only one Strudel version. Exposing a version selector would imply support that does not exist, and diagnostic overrides would add a cross-client settings contract before a concrete user requirement has been demonstrated. The conservative diagnostic policy already distinguishes errors, warnings and informational findings, and editor-specific settings remain outside the server core under ADR-005.
+
+Consequences:
+
+- `docs/LSP_FEATURES.md`, `docs/ARCHITECTURE.md`, `docs/TESTING_STRATEGY.md` and the README now state the implemented defaults and deferred options explicitly.
+- This is an explicit first-release exception to the broader configuration guidance in `AGENTS.md` section 5; it must be revisited before a stability commitment or when multiple Strudel metadata snapshots exist.
+- No capability advertisement, provider behaviour or test suite changes are made by this decision.
+- Future settings require configuration contract tests and documentation before implementation; this ADR is not publication authorization.
