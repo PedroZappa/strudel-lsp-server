@@ -45,6 +45,20 @@ void test('release workflow publishes only from a tagged commit after approval',
   assert.match(workflow, /npm audit signatures --prefix/);
 });
 
+void test('post-publish verification waits for registry visibility', () => {
+  const waitStep = 'name: Wait for published version to become visible';
+  const install = 'npm install --prefix "$check_dir"';
+
+  assert.ok(workflow.includes(waitStep), 'workflow omits registry visibility wait');
+  assert.match(workflow, /npm view "\$\{package_name\}@\$\{version\}" version --prefer-online/);
+  assert.match(workflow, /for \(\(attempt = 1; attempt <= 12; attempt\+\+\)\)/);
+  assert.match(workflow, /sleep 15/);
+  assert.ok(workflow.indexOf(waitStep) < workflow.indexOf(install));
+  assert.match(workflow, /npm install [^\n]*--prefer-online/);
+  assert.match(decisions, /^## ADR-070 — Bounded registry visibility wait after publish$/m);
+  assert.match(testingStrategy, /^### Release workflow registry visibility wait/m);
+});
+
 void test('release workflow uses pinned actions and no npm token', () => {
   assert.doesNotMatch(workflow, /secrets\./);
   assert.doesNotMatch(workflow, /NPM_TOKEN|NODE_AUTH_TOKEN|_authToken/);

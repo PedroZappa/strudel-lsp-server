@@ -1356,3 +1356,20 @@ Consequences:
 - Template literals and nested substitutions remain outside the lexical attachment seam; only plain double-quoted mini arguments receive an AST.
 - Diagnostics configuration, quick fixes, semantic tokens and the LSP capability matrix are unchanged.
 - `validation/real-corpus.json`, compatibility documentation and contract tests record the new coverage. The compiled AST module adds three files under the existing `dist/src/miniNotation/` allowlist, raising the verified tarball from 138 to 141 files; no dependency, runtime data file or publication state changes.
+
+## ADR-070 — Bounded registry visibility wait after publish
+
+Status: accepted on 2026-11-27 after diagnosing workflow run `46049593155`. This decision hardens `.github/workflows/release.yml` for future controlled releases. It does not alter the published `0.3.0` artifact, tag, registry state or release notes, and it does not authorize another publication.
+
+Problem: npm reported `+ strudel-lsp-server@0.3.0` and warned that the package was being processed and might take a few minutes to become available, but the same job immediately ran `npm install strudel-lsp-server@0.3.0` and failed with `ETARGET`. The version became visible a few minutes later and independent smoke checks passed. A controlled publish must not be misreported as failed merely because post-publish verification starts before registry propagation.
+
+Decision: after `npm publish`, the workflow polls `npm view strudel-lsp-server@<version> version --prefer-online` up to 12 times at 15-second intervals before the installed-package smoke check. The poll is bounded and fails with an explicit message if the version never becomes visible, so a genuine publication or registry problem still fails the job. The subsequent `npm install` uses `--prefer-online` so it consumes freshly revalidated registry metadata rather than a stale cached package record. No credentials, dependency, package content or registry mutation is introduced.
+
+Rationale: npm's publish response explicitly warns that availability can lag. Waiting until the exact version is readable from the public registry is the narrowest reliable precondition for the install-based signature and attestation audit. A bounded retry preserves failure signalling for real errors while eliminating the transient race that made the `0.3.0` publish job red after a successful publish.
+
+Consequences:
+
+- The `0.3.0` publication remains valid and unchanged; ADR-067 continues to record its historical transient failure and independent verification.
+- Future controlled releases, including Phase 22, use the hardened workflow from the tag being published; a rerun of an older tag still uses its historical workflow file.
+- Contract tests assert that the visibility wait precedes installation, uses fresh metadata and is bounded.
+- No version bump, tag, publish, deprecation, dist-tag change, unpublish or retag is authorized by this decision.

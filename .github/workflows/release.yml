@@ -116,11 +116,28 @@ jobs:
       - name: Publish with trusted publishing
         run: npm publish --access public
 
+      - name: Wait for published version to become visible
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          version="${RELEASE_TAG#v}"
+          package_name="strudel-lsp-server"
+          for ((attempt = 1; attempt <= 12; attempt++)); do
+            if npm view "${package_name}@${version}" version --prefer-online >/dev/null 2>&1; then
+              echo "${package_name}@${version} visible (attempt ${attempt})"
+              exit 0
+            fi
+            echo "not visible yet (attempt ${attempt}/12); retrying in 15s"
+            sleep 15
+          done
+          echo "${package_name}@${version} never became visible" >&2
+          exit 1
+
       - name: Verify published signatures and attestations
         env:
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
           version="${RELEASE_TAG#v}"
           check_dir="$(mktemp -d)"
-          npm install --prefix "$check_dir" --ignore-scripts "strudel-lsp-server@${version}"
+          npm install --prefix "$check_dir" --ignore-scripts --prefer-online "strudel-lsp-server@${version}"
           npm audit signatures --prefix "$check_dir"

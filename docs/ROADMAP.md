@@ -561,6 +561,8 @@ Exit criteria:
 - [ ] Semantic and mini-notation limitations remaining after this release are documented.
 - [ ] No unapproved registry mutation occurs.
 
+Evidence: ADR-070 hardens `.github/workflows/release.yml` with a bounded registry-visibility wait so the post-publish smoke step cannot repeat the `ETARGET` race observed in `0.3.0`. Phase 22 remains proposed pending exact publication authorization.
+
 ### Phase 23 — Editor ergonomics and navigation (proposed, `v0.5.0`)
 
 Dependencies: Phase 22.

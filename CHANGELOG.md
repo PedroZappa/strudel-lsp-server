@@ -24,6 +24,7 @@ Version `0.3.0` was published on 2026-11-27 from tag `v0.3.0` at commit `b3451e2
 - Corrected curated `s` and `Pattern.euclid` signatures to their user-facing arity: `n`/`gain` are control names and the registered `pat` parameter is the injected method receiver.
 - Signature help now uses alias names in labels, suppresses catalog fallback for shadowed builtins, clamps the active parameter for rest signatures, preserves generated documentation in curated signatures, falls back on empty curated signature arrays and reads user rest parameters from the pinned grammar's `error`-node shape.
 - Definition and rename ranges for default and rest parameters cover only the identifier; ambiguous or conflicting receiver methods no longer infer `Pattern` parameters.
+- Hardened the controlled release workflow with a bounded registry-visibility wait before post-publication install and signature checks, preventing npm propagation lag from marking a successful publish as failed. See ADR-070.
 
 ## [0.3.0] - 2026-11-27
 
