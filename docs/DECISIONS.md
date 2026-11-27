@@ -1,6 +1,6 @@
 # Decisions
 
-Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened or superseded; ADR-021 records the Phase 6 deferred-item completion, ADR-022 records Phase 7 quick fixes, ADR-023 records document-scoped rename, ADR-024 records document symbols, ADR-025 records semantic tokens, ADR-026 records conservative formatting, ADR-027 records prototype client dependency remediation, ADR-028 records inline-constant refactoring, ADR-029 records bounded on-demand workspace symbols, ADR-030 records the Phase 8 performance baseline and advisory check, ADR-031 records Phase 9 local packaging verification, ADR-032 records the AGPL-3.0-only project licence decision, ADR-033 records the `0.1.0` release identity and SemVer policy, ADR-034 records the deferred user configuration boundary, ADR-035 records the `0.1.0` supported runtime and OS matrix, ADR-036 records the Phase 11 clean-install validation design, ADR-037 records the real documentation corpus validation design, ADR-038 records the Phase 11 protocol robustness review and transport behaviour, ADR-039 records the npm namespace and publication access review, ADR-040 records the Phase 12 licensing and provenance sign-off, ADR-041 records the Phase 12 dependency and secret audit, ADR-042 records the controlled release workflow design, and ADR-043 records the publish/pack dry-run comparison.
+Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened or superseded; ADR-021 records the Phase 6 deferred-item completion, ADR-022 records Phase 7 quick fixes, ADR-023 records document-scoped rename, ADR-024 records document symbols, ADR-025 records semantic tokens, ADR-026 records conservative formatting, ADR-027 records prototype client dependency remediation, ADR-028 records inline-constant refactoring, ADR-029 records bounded on-demand workspace symbols, ADR-030 records the Phase 8 performance baseline and advisory check, ADR-031 records Phase 9 local packaging verification, ADR-032 records the AGPL-3.0-only project licence decision, ADR-033 records the `0.1.0` release identity and SemVer policy, ADR-034 records the deferred user configuration boundary, ADR-035 records the `0.1.0` supported runtime and OS matrix, ADR-036 records the Phase 11 clean-install validation design, ADR-037 records the real documentation corpus validation design, ADR-038 records the Phase 11 protocol robustness review and transport behaviour, ADR-039 records the npm namespace and publication access review, ADR-040 records the Phase 12 licensing and provenance sign-off, ADR-041 records the Phase 12 dependency and secret audit, ADR-042 records the controlled release workflow design, ADR-043 records the publish/pack dry-run comparison, ADR-044 records the changelog and GitHub release notes preparation, ADR-045 records the rollback and correction policy, ADR-046 records the post-publication smoke plan, ADR-047 records the Phase 13 release authorization, and ADR-048 records the Phase 13 gate confirmation, and ADR-049 records the first-publish bootstrap exception.
 
 ## ADR-001 — Clean-slate re-implementation
 
@@ -764,3 +764,152 @@ Consequences:
 - This comparison is point-in-time. A changed manifest, dependency, generated snapshot or build output invalidates it, and the exact tagged release commit must be rechecked before publication.
 - The published tarball must still be verified from the public registry after publication; this review covers only local dry-runs and the locally packed tarball.
 - This decision does not authorize publication; Phase 13 gates still apply.
+
+## ADR-044 — Changelog and GitHub release notes preparation
+
+Status: accepted on 2026-11-27. This prepares release text for the planned `0.1.0` publication; it does not create a release, tag or publication.
+
+Decision: keep a versioned `## [0.1.0] - 2026-11-27` section in `CHANGELOG.md` under an empty `Unreleased` heading, and use `.github/RELEASE_TEMPLATE.md` as the prepared body for the GitHub `v0.1.0` release. The changelog is a concise Keep a Changelog record of added, changed, fixed and known-issue items; the release template is the user-facing summary with pinned versions, capabilities, explicit limitations, installed-package verification and links. `test/releaseWorkflow.test.ts` asserts that both artifacts match the manifest version and contain the required release-note sections.
+
+Evidence:
+
+- Version and runtime facts come from `package.json` and ADR-033/ADR-035: version `0.1.0`, `vX.Y.Z` tags, Node `^24.0.0 || ^26.0.0`, npm `>=11 <12`, and the Linux x64/macOS arm64/Windows x64 validation matrix.
+- Language facts come from `docs/LANGUAGE_SPECIFICATION.md` and ADR-014: core/mini/transpiler `1.2.6`, reference `1.2.2`, parser `tree-sitter-strudel@2.0.2` with `tree-sitter@0.25.1`. No Strudel version selection is exposed, as recorded in ADR-034.
+- Capability and limitation statements are drawn from `docs/LSP_FEATURES.md`, `docs/SEMANTIC_ENGINE.md` and the README. Known issues include the two upstream grammar gaps behind seven corpus examples recorded in `validation/real-corpus.json` and `docs/PARSER_INTEGRATION.md`.
+- Verification statements reuse ADR-036 (six-job compatibility run `45990023185`), ADR-037 (484 examples, 477 clean parses, seven parser gaps, zero invariant failures), ADR-038 (protocol robustness), ADR-043 (dry-run parity) and the recorded `npm run check`/`npm run verify:package` results. No new validation claim is introduced.
+
+Rationale: GitHub populates release bodies from `.github/RELEASE_TEMPLATE.md`, so keeping the prepared notes there avoids a second, conflicting release-note document under `docs/`. The changelog remains the historical package record. `CHANGELOG.md` is not in the current `files` allowlist, so the GitHub release notes are the user-facing summary; changing the allowlist is a separate backlog item.
+
+Consequences:
+
+- The release date, tag, exact commit and `Publication record` line must be confirmed when the authorized release is created. The notes must be reread after any capability, version or verification change; the version-consistency test catches manifest drift but not prose drift.
+- Publication and provenance remain unverified and unauthorized under Phase 13. The release template deliberately contains no claim that a publish, signature audit or provenance check has already succeeded.
+- This decision does not authorize publication; Phase 13 gates still apply.
+
+## ADR-045 — Rollback and correction policy
+
+Status: accepted on 2026-11-27. This defines policy only; it does not authorize publishing, deprecating, unpublishing or changing dist-tags, and no registry mutation is performed.
+
+Sources: npm's [unpublish policy](https://docs.npmjs.com/policies/unpublish), [`npm unpublish`](https://docs.npmjs.com/cli/v11/commands/npm-unpublish), [`npm deprecate`](https://docs.npmjs.com/cli/v11/commands/npm-deprecate), [dist-tags](https://docs.npmjs.com/adding-dist-tags-to-packages) and [version updates](https://docs.npmjs.com/updating-your-published-package-version-number).
+
+Decision:
+
+1. A published `name@version` is never replaced or republished. Corrections to released code are a new SemVer patch version from a new commit and `vX.Y.Z` tag, using the same controlled workflow and gates as the first release. Under the ADR-033 pre-1.0 policy, `0.1.0` corrections are `0.1.1`, `0.1.2`, and so on; `1.0.0` remains reserved for a stability commitment.
+2. For an ordinary defect, publish the patch release, add a `CHANGELOG.md` entry, create a GitHub release for the new tag and update `.github/RELEASE_TEMPLATE.md` so the published notes point to the fix.
+3. When a released version is known bad, deprecate that specific version with `npm deprecate strudel-lsp-server@X.Y.Z "<message>"`, naming the replacement version and a GitHub issue URL. Deprecation is preferred over unpublishing because it warns installers without breaking existing builds. Deprecate a SemVer range only with explicit approval, since ranges also affect prereleases.
+4. A `dist-tag` correction is an exceptional operator action, not an automated rollback: if a newer version was tagged `latest` prematurely and a previously published version is sound, an authorized operator may move the tag. Trusted-publishing dist-tag permission is disabled by default and requires a separate npm configuration and newer CLI than the locally recorded 11.19.1; no workflow change is authorized here.
+5. `npm unpublish` is reserved for exceptional security, malware, legal/copyright or credential-exposure cases, or a clearly accidental publication, and only where npm's current criteria allow it. It requires an explicit decision recording the exact version, operator and reason. Unpublishing cannot be undone, the name/version can never be reused, and unpublishing all versions imposes a 24-hour republish wait. Requests outside npm's criteria go through npm support rather than `--force`.
+6. Before publication, a failed gate is handled by fixing the candidate on a new commit and rerunning validation; there is nothing to roll back in the registry. Git `v*` tags and released commits are not deleted or rewritten to hide a bad release.
+7. User notification uses, as applicable: the npm deprecation warning, a versioned changelog entry, the GitHub release and release notes for the correction, and a linked GitHub issue. Notices must state the affected and replacement versions and must not expose credentials or private data. The workflow contains no automatic rollback or notification step; every registry mutation remains a separately authorized operator action.
+
+Evidence: npm states registry data is immutable and that an unpublished name/version combination can never be reused. Its policy permits unpublishing a newly created package within 72 hours when no registry package depends on it, or an older package with no dependents, fewer than 300 weekly downloads and a single owner; otherwise it recommends deprecation. `npm deprecate` adds a warning for installers and supports specific versions or SemVer ranges. `npm dist-tag add` can retag an existing version. All five sources were fetched from official npm documentation on 2026-11-27.
+
+Rationale: patch releases preserve installers and provenance history, deprecation gives a clear upgrade signal without breaking builds, and unpublishing is a last resort with lasting consequences. Keeping each corrective registry action outside the publish workflow avoids an unattended destructive path and preserves the Phase 13 authorization gate.
+
+Consequences:
+
+- The first release notes now include a short corrections section so users know where fixes and warnings will appear. The test in `test/releaseWorkflow.test.ts` guards the presence of that section.
+- A future patch release must repeat the manifest, tag, dry-run, CI and package verification gates; ADR-043's artifact evidence is point-in-time and does not carry over.
+- No credential, token, `--force` flag or unpublish/dist-tag command is added to the repository. Any exceptional action needs a new decision with explicit authorization and an operator named at that time.
+- This decision does not authorize publication or any rollback action; Phase 13 gates still apply.
+
+## ADR-046 — Post-publication smoke plan
+
+Status: accepted on 2026-11-27. This defines the Phase 13 checklist only; it does not authorize publication or perform any registry, tag or release mutation.
+
+Sources: npm [`view`](https://docs.npmjs.com/cli/v11/commands/npm-view) for published registry fields, npm [`audit`](https://docs.npmjs.com/cli/v11/commands/npm-audit) for `npm audit signatures --json --include-attestations`, and GitHub [release management](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository) for tags, drafts and published release records. All three sources were fetched on 2026-11-27.
+
+Decision: after the authorized publication succeeds, verify the Git tag and GitHub release record, public npm metadata and licence, a clean-machine install from the public registry, the documented `strudel-lsp-server` launch command with a full initialize/shutdown stdio handshake, and the release notes. The executable checklist is in the `Post-publication smoke plan` section of `docs/TESTING_STRATEGY.md`. The GitHub release may be prepared as a draft from the exact tag, but it is published only after the smoke checks pass. Evidence must record the version, tag, commit, operator, platform, Node/npm versions, commands and outcomes without tokens or other secrets. A missing provenance attestation is recorded honestly under ADR-042 rather than silently treated as success.
+
+Rationale: pre-publication checks validate a local tarball; only a post-publication check proves what users actually receive from the registry. Running the handshake through the installed `PATH` command validates the documented launch path, while checking the tag and release body keeps Git, npm and user-facing notes tied to the same commit. Keeping registry and Git mutations outside the smoke run preserves the Phase 13 authorization gate and the ADR-045 correction policy.
+
+Consequences:
+
+- Phase 13 now has a deterministic checklist; the required headings are guarded by `test/releaseWorkflow.test.ts`.
+- The smoke plan is executed once after publication and repeated for each patch release under ADR-045. Results are added to `docs/TESTING_STRATEGY.md` and the Phase 13 decision record after execution.
+- No new npm script, dependency, workflow step or saved credential is introduced by this decision.
+- Any failed check blocks release completion and is handled by ADR-045; no registry repair, tag deletion or history rewrite is implied.
+
+## ADR-047 — Phase 13 release authorization
+
+Status: accepted on 2026-11-27. This records explicit user authorization for the first Phase 13 release. It does not create a tag, GitHub release or publication, and it does not waive any remaining gate.
+
+Authorization: publish exactly `strudel-lsp-server@0.1.0`, using `pedrozappa` as the named release operator. The user gave this authorization in response to a direct question naming the exact package version and operator; no token, password, OTP or recovery code was supplied or recorded.
+
+Evidence: `package.json`, `CHANGELOG.md` and `.github/RELEASE_TEMPLATE.md` identify `0.1.0` as the release candidate under ADR-033 and ADR-044. ADR-039 records `pedrozappa` as the npm account returned by `npm whoami` on 2026-11-27. The authorization matches those recorded identities exactly.
+
+Scope and limits:
+
+- This satisfies the Phase 13 task requiring explicit authorization that names the version and operator; no exception to any other gate is granted.
+- The release is limited to version `0.1.0`. A different version, a retag, a deprecation, an unpublish or a dist-tag change needs a new explicit decision under ADR-045.
+- The first-publish bootstrap decision in ADR-042 remains unresolved. The operator must still choose between an operator-supplied short-lived credential outside repository files and an operator-managed publish, with provenance verified afterwards.
+- Git state-changing commands still require the project's per-command approval. This ADR authorizes the release outcome, not an unattended sequence of tag, push or publish commands.
+- The exact tagged commit, clean worktree, CI result, package/dry-run parity, namespace recheck, release notes and post-publication smoke plan must all be confirmed at release time as required by Phases 12 and 13.
+
+Rationale: the roadmap explicitly gates first publication on an authorization naming the exact version and operator. Recording it in the decision log makes the scope auditable and prevents later releases from treating a one-time authorization as blanket permission.
+
+Consequences:
+
+- The Phase 13 authorization task and exit criterion can be checked, but Phase 13 remains incomplete until publication and smoke checks succeed.
+- No publication was performed while recording this decision, and no credential was added to the repository.
+- The next work is the read-only gate confirmation for the exact release candidate, followed by the bootstrap decision before any publish command.
+
+## ADR-048 — Phase 13 gate confirmation
+
+Status: accepted as a review record on 2026-11-27. This does not mark the Phase 13 gate-confirmation task complete: the review found unresolved pre-publication blockers and no approved exception for them. No tag, GitHub release, registry mutation or repository setting was changed.
+
+Scope: Phase 0–12 exit criteria, ADR-039–ADR-047, the current worktree, npm namespace, GitHub release settings and the rerunnable local validation gates. The validation evidence is also recorded in `docs/TESTING_STRATEGY.md`.
+
+Checked gates:
+
+- Release authorization: ADR-047 records exactly `strudel-lsp-server@0.1.0` and operator `pedrozappa`.
+- Release identity, configuration boundary, runtime matrix and manifest/README review: ADR-033–ADR-035 and `test/packageScripts.test.ts`; the manifest version is `0.1.0`.
+- Licensing/provenance sign-off and dependency/secret audit: ADR-040 and ADR-041, recorded against the candidate tarball and commit `c6a9200`.
+- Controlled workflow design and local validation: ADR-042 and ADR-043; no ordinary-commit publish path, no committed token, and matching pack/publish dry-runs on the candidate.
+- Changelog, release notes, rollback policy and smoke plan: ADR-044–ADR-046 and their contract tests.
+- Local validation rerun during this review: `npm run check` (69/69), `npm run test:protocol` (8/8), `npm run validate:corpus` (484 examples, 477 clean parses, seven upstream parser gaps, zero invariant failures), `npm run verify:package` (132 files, both offline install modes, parser prebuild load and stdio handshakes on darwin-arm64 with Node 26.8.2/npm 11.19.1), `npm audit --omit=dev` (zero vulnerabilities), `npm run benchmark:check` (18/18 workloads within thresholds) and `git diff --check` (clean) all passed.
+- Namespace recheck: `npm view strudel-lsp-server version --json` still returned `E404` on 2026-11-27, so the exact unscoped name remains unregistered. `gh auth status --hostname github.com` showed the authenticated GitHub account as `PedroZappa`; no token value was recorded.
+
+Open pre-publication blockers:
+
+1. First-publish bootstrap (ADR-042): the workflow uses OIDC trusted publishing and has no token path, but a trusted publisher cannot be registered until the package exists. The operator must explicitly choose an operator-supplied short-lived credential outside repository files or an operator-managed publish. No such exception or decision has been recorded, so this is not waived.
+2. GitHub repository settings: `gh api repos/PedroZappa/strudel-lsp-server/environments/npm-release` returned `404`, and `gh api repos/PedroZappa/strudel-lsp-server/tags/protection` returned `404`. The `npm-release` environment with required reviewers and `v*` tag protection are not configured. These are operator actions outside the workflow file and are blocking.
+3. Exact tagged release commit: `git tag -l 'v*'` is empty, `HEAD` is `0e5e022`, and the tracked worktree contains uncommitted release-governance changes. CI, `npm run verify:release`, audits, dry-run parity and release-artifact confirmation must be repeated on the exact commit after those changes are committed and tagged. This is a future gate, not an exception.
+
+Publication-dependent gates (cannot be confirmed before publication): workflow provenance, public registry metadata/licence, installed-package smoke checks, GitHub release record and final changelog presence under the release tag.
+
+Non-blocking deferred work: the release-quality backlog and items deferred until after the first release are intentionally outside the blocking gate set. Their deferral is already visible in `docs/ROADMAP.md` and, where user-facing, in `.github/RELEASE_TEMPLATE.md`; no separate approved exception is required.
+
+Rationale: the Phase 13 task asks for confirmation, not an assumption. Recording a negative result with precise blockers prevents the controlled workflow from being started with missing approval environment, tag protection or bootstrap credentials, and keeps point-in-time evidence from being mistaken for exact-tag evidence.
+
+Consequences:
+
+- The roadmap task stays unchecked until blockers 1 and 2 are resolved and blocker 3 is repeated on the exact tag.
+- No `--force`, token, credential or unattended publish path was added or approved.
+- The next decision needed is the first-publish bootstrap method with an explicit operator choice; repository settings then require operator configuration outside this repository.
+- After those blockers are resolved, the local validation suite should be rerun on the exact tagged commit rather than reusing the candidate evidence above.
+
+## ADR-049 — First-publish bootstrap exception
+
+Status: accepted on 2026-11-27. This is a first-publication-only exception to ADR-042 and the Phase 13 controlled-workflow criterion. It does not authorize publication by the agent, and it does not waive clean-worktree, exact-tag, CI, dry-run, audit, namespace or smoke-plan gates.
+
+Decision: for exactly `strudel-lsp-server@0.1.0`, operator `pedrozappa` performs an operator-managed publish from the validated release commit after all blocking gates pass. No npm token, password, OTP, recovery code or long-lived credential is added to the repository or supplied to the agent. The workflow still validates tag pushes but has no workflow publish for `v0.1.0`; the exact-tag guard is in `.github/workflows/release.yml`. After `0.1.0` exists, the operator configures npm trusted publishing, and `0.1.1` and later releases use the controlled OIDC workflow unchanged. A provenance attestation for `0.1.0` is not assumed; its presence or absence is recorded under ADR-042 and ADR-046 after publication.
+
+GitHub settings: the operator will configure the `npm-release` environment with required reviewers and `v*` tag protection. The agent makes no external repository-setting changes.
+
+Rationale: npm trusted publishing cannot be registered for a package that does not yet exist, while the approved workflow deliberately has no token path. An operator-managed first publication avoids adding a long-lived secret to the workflow. Excluding only the exact `v0.1.0` tag from the publish job prevents a duplicate publish attempt after the operator has published the immutable version; validation still runs on the tag.
+
+Scope and limits:
+
+- This exception supersedes only the first-publish bootstrap blocker recorded in ADR-048. It is limited to exactly `strudel-lsp-server@0.1.0`; a different version, a retag, a deprecation, an unpublish or a dist-tag change requires a new explicit decision under ADR-045.
+- The operator controls npm login, 2FA and the publish command. No credential value is recorded in chat, the repository or logs.
+- The local annotated tag must point to a clean commit containing the release governance artifacts. CI, `npm run verify:release`, audits, dry-run parity and namespace checks must be repeated on that exact commit and tag.
+- The `npm-release` environment and `v*` tag protection remain operator-configured pre-publication gates until confirmed.
+- Because the first publish does not use trusted publishing, a missing provenance attestation is a recorded limitation, not a failed smoke check and not a false claim of provenance.
+
+Consequences:
+
+- The Phase 13 bootstrap exception is recorded without weakening later release controls.
+- `.github/workflows/release.yml` validates `v0.1.0` but skips its publish job; later `v*` tags retain the approval-guarded OIDC publish path.
+- The GitHub release record, smoke plan and rollback policy remain unchanged, and the operator still decides when to publish.
+- No publication, tag push, repository-setting change or registry mutation was performed by this decision.

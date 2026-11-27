@@ -1,23 +1,43 @@
-# Change Log
+# Changelog
 
-All notable changes to the "strudel-lsp-server" extension will be documented in this file.
+All notable changes to the `strudel-lsp-server` npm package are documented in this file. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
+The `0.1.0` section is prepared for the first authorized publication; confirm the release date and exact tagged commit before publishing. Full user-facing notes are in `.github/RELEASE_TEMPLATE.md`.
 
 ## [Unreleased]
 
-- Recorded a green six-job compatibility matrix covering Linux x64, macOS arm64 and Windows x64 with Node 24/26 and npm 11.
-- Fixed Windows package verification to invoke `npm.cmd` through the platform shell.
-- Added a cross-platform clean-install compatibility workflow and expanded package verification to cover both install modes, native parser prebuild loading and installed stdio handshakes.
-- Finalized first-release README scope and npm repository/homepage/bugs metadata, with a package metadata contract test.
-- Declared Node 24/26 and npm 11 support in package `engines` and documented the first-release OS validation matrix.
-- Documented the `0.1.0` configuration boundary: no custom settings, with diagnostic overrides and Strudel version selection deferred.
-- Set the initial public release identity to `0.1.0`, with `vX.Y.Z` tags and a pre-1.0 SemVer policy.
-- Changed the project licence to AGPL-3.0-only to align with the pinned AGPL-only parser and the Strudel AGPL family, and extended package verification to check the installed licence.
-- Replaced the stale prototype README with authoritative npm package documentation and added offline tarball/stdio verification via `npm run verify:package`.
-- Added a deterministic performance harness with 18 representative workloads, p50/p95/p99 baseline targets and an advisory regression check.
-- Added bounded on-demand workspace symbols with open-document overrides.
-- Added conservative `refactor.inline` code action for single-use literal constants.
-- Upgraded prototype client `glob` to 14.0.6 and refreshed its lockfile to clear dependency advisories.
+## [0.1.0] - 2026-11-27
+
+### Added
+
+- Editor-agnostic stdio LSP server with conservative diagnostics, position-aware completion, hover documentation and signature help backed by pinned Strudel metadata.
+- Definition, references, document symbols and bounded on-demand workspace symbols with open-document overrides.
+- Rename, mini-notation quick fixes and a conservative `refactor.inline` code action for single-use literal constants.
+- Semantic tokens and indentation-only formatting driven by standard LSP formatting options.
+- Mini-notation tokens, structural diagnostics and hover derived from the pinned `@strudel/mini@1.2.6` lexical model.
+- Deterministic performance harness with 18 workloads and advisory p50/p95/p99 regression checks.
+- Offline tarball and installed-executable verification via `npm run verify:package`, plus a clean-install compatibility workflow across the required platforms.
+- Deterministic corpus validation over 484 pinned documentation examples and raw stdio protocol robustness tests.
+- Controlled tag-gated release workflow with approval environment, OIDC trusted publishing and `npm run verify:release` dry-run parity checks.
+
+### Changed
+
+- Set the first public version to `0.1.0` with `vX.Y.Z` tags and a pre-1.0 SemVer policy.
+- Declared Node.js 24/26 with npm 11 support and documented the required Linux x64, macOS arm64 and Windows x64 validation matrix.
+- Pinned the language database to `@strudel/core`, `@strudel/mini` and `@strudel/transpiler` `1.2.6`, with `@strudel/reference` `1.2.2` for JSDoc metadata; no custom Strudel version selection is exposed.
+- Changed the project licence to AGPL-3.0-only to align with the pinned AGPL-only parser and extended package verification to check the installed licence.
+- Replaced the stale prototype README with authoritative npm package documentation and accurate repository/homepage/bugs metadata, covered by a package metadata contract test.
 - Added GitHub Actions CI for verification, packaging, benchmark execution and dependency auditing.
-- Initial release
+- Upgraded prototype client `glob` to `14.0.6` and refreshed its lockfile to clear dependency advisories.
+
+### Fixed
+
+- Fixed Windows package verification to invoke `npm.cmd` through the platform shell.
+- Rejected stale document versions at the scheduling boundary so an older edit cannot overwrite a newer analysis.
+- Fixed Node 24 test discovery by passing quoted compiled test globs instead of bare directories.
+
+### Known issues
+
+- Seven pinned documentation examples expose two upstream `tree-sitter-strudel@2.0.2` grammar gaps: `%` modulo in JavaScript expressions and `//` inside string literals. The grammar is not vendored or patched here.
+- There is no custom configuration channel; diagnostic overrides and Strudel version selection remain deferred.
+- Incremental semantic reuse is statement-level, and mini-notation tokenization is lexical rather than a full recovery parser. Platforms outside the validated matrix are best-effort.
