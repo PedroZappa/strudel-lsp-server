@@ -65,8 +65,8 @@ Token boundaries and semantics were validated against pinned sources: `@strudel/
 
 - Analysis results are versioned by the `SemanticDocument` produced for a syntax version.
 - The engine keeps a `WeakMap` from a previous semantic document to its analysis cache.
-- Top-level statements are keyed by a stable content hash and occurrence. Unchanged statements are reused with shifted symbol, reference, mini-notation token, AST node and AST operator-target ranges after edits.
-- Global declarations form a signature. When that signature changes, analysis falls back to a conservative full rebuild so type changes do not leave stale references.
+- Top-level statements are keyed by a stable content hash and occurrence. Unchanged statements are reused with shifted symbol, reference, mini-notation token, AST node and AST operator-target ranges after edits; analyses whose ranges did not move are shared immutably.
+- Global declaration symbol IDs depend on declaration identity and order, not statement text. A changed initializer is analysed in isolation first; only when its inferred type and signature are unchanged do other statements get reused with references to the same global symbol. An inferred-type or signature change, multiple changed declarations, a declaration rename, insertion, removal, reorder or catalog-version change forces a conservative full rebuild so reused statements cannot retain types derived from old declarations.
 - Cancellation tokens are checked before analysis, at statement boundaries and during expression inference. Cancellation throws `SemanticAnalysisCancelledError`; no cancelled snapshot is cached.
 - Published semantic documents contain fresh arrays and maps and are not mutated by later analysis.
 

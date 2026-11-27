@@ -120,7 +120,9 @@ export function cloneStatementAnalysis(
 
   return {
     key: analysis.key,
-    sourceText,
+    // `sourceText` is the whole document here; the analysis's own source text
+    // is the unchanged statement text and must stay stable for later reuse.
+    sourceText: analysis.sourceText,
     sourceRange,
     scopes: analysis.scopes.map((scope) => ({
       ...scope,

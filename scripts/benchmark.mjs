@@ -1,9 +1,12 @@
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
 import { arch, cpus, platform, totalmem } from 'node:os';
 import { dirname, join } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
+import { reference } from '@strudel/reference';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 
 import {
@@ -35,6 +38,7 @@ import {
   createDefaultLanguageDatabase,
 } from '../dist/src/languageDatabase/index.js';
 import { DocumentAnalysisService, readWorkspaceFiles } from '../dist/src/lsp/index.js';
+import { createInMemoryLocalTiming } from '../dist/src/performance/index.js';
 import { createSemanticEngine } from '../dist/src/semantic/index.js';
 import { createSyntaxAdapter } from '../dist/src/syntax/index.js';
 
@@ -43,14 +47,28 @@ const FIXTURES = join(ROOT, 'benchmarks', 'fixtures');
 const BASELINE_PATH = join(ROOT, 'benchmarks', 'baseline.json');
 const REGRESSION_FACTORS = { p50: 2, p95: 2.5, p99: 3 };
 const MINIMUM_THRESHOLD_MS = 0.05;
+const CORPUS_REPORT_PATH = join(ROOT, 'validation', 'real-corpus.json');
+const REAL_SAMPLE_SIZE = 24;
+const EXPECTED_CORPUS_SOURCE = {
+  kind: 'pinned-jsdoc-examples',
+  package: '@strudel/reference',
+  version: '1.2.2',
+  tarball: 'https://registry.npmjs.org/@strudel/reference/-/reference-1.2.2.tgz',
+  integrity:
+    'sha512-1zJwv4U2NVWhw/T2fDL6XJjSKi8ltetw9qX79Lum51g7x0CX1naf6imbkdBzS7QKYyKnUYyHCtxsgFIKyGyiDg==',
+  license: 'AGPL-3.0-or-later',
+  repository: 'git+https://codeberg.org/uzu/strudel.git',
+};
 
 function parseArguments(argv) {
-  const options = { writeBaseline: false, check: false };
+  const options = { writeBaseline: false, check: false, timing: false };
   for (const argument of argv) {
     if (argument === '--write-baseline') {
       options.writeBaseline = true;
     } else if (argument === '--check') {
       options.check = true;
+    } else if (argument === '--timing') {
+      options.timing = true;
     } else {
       throw new Error(`Unknown benchmark option: ${argument}`);
     }
@@ -59,6 +77,67 @@ function parseArguments(argv) {
     throw new Error('Use either --write-baseline or --check, not both');
   }
   return options;
+}
+
+const options = parseArguments(process.argv.slice(2));
+const localTiming = options.timing ? createInMemoryLocalTiming() : undefined;
+
+function sha256(value) {
+  return createHash('sha256').update(value, 'utf8').digest('hex');
+}
+
+function collectCorpusExamples() {
+  const examples = [];
+  for (const doc of reference.docs ?? []) {
+    const name = typeof doc.name === 'string' ? doc.name : '';
+    const longName = typeof doc.longname === 'string' ? doc.longname : name;
+    const values = Array.isArray(doc.examples) ? doc.examples : [];
+    for (const [index, value] of values.entries()) {
+      if (typeof value !== 'string' || value.trim() === '') {
+        continue;
+      }
+      const id = sha256(value);
+      examples.push({ id, name, longName, index, text: value });
+    }
+  }
+  const compare = (left, right) => (left < right ? -1 : left > right ? 1 : 0);
+  examples.sort(
+    (left, right) =>
+      compare(left.id, right.id) ||
+      compare(left.longName, right.longName) ||
+      left.index - right.index,
+  );
+  return examples;
+}
+
+async function loadRealCorpusSample() {
+  const report = JSON.parse(await readFile(CORPUS_REPORT_PATH, 'utf8'));
+  assert.deepEqual(
+    report.source,
+    EXPECTED_CORPUS_SOURCE,
+    'Real benchmark corpus provenance drifted',
+  );
+  const examples = collectCorpusExamples();
+  assert.equal(
+    sha256(examples.map((example) => example.id).join('\n')),
+    report.corpus.corpusHash,
+    'Real benchmark corpus does not match validated evidence',
+  );
+
+  const parserGapIds = new Set(report.parserGaps.map((gap) => gap.id));
+  const cleanExamples = examples.filter((example) => !parserGapIds.has(example.id));
+  assert.ok(cleanExamples.length >= REAL_SAMPLE_SIZE, 'Not enough clean corpus examples');
+  const stride = Math.floor(cleanExamples.length / REAL_SAMPLE_SIZE);
+  const sample = [];
+  for (
+    let index = 0;
+    index < cleanExamples.length && sample.length < REAL_SAMPLE_SIZE;
+    index += stride
+  ) {
+    sample.push(cleanExamples[index]);
+  }
+  assert.equal(sample.length, REAL_SAMPLE_SIZE);
+  return sample;
 }
 
 function buildThresholds(summary) {
@@ -108,11 +187,11 @@ function requireOffset(text, needle) {
   return index;
 }
 
-function createIncrementalState(text, uri, target) {
+function createIncrementalState(text, uri, target, timing) {
   const targetOffset = requireOffset(text, target);
   const digitOffset = targetOffset + target.indexOf('2');
   const document = TextDocument.create(uri, 'strudel', 1, text);
-  const service = new DocumentAnalysisService(adapter, engine);
+  const service = new DocumentAnalysisService(adapter, engine, timing);
   service.open({ textDocument: { uri, languageId: 'strudel', version: 1, text } });
   return {
     service,
@@ -151,10 +230,15 @@ const unformattedMediumText = mediumText
   .map((line) => (line.length > 0 ? `  ${line}` : line))
   .join('\n');
 const workspaceRootUri = pathToFileURL(join(FIXTURES, 'workspace')).href;
+const realExamples = await loadRealCorpusSample();
+
+function realExampleUri(example) {
+  return `file:///benchmark/real/${example.id}.strudel`;
+}
 
 function contextFor(text, offset, uri = 'file:///benchmark/document.strudel') {
   const syntax = adapter.parse({ uri, version: 1, text });
-  const semantic = engine.analyze(syntax);
+  const semantic = engine.analyze(syntax, { timing: localTiming?.recorder });
   return {
     uri,
     text,
@@ -178,6 +262,7 @@ const definitionContext = contextFor(
 );
 const refactorContext = contextFor(smallText);
 const formattingContext = contextFor(unformattedMediumText);
+localTiming?.reset();
 
 const workloads = [
   {
@@ -197,7 +282,7 @@ const workloads = [
         version: 1,
         text: mediumText,
       });
-      return engine.analyze(syntax);
+      return engine.analyze(syntax, { timing: localTiming?.recorder });
     },
   },
   {
@@ -210,14 +295,20 @@ const workloads = [
         version: 1,
         text: largeText,
       });
-      return engine.analyze(syntax);
+      return engine.analyze(syntax, { timing: localTiming?.recorder });
     },
   },
   {
     id: 'incremental-edit-small',
     description: 'Incremental syntax and semantic update after a small buffer edit',
     fixture: 'small-live-edit.strudel',
-    prepare: () => createIncrementalState(smallText, 'file:///benchmark/edit.strudel', 'fast(2)'),
+    prepare: () =>
+      createIncrementalState(
+        smallText,
+        'file:///benchmark/edit.strudel',
+        'fast(2)',
+        localTiming?.recorder,
+      ),
     run: (state) =>
       state.service.change({
         textDocument: { uri: state.uri, version: 2 },
@@ -228,7 +319,13 @@ const workloads = [
     id: 'incremental-edit-large',
     description: 'Incremental syntax and semantic update after a large buffer edit',
     fixture: 'large-pattern-set.strudel',
-    prepare: () => createIncrementalState(largeText, 'file:///benchmark/edit.strudel', 'fast(2)'),
+    prepare: () =>
+      createIncrementalState(
+        largeText,
+        'file:///benchmark/edit.strudel',
+        'fast(2)',
+        localTiming?.recorder,
+      ),
     run: (state) =>
       state.service.change({
         textDocument: { uri: state.uri, version: 2 },
@@ -329,6 +426,58 @@ const workloads = [
       };
     },
   },
+  {
+    id: 'parse-analyze-real-corpus',
+    description: 'Full parse and analysis of pinned real Strudel documentation examples',
+    fixture: '@strudel/reference@1.2.2 sample (24 examples)',
+    run: () => {
+      let resultCount = 0;
+      for (const example of realExamples) {
+        const syntax = adapter.parse({
+          uri: realExampleUri(example),
+          version: 1,
+          text: example.text,
+        });
+        resultCount += consume(engine.analyze(syntax, { timing: localTiming?.recorder }));
+      }
+      return resultCount;
+    },
+  },
+  {
+    id: 'incremental-edit-real-corpus',
+    description: 'Incremental syntax and semantic update of pinned real documentation examples',
+    fixture: '@strudel/reference@1.2.2 sample (24 examples)',
+    prepare: () => {
+      const service = new DocumentAnalysisService(adapter, engine, localTiming?.recorder);
+      for (const example of realExamples) {
+        service.open({
+          textDocument: {
+            uri: realExampleUri(example),
+            languageId: 'strudel',
+            version: 1,
+            text: example.text,
+          },
+        });
+      }
+      return { service };
+    },
+    run: (state) => {
+      let resultCount = 0;
+      for (const example of realExamples) {
+        const uri = realExampleUri(example);
+        const document = state.service.get(uri)?.document;
+        assert.ok(document !== undefined, `Missing prepared corpus document ${uri}`);
+        const end = document.positionAt(document.getText().length);
+        resultCount += consume(
+          state.service.change({
+            textDocument: { uri, version: 2 },
+            contentChanges: [{ range: { start: end, end }, text: '\n' }],
+          }),
+        );
+      }
+      return resultCount;
+    },
+  },
 ];
 
 async function measure(workload) {
@@ -397,6 +546,7 @@ function methodology() {
     percentileMethod: 'nearest-rank within each batch, then median across batches',
     regressionFactors: REGRESSION_FACTORS,
     minimumThresholdMs: MINIMUM_THRESHOLD_MS,
+    realCorpusSampleSize: REAL_SAMPLE_SIZE,
   };
 }
 
@@ -408,6 +558,39 @@ function printTable(results) {
       `${result.id.padEnd(28)} ${result.p50.toFixed(3).padStart(7)} ${result.p95
         .toFixed(3)
         .padStart(8)} ${result.p99.toFixed(3).padStart(8)} ${String(result.samples).padStart(8)}`,
+    );
+  }
+}
+
+function printLocalTiming() {
+  if (localTiming === undefined) {
+    return;
+  }
+  const summary = new Map();
+  for (const sample of localTiming.samples()) {
+    const entry = summary.get(sample.name) ?? {
+      events: 0,
+      totalMs: 0,
+      maxMs: 0,
+      totalCount: 0,
+    };
+    entry.events += 1;
+    entry.totalMs += sample.durationMs ?? 0;
+    entry.maxMs = Math.max(entry.maxMs, sample.durationMs ?? 0);
+    entry.totalCount += sample.count ?? 0;
+    summary.set(sample.name, entry);
+  }
+  console.log('Local timing (opt-in, excluded from baseline)');
+  console.log('metric                          events totalMs  maxMs totalCount');
+  for (const [name, entry] of [...summary.entries()].sort(([left], [right]) =>
+    left < right ? -1 : left > right ? 1 : 0,
+  )) {
+    console.log(
+      `${name.padEnd(32)} ${String(entry.events).padStart(6)} ${entry.totalMs
+        .toFixed(1)
+        .padStart(
+          7,
+        )} ${entry.maxMs.toFixed(2).padStart(6)} ${String(entry.totalCount).padStart(10)}`,
     );
   }
 }
@@ -471,9 +654,9 @@ async function checkBaseline(results) {
   return false;
 }
 
-const options = parseArguments(process.argv.slice(2));
 const results = await collectResults();
 printTable(results);
+printLocalTiming();
 console.log(JSON.stringify(await environmentInfo()));
 
 if (options.writeBaseline) {

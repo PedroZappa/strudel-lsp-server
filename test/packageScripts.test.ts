@@ -117,6 +117,32 @@ void test('end-to-end benchmark is advisory and separate from the layer baseline
   );
 });
 
+void test('local timing is opt-in and performance thresholds remain advisory', () => {
+  assert.match(packageJson.scripts['benchmark:timing'], /scripts\/benchmark\.mjs --timing$/);
+
+  const workflow = readFileSync(join(repositoryRoot, '.github', 'workflows', 'ci.yml'), 'utf8');
+  const performanceStart = workflow.indexOf('  performance:');
+  const auditStart = workflow.indexOf('  audit:');
+  assert.ok(performanceStart >= 0 && auditStart > performanceStart);
+  const performanceJob = workflow.slice(performanceStart, auditStart);
+  assert.match(performanceJob, /name: Advisory benchmark check/);
+  assert.equal(performanceJob.match(/continue-on-error: true/g)?.length, 2);
+
+  const baseline = JSON.parse(
+    readFileSync(join(repositoryRoot, 'benchmarks', 'baseline.json'), 'utf8'),
+  ) as {
+    methodology: { realCorpusSampleSize?: number };
+    workloads: { id: string }[];
+  };
+  assert.equal(baseline.methodology.realCorpusSampleSize, 24);
+  for (const id of ['parse-analyze-real-corpus', 'incremental-edit-real-corpus']) {
+    assert.ok(
+      baseline.workloads.some((workload) => workload.id === id),
+      `${id} must be part of the layer baseline`,
+    );
+  }
+});
+
 void test('editor-client smoke evidence is separate from the published package', () => {
   assert.match(packageJson.scripts['smoke:clients'], /scripts\/smoke-clients\.mjs$/);
   assert.match(packageJson.scripts['smoke:clients:write'], /--write-report$/);

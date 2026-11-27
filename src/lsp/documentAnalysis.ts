@@ -1,3 +1,5 @@
+import { performance } from 'node:perf_hooks';
+
 import type {
   DidChangeTextDocumentParams,
   DidCloseTextDocumentParams,
@@ -6,6 +8,7 @@ import type {
 } from 'vscode-languageserver/node';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 
+import { recordDuration, type LocalTimingRecorder } from '../performance/index.js';
 import type { SemanticDocument, SemanticEngine } from '../semantic/index.js';
 import type {
   SyntaxAdapter,
@@ -58,6 +61,7 @@ export class DocumentAnalysisService {
   constructor(
     private readonly adapter: SyntaxAdapter,
     private readonly engine: SemanticEngine,
+    private readonly timing?: LocalTimingRecorder,
   ) {}
 
   open(params: DidOpenTextDocumentParams): AnalyzedDocument {
@@ -104,12 +108,30 @@ export class DocumentAnalysisService {
     previous?: AnalyzedDocument,
     edits: readonly SyntaxEdit[] = [],
   ): AnalyzedDocument {
+    const startedAt = this.timing === undefined ? undefined : performance.now();
     const snapshot = snapshotOf(document);
+    const incremental = previous !== undefined && edits.length > 0;
+    const syntaxStartedAt = this.timing === undefined ? undefined : performance.now();
     const syntax =
-      previous !== undefined && edits.length > 0
+      incremental && previous !== undefined
         ? this.adapter.update(previous.syntax, snapshot, edits)
         : this.adapter.parse(snapshot);
-    const semantic = this.engine.analyze(syntax, { previous: previous?.semantic });
+    if (syntaxStartedAt !== undefined) {
+      recordDuration(this.timing, 'document.syntax', syntaxStartedAt, {
+        incremental,
+        version: document.version,
+      });
+    }
+    const semantic = this.engine.analyze(syntax, {
+      previous: previous?.semantic,
+      timing: this.timing,
+    });
+    if (startedAt !== undefined) {
+      recordDuration(this.timing, 'document.analyze', startedAt, {
+        incremental,
+        version: document.version,
+      });
+    }
     const analyzed: AnalyzedDocument = { document, syntax, semantic };
     this.entries.set(document.uri, analyzed);
     return analyzed;

@@ -51,7 +51,7 @@ _INFO    = [$(BLU)INFO$(D)]
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install install-dev build typecheck lint format format-check test test-parser test-semantic test-metadata test-configuration test-lsp test-features test-mini test-protocol test-soak smoke-clients smoke-clients-write smoke-vscode smoke-nvim validate-corpus validate-corpus-write generate-metadata benchmark benchmark-check benchmark-baseline benchmark-e2e benchmark-e2e-write pack-check verify-package verify-consumer verify-release check verify verify-all ci check-static audit audit-client clean docs docs-open
+.PHONY: help install install-dev build typecheck lint format format-check test test-parser test-semantic test-metadata test-configuration test-lsp test-features test-mini test-protocol test-soak smoke-clients smoke-clients-write smoke-vscode smoke-nvim validate-corpus validate-corpus-write generate-metadata benchmark benchmark-check benchmark-baseline benchmark-e2e benchmark-e2e-write benchmark-timing pack-check verify-package verify-consumer verify-release check verify verify-all ci check-static audit audit-client clean docs docs-open
 
 #==============================================================================#
 #                                  RULES                                       #
@@ -205,6 +205,11 @@ benchmark-e2e-write:	## Refresh the committed advisory end-to-end benchmark repo
 	@echo "$(YEL)Refreshing end-to-end benchmark report...$(D)"
 	@$(NPM) run benchmark:e2e:write
 	@echo "$(YEL)* $(_SUCCESS) End-to-end benchmark report updated$(D)"
+
+benchmark-timing:	## Run benchmarks with opt-in local-only timing instrumentation
+	@echo "$(YEL)Running benchmarks with local timing...$(D)"
+	@$(NPM) run benchmark:timing
+	@echo "$(YEL)* $(_SUCCESS) Local timing benchmark completed$(D)"
 
 pack-check:	## Preview and verify npm package contents
 	@echo "$(YEL)Checking npm package contents...$(D)"

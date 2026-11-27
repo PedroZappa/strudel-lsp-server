@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import { miniNotationAstNodes } from '../../src/miniNotation/index.js';
+import { createInMemoryLocalTiming } from '../../src/performance/index.js';
 import {
   createSemanticEngine,
   createStaticSemanticCatalog,
@@ -482,8 +483,9 @@ void test('reuses unaffected statement analysis after a non-declaration edit', (
   assert.equal(secondReference.range.startOffset, firstReference.range.startOffset + 8);
 });
 
-void test('invalidates cached analysis when a global declaration changes', () => {
+void test('reuses unaffected statements when a declaration initializer preserves its type', () => {
   const engine = createSemanticEngine(catalog);
+  const timing = createInMemoryLocalTiming();
   const firstText = 'const pat = s("bd")\npat.gain(0.5)';
   const first = engine.analyze(
     createFixtureDocument(firstText, [
@@ -512,30 +514,56 @@ void test('invalidates cached analysis when a global declaration changes', () =>
           },
         ],
       },
+      {
+        kind: 'expressionStatement',
+        text: 'pat.gain(0.5)',
+        children: [
+          {
+            kind: 'callExpression',
+            text: 'pat.gain(0.5)',
+            children: [
+              {
+                kind: 'memberExpression',
+                text: 'pat.gain',
+                children: [
+                  { kind: 'identifier', text: 'pat', occurrence: 1 },
+                  { kind: 'token', text: '.' },
+                  { kind: 'identifier', text: 'gain' },
+                ],
+              },
+              {
+                kind: 'arguments',
+                text: '(0.5)',
+                children: [{ kind: 'number', text: '0.5' }],
+              },
+            ],
+          },
+        ],
+      },
     ]).document,
   );
 
-  const secondText = 'const pat = note("c")\npat.gain(0.5)';
+  const secondText = 'const pat = s("sd")\npat.gain(0.5)';
   const second = engine.analyze(
     createFixtureDocument(secondText, [
       {
         kind: 'variableDeclaration',
-        text: 'const pat = note("c")',
+        text: 'const pat = s("sd")',
         children: [
           {
             kind: 'variableDeclarator',
-            text: 'pat = note("c")',
+            text: 'pat = s("sd")',
             children: [
               { kind: 'identifier', text: 'pat', occurrence: 0 },
               {
                 kind: 'callExpression',
-                text: 'note("c")',
+                text: 's("sd")',
                 children: [
-                  { kind: 'identifier', text: 'note' },
+                  { kind: 'identifier', text: 's', occurrence: 1 },
                   {
                     kind: 'arguments',
-                    text: '("c")',
-                    children: [{ kind: 'string', text: '"c"' }],
+                    text: '("sd")',
+                    children: [{ kind: 'string', text: '"sd"' }],
                   },
                 ],
               },
@@ -543,11 +571,248 @@ void test('invalidates cached analysis when a global declaration changes', () =>
           },
         ],
       },
+      {
+        kind: 'expressionStatement',
+        text: 'pat.gain(0.5)',
+        children: [
+          {
+            kind: 'callExpression',
+            text: 'pat.gain(0.5)',
+            children: [
+              {
+                kind: 'memberExpression',
+                text: 'pat.gain',
+                children: [
+                  { kind: 'identifier', text: 'pat', occurrence: 1 },
+                  { kind: 'token', text: '.' },
+                  { kind: 'identifier', text: 'gain' },
+                ],
+              },
+              {
+                kind: 'arguments',
+                text: '(0.5)',
+                children: [{ kind: 'number', text: '0.5' }],
+              },
+            ],
+          },
+        ],
+      },
     ]).document,
-    { previous: first },
+    { previous: first, timing: timing.recorder },
   );
 
-  assert.notEqual(firstSymbol(second, 'pat').id, firstSymbol(first, 'pat').id);
+  const firstPat = firstSymbol(first, 'pat');
+  const secondPat = firstSymbol(second, 'pat');
+  const reusedReference = second.references.find((reference) => reference.name === 'pat');
+  const count = (name: string): number =>
+    timing.samples().find((sample) => sample.name === name)?.count ?? 0;
+
+  // Declaration identity and inferred type are stable, so unchanged statements
+  // keep resolving to it and are reused instead of rebuilt.
+  assert.equal(secondPat.id, firstPat.id);
+  assert.equal(firstPat.type.kind, 'Pattern');
+  assert.equal(secondPat.type.kind, 'Pattern');
+  assert.equal(reusedReference?.resolvedSymbolId, secondPat.id);
+  assert.equal(count('semantic.statements.reused'), 1);
+  assert.equal(count('semantic.statements.analyzed'), 1);
+});
+
+void test('rebuilds when a declaration initializer changes its inferred type', () => {
+  const engine = createSemanticEngine(catalog);
+  const timing = createInMemoryLocalTiming();
+  const first = engine.analyze(
+    createFixtureDocument('const pat = s("bd")\npat', [
+      {
+        kind: 'variableDeclaration',
+        text: 'const pat = s("bd")',
+        children: [
+          {
+            kind: 'variableDeclarator',
+            text: 'pat = s("bd")',
+            children: [
+              { kind: 'identifier', text: 'pat', occurrence: 0 },
+              {
+                kind: 'callExpression',
+                text: 's("bd")',
+                children: [
+                  { kind: 'identifier', text: 's', occurrence: 1 },
+                  {
+                    kind: 'arguments',
+                    text: '("bd")',
+                    children: [{ kind: 'string', text: '"bd"' }],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        kind: 'expressionStatement',
+        text: 'pat',
+        children: [{ kind: 'identifier', text: 'pat', occurrence: 1 }],
+      },
+    ]).document,
+  );
+  const second = engine.analyze(
+    createFixtureDocument('const pat = 42\npat', [
+      {
+        kind: 'variableDeclaration',
+        text: 'const pat = 42',
+        children: [
+          {
+            kind: 'variableDeclarator',
+            text: 'pat = 42',
+            children: [
+              { kind: 'identifier', text: 'pat', occurrence: 0 },
+              { kind: 'token', text: '=' },
+              { kind: 'number', text: '42' },
+            ],
+          },
+        ],
+      },
+      {
+        kind: 'expressionStatement',
+        text: 'pat',
+        children: [{ kind: 'identifier', text: 'pat', occurrence: 1 }],
+      },
+    ]).document,
+    { previous: first, timing: timing.recorder },
+  );
+
+  const secondPat = firstSymbol(second, 'pat');
+  const count = (name: string): number =>
+    timing.samples().find((sample) => sample.name === name)?.count ?? 0;
+
+  assert.equal(secondPat.type.kind, 'Number');
+  assert.equal(count('semantic.statements.reused'), 0);
+  assert.equal(count('semantic.statements.analyzed'), 2);
+});
+
+void test('invalidates cached analysis when a global declaration identity changes', () => {
+  const engine = createSemanticEngine(catalog);
+  const timing = createInMemoryLocalTiming();
+  const firstText = 'const pat = s("bd")\npat.gain(0.5)';
+  const first = engine.analyze(
+    createFixtureDocument(firstText, [
+      {
+        kind: 'variableDeclaration',
+        text: 'const pat = s("bd")',
+        children: [
+          {
+            kind: 'variableDeclarator',
+            text: 'pat = s("bd")',
+            children: [
+              { kind: 'identifier', text: 'pat', occurrence: 0 },
+              {
+                kind: 'callExpression',
+                text: 's("bd")',
+                children: [
+                  { kind: 'identifier', text: 's', occurrence: 1 },
+                  {
+                    kind: 'arguments',
+                    text: '("bd")',
+                    children: [{ kind: 'string', text: '"bd"' }],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        kind: 'expressionStatement',
+        text: 'pat.gain(0.5)',
+        children: [
+          {
+            kind: 'callExpression',
+            text: 'pat.gain(0.5)',
+            children: [
+              {
+                kind: 'memberExpression',
+                text: 'pat.gain',
+                children: [
+                  { kind: 'identifier', text: 'pat', occurrence: 1 },
+                  { kind: 'token', text: '.' },
+                  { kind: 'identifier', text: 'gain' },
+                ],
+              },
+              {
+                kind: 'arguments',
+                text: '(0.5)',
+                children: [{ kind: 'number', text: '0.5' }],
+              },
+            ],
+          },
+        ],
+      },
+    ]).document,
+  );
+
+  const secondText = 'const beat = s("bd")\nbeat.gain(0.5)';
+  const second = engine.analyze(
+    createFixtureDocument(secondText, [
+      {
+        kind: 'variableDeclaration',
+        text: 'const beat = s("bd")',
+        children: [
+          {
+            kind: 'variableDeclarator',
+            text: 'beat = s("bd")',
+            children: [
+              { kind: 'identifier', text: 'beat', occurrence: 0 },
+              {
+                kind: 'callExpression',
+                text: 's("bd")',
+                children: [
+                  { kind: 'identifier', text: 's', occurrence: 1 },
+                  {
+                    kind: 'arguments',
+                    text: '("bd")',
+                    children: [{ kind: 'string', text: '"bd"' }],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        kind: 'expressionStatement',
+        text: 'beat.gain(0.5)',
+        children: [
+          {
+            kind: 'callExpression',
+            text: 'beat.gain(0.5)',
+            children: [
+              {
+                kind: 'memberExpression',
+                text: 'beat.gain',
+                children: [
+                  { kind: 'identifier', text: 'beat', occurrence: 1 },
+                  { kind: 'token', text: '.' },
+                  { kind: 'identifier', text: 'gain' },
+                ],
+              },
+              {
+                kind: 'arguments',
+                text: '(0.5)',
+                children: [{ kind: 'number', text: '0.5' }],
+              },
+            ],
+          },
+        ],
+      },
+    ]).document,
+    { previous: first, timing: timing.recorder },
+  );
+
+  const count = (name: string): number =>
+    timing.samples().find((sample) => sample.name === name)?.count ?? 0;
+
+  assert.notEqual(firstSymbol(second, 'beat').id, firstSymbol(first, 'pat').id);
+  assert.equal(count('semantic.statements.reused'), 0);
+  assert.equal(count('semantic.statements.analyzed'), 2);
 });
 
 void test('supports cancellation before and during analysis', () => {

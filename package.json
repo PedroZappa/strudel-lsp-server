@@ -51,6 +51,7 @@
     "benchmark": "npm run build && node scripts/benchmark.mjs",
     "benchmark:check": "npm run build && node scripts/benchmark.mjs --check",
     "benchmark:baseline": "npm run build && node scripts/benchmark.mjs --write-baseline",
+    "benchmark:timing": "npm run build && node scripts/benchmark.mjs --timing",
     "benchmark:e2e": "npm run build && node scripts/benchmark-e2e.mjs",
     "benchmark:e2e:write": "npm run build && node scripts/benchmark-e2e.mjs --write-report",
     "smoke:clients": "npm run build && node scripts/smoke-clients.mjs",

@@ -1,3 +1,6 @@
+import { performance } from 'node:perf_hooks';
+
+import { recordCount, recordDuration } from '../performance/index.js';
 import type { SyntaxDocument, SyntaxNode } from '../syntax/index.js';
 
 import {
@@ -70,7 +73,6 @@ function statementRange(text: string, statement: SyntaxNode) {
 
 function collectDeclarationPlans(
   statements: readonly SyntaxNode[],
-  keys: readonly string[],
   text: string,
 ): DeclarationPlan[] {
   const plans: DeclarationPlan[] = [];
@@ -83,10 +85,13 @@ function collectDeclarationPlans(
       rangeNode: SyntaxNode,
       node: SyntaxNode,
     ): void => {
+      // Keep global identity independent of statement text. An initializer edit
+      // changes the statement key and forces that declaration to reanalyze, but
+      // references in unchanged statements must continue to resolve to it.
       plans.push({
         kind,
         name,
-        symbolId: `${keys[statementIndex]}:symbol:global:${kind}:${plans.length}:${name}`,
+        symbolId: `symbol:global:${statementIndex}:${kind}:${plans.length}:${name}`,
         statementIndex,
         range: toSemanticRange(text, rangeNode.range),
         node,
@@ -138,9 +143,12 @@ function collectDeclarationPlans(
 }
 
 function globalSignature(catalog: SemanticCatalog, plans: readonly DeclarationPlan[]): string {
+  // Declaration identity and order determine whether unchanged statements can
+  // safely be reused. Initializer text is excluded because the changed
+  // declaration's own statement key is sufficient to force its reanalysis.
   return JSON.stringify({
     catalogVersion: catalog.version,
-    declarations: plans.map((plan) => [plan.kind, plan.name, plan.node.text]),
+    declarations: plans.map((plan) => plan.symbolId),
   });
 }
 
@@ -170,6 +178,10 @@ function catalogEntryForSymbol(
     default:
       return undefined;
   }
+}
+
+function semanticValuesEqual(left: unknown, right: unknown): boolean {
+  return JSON.stringify(left) === JSON.stringify(right);
 }
 
 function finalizeDocument(
@@ -248,22 +260,32 @@ export class SemanticEngine {
   analyze(syntax: SyntaxDocument, options: SemanticAnalysisOptions = {}): SemanticDocument {
     throwIfCancelled(options.token);
 
+    const startedAt = options.timing === undefined ? undefined : performance.now();
     const statements = topLevelStatements(syntax.root);
     const keys = statementKeys(statements);
-    const plans = collectDeclarationPlans(statements, keys, syntax.text);
+    const plans = collectDeclarationPlans(statements, syntax.text);
     const signature = globalSignature(this.catalog, plans);
     const previousCache =
       options.previous === undefined ? undefined : this.caches.get(options.previous);
-    const canReuse =
-      previousCache?.globalSignature === signature &&
-      previousCache.statementKeys.length === keys.length;
-
     const plansByStatement = new Map<number, DeclarationPlan[]>();
     for (const plan of plans) {
       const existing = plansByStatement.get(plan.statementIndex) ?? [];
       existing.push(plan);
       plansByStatement.set(plan.statementIndex, existing);
     }
+
+    const canReuse =
+      previousCache?.globalSignature === signature &&
+      previousCache.statementKeys.length === keys.length &&
+      this.preservesGlobalSymbolSemantics(
+        syntax,
+        statements,
+        keys,
+        plans,
+        plansByStatement,
+        previousCache,
+        options,
+      );
 
     const initialSymbols = new Map<string, MutableSymbol>();
     for (const plan of plans) {
@@ -280,18 +302,28 @@ export class SemanticEngine {
     }
 
     const analyses: (StatementAnalysis | undefined)[] = [];
+    let reusedStatements = 0;
+    let analyzedStatements = 0;
     statements.forEach((statement, index) => {
       throwIfCancelled(options.token);
       if (canReuse && previousCache?.statementKeys[index] === keys[index]) {
         const cached = previousCache.analyses[index];
         if (cached?.sourceText === statement.text) {
+          const sourceRange = statementRange(syntax.text, statement);
+          // An unchanged range needs no cloned tree: reused analyses are never
+          // mutated after publication. Shifted statements still need fresh
+          // ranges for symbols, references and mini-notation facts.
           analyses.push(
-            cloneStatementAnalysis(cached, syntax.text, statementRange(syntax.text, statement)),
+            cached.sourceRange.startOffset === sourceRange.startOffset
+              ? cached
+              : cloneStatementAnalysis(cached, syntax.text, sourceRange),
           );
+          reusedStatements += 1;
           return;
         }
       }
       analyses.push(createAnalysis(statement, keys[index] ?? '', syntax.text));
+      analyzedStatements += 1;
     });
 
     const symbolsById = new Map(initialSymbols);
@@ -362,7 +394,144 @@ export class SemanticEngine {
       statementKeys: keys,
       analyses: completed,
     });
+    recordCount(options.timing, 'semantic.statements.reused', reusedStatements, {
+      version: syntax.version,
+    });
+    recordCount(options.timing, 'semantic.statements.analyzed', analyzedStatements, {
+      version: syntax.version,
+    });
+    if (startedAt !== undefined) {
+      recordDuration(options.timing, 'semantic.analyze', startedAt, {
+        version: syntax.version,
+        statements: statements.length,
+      });
+    }
     return document;
+  }
+
+  /**
+   * An unchanged statement can only be reused if the global declarations it may
+   * reference still have the same semantics. A changed initializer is analysed
+   * once in isolation; any inferred-type or signature change forces a rebuild
+   * so reused statements cannot keep types derived from the old declaration.
+   */
+  private preservesGlobalSymbolSemantics(
+    syntax: SyntaxDocument,
+    statements: readonly SyntaxNode[],
+    keys: readonly string[],
+    plans: readonly DeclarationPlan[],
+    plansByStatement: ReadonlyMap<number, DeclarationPlan[]>,
+    previousCache: EngineCache | undefined,
+    options: SemanticAnalysisOptions,
+  ): boolean {
+    if (options.previous === undefined || previousCache === undefined) {
+      return true;
+    }
+
+    const changedIndexes = [
+      ...new Set(
+        plans
+          .filter(
+            (plan) =>
+              previousCache.statementKeys[plan.statementIndex] !== keys[plan.statementIndex],
+          )
+          .map((plan) => plan.statementIndex),
+      ),
+    ];
+    if (changedIndexes.length === 0) {
+      return true;
+    }
+    if (changedIndexes.length > 1) {
+      return false;
+    }
+
+    const index = changedIndexes[0];
+    const statement = statements[index];
+    if (statement === undefined) {
+      return false;
+    }
+
+    const symbolsById = new Map<string, MutableSymbol>();
+    for (const symbol of options.previous.symbols.values()) {
+      symbolsById.set(symbol.id, { ...symbol });
+    }
+    const scopesById = new Map<string, MutableScope>();
+    for (const scope of options.previous.scopes.values()) {
+      scopesById.set(scope.id, {
+        id: scope.id,
+        kind: scope.kind,
+        range: scope.range,
+        parentId: scope.parentId,
+        symbolIds: [...scope.symbolIds],
+        childIds: [...scope.childIds],
+      });
+    }
+    if (!scopesById.has(GLOBAL_SCOPE_ID)) {
+      scopesById.set(GLOBAL_SCOPE_ID, {
+        id: GLOBAL_SCOPE_ID,
+        kind: 'global',
+        range: toSemanticRange(syntax.text, syntax.root.range),
+        symbolIds: [],
+        childIds: [],
+      });
+    }
+
+    const changedPlans = plansByStatement.get(index) ?? [];
+    for (const plan of changedPlans) {
+      symbolsById.set(plan.symbolId, {
+        id: plan.symbolId,
+        name: plan.name,
+        kind: this.symbolKindForPlan(plan.kind),
+        type: { kind: 'Unknown' },
+        declaration: plan.range,
+        scopeId: GLOBAL_SCOPE_ID,
+      });
+    }
+
+    const globalBindings = new Map<string, GlobalBinding>();
+    for (const plan of plans) {
+      const symbol = symbolsById.get(plan.symbolId);
+      if (symbol !== undefined) {
+        globalBindings.set(plan.name, { plan, symbol });
+      }
+    }
+    const catalogEntriesById = new Map<string, SemanticCatalogEntry>();
+    for (const symbol of symbolsById.values()) {
+      const entry = catalogEntryForSymbol(symbol, this.catalog);
+      if (entry !== undefined) {
+        catalogEntriesById.set(symbol.id, entry);
+      }
+    }
+
+    throwIfCancelled(options.token);
+    new StatementAnalyzer({
+      statement,
+      key: keys[index] ?? '',
+      text: syntax.text,
+      analysis: createAnalysis(statement, keys[index] ?? '', syntax.text),
+      plansForStatement: changedPlans,
+      globalBindings,
+      symbolsById,
+      scopesById,
+      catalogEntriesById,
+      catalog: this.catalog,
+      token: options.token,
+    }).analyze();
+    throwIfCancelled(options.token);
+
+    for (const plan of changedPlans) {
+      const current = symbolsById.get(plan.symbolId);
+      const previous = options.previous.symbols.get(plan.symbolId);
+      if (
+        current === undefined ||
+        previous === undefined ||
+        !semanticValuesEqual(current.type, previous.type) ||
+        !semanticValuesEqual(current.signature, previous.signature)
+      ) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private symbolKindForPlan(kind: DeclarationPlanKind): MutableSymbol['kind'] {

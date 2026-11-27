@@ -1,4 +1,5 @@
 import type { MiniNotationAnalysis } from '../miniNotation/index.js';
+import type { LocalTimingRecorder } from '../performance/index.js';
 
 /** Parser-independent source range used by the semantic model. */
 export interface SemanticRange {
@@ -102,4 +103,6 @@ export interface SemanticCancellationToken {
 export interface SemanticAnalysisOptions {
   readonly previous?: SemanticDocument;
   readonly token?: SemanticCancellationToken;
+  /** Optional in-process diagnosis hook; the server never supplies one by default. */
+  readonly timing?: LocalTimingRecorder;
 }

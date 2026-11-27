@@ -1,6 +1,6 @@
 # Performance
 
-Status: Phase 8 benchmark harness, workloads, baseline and advisory regression check implemented on 2026-11-27; the separate advisory installed-binary harness was added for Phase 14 work and is published in `0.2.0` on 2026-11-27.
+Status: Phase 24 scale and responsiveness work is complete in the unreleased `v0.5.0` development tree. The layer baseline contains 20 measured workloads, including two real-corpus workloads; opt-in local timing is available; performance thresholds remain advisory. Phase 25 owns the release.
 
 Authority: `AGENTS.md` section 6.
 
@@ -21,30 +21,36 @@ Track p50, p95 and p99 latency. Average execution time alone is not sufficient.
 
 ## Workloads
 
-The committed layer harness is `scripts/benchmark.mjs`. It imports the compiled ESM modules from `dist/src/` and measures transport-independent layer boundaries; it does not spawn a language-server process or include JSON-RPC serialisation. A second harness, `scripts/benchmark-e2e.mjs`, measures one installed-binary JSON-RPC path and reports it separately in `benchmarks/end-to-end.json`; it has no thresholds and is not part of the layer baseline. Both harnesses share constants and percentile helpers from `scripts/lib/benchmarkStats.mjs`. Fixtures are synthetic buffers hand-authored for this repository and described in `benchmarks/fixtures/README.md`.
+The committed layer harness is `scripts/benchmark.mjs`. It imports the compiled ESM modules from `dist/src/` and measures transport-independent layer boundaries; it does not spawn a language-server process or include JSON-RPC serialisation. A second harness, `scripts/benchmark-e2e.mjs`, measures one installed-binary JSON-RPC path and reports it separately in `benchmarks/end-to-end.json`; it has no thresholds and is not part of the layer baseline. Both harnesses share constants and percentile helpers from `scripts/lib/benchmarkStats.mjs`. Synthetic fixtures are hand-authored for this repository and described in `benchmarks/fixtures/README.md`.
 
-| Workload                 | Fixture                      | Operation                                                                      |
-| ------------------------ | ---------------------------- | ------------------------------------------------------------------------------ |
-| `parse-small`            | `small-live-edit.strudel`    | Full Tree-sitter parse of a small live-coding buffer.                          |
-| `parse-analyze-medium`   | `medium-composition.strudel` | Full parse and semantic analysis with user-defined functions and chains.       |
-| `parse-analyze-large`    | `large-pattern-set.strudel`  | Full parse and semantic analysis of many declarations and mini-notation calls. |
-| `incremental-edit-small` | `small-live-edit.strudel`    | Incremental syntax update plus semantic update for a one-character edit.       |
-| `incremental-edit-large` | `large-pattern-set.strudel`  | The same update on the large fixture.                                          |
-| `diagnostics-small`      | `small-live-edit.strudel`    | Diagnostic derivation with default configuration applied to a valid buffer.    |
-| `diagnostics-incomplete` | `incomplete-live.strudel`    | Resilient diagnostics for partially typed input.                               |
-| `completion-medium`      | `medium-composition.strudel` | Pattern-method completion after a dot.                                         |
-| `hover-large`            | `large-pattern-set.strudel`  | Hover for a resolved declaration.                                              |
-| `definition-large`       | `large-pattern-set.strudel`  | Definition lookup for a resolved reference.                                    |
-| `signature-help-medium`  | `medium-composition.strudel` | Signature help inside a pattern-method call.                                   |
-| `document-symbols-large` | `large-pattern-set.strudel`  | Outline traversal.                                                             |
-| `workspace-symbols-scan` | `workspace/`                 | Bounded file discovery, parsing, analysis and workspace-symbol query.          |
-| `formatting-medium`      | `medium-composition.strudel` | Indentation-only formatting of an unformatted copy.                            |
-| `semantic-tokens-large`  | `large-pattern-set.strudel`  | Full-document semantic-token classification.                                   |
-| `quick-fixes-small`      | `small-live-edit.strudel`    | Quick-fix derivation from fresh configured diagnostics.                        |
-| `refactor-inline-small`  | `small-live-edit.strudel`    | Inline-constant eligibility scan.                                              |
-| `rename-large`           | `large-pattern-set.strudel`  | Rename preparation and edit computation.                                       |
+| Workload                       | Fixture                           | Operation                                                                      |
+| ------------------------------ | --------------------------------- | ------------------------------------------------------------------------------ |
+| `parse-small`                  | `small-live-edit.strudel`         | Full Tree-sitter parse of a small live-coding buffer.                          |
+| `parse-analyze-medium`         | `medium-composition.strudel`      | Full parse and semantic analysis with user-defined functions and chains.       |
+| `parse-analyze-large`          | `large-pattern-set.strudel`       | Full parse and semantic analysis of many declarations and mini-notation calls. |
+| `incremental-edit-small`       | `small-live-edit.strudel`         | Incremental syntax update plus semantic update for a one-character edit.       |
+| `incremental-edit-large`       | `large-pattern-set.strudel`       | The same update on the large fixture.                                          |
+| `diagnostics-small`            | `small-live-edit.strudel`         | Diagnostic derivation with default configuration applied to a valid buffer.    |
+| `diagnostics-incomplete`       | `incomplete-live.strudel`         | Resilient diagnostics for partially typed input.                               |
+| `completion-medium`            | `medium-composition.strudel`      | Pattern-method completion after a dot.                                         |
+| `hover-large`                  | `large-pattern-set.strudel`       | Hover for a resolved declaration.                                              |
+| `definition-large`             | `large-pattern-set.strudel`       | Definition lookup for a resolved reference.                                    |
+| `signature-help-medium`        | `medium-composition.strudel`      | Signature help inside a pattern-method call.                                   |
+| `document-symbols-large`       | `large-pattern-set.strudel`       | Outline traversal.                                                             |
+| `workspace-symbols-scan`       | `workspace/`                      | Bounded file discovery, parsing, analysis and workspace-symbol query.          |
+| `formatting-medium`            | `medium-composition.strudel`      | Indentation-only formatting of an unformatted copy.                            |
+| `semantic-tokens-large`        | `large-pattern-set.strudel`       | Full-document semantic-token classification.                                   |
+| `quick-fixes-small`            | `small-live-edit.strudel`         | Quick-fix derivation from fresh configured diagnostics.                        |
+| `refactor-inline-small`        | `small-live-edit.strudel`         | Inline-constant eligibility scan.                                              |
+| `rename-large`                 | `large-pattern-set.strudel`       | Rename preparation and edit computation.                                       |
+| `parse-analyze-real-corpus`    | `@strudel/reference@1.2.2` sample | Full parse and analysis of 24 deterministic documentation examples.            |
+| `incremental-edit-real-corpus` | `@strudel/reference@1.2.2` sample | Incremental syntax and semantic update of the same 24 examples.                |
 
-The fixtures use syntax representative of Strudel 1.2.6 as pinned by `package.json`; no external composition was copied. The workspace fixture includes a nested directory and a non-Strudel file so extension filtering is exercised.
+### Real-corpus provenance and redistribution
+
+The two real workloads read examples from the pinned development dependency `@strudel/reference@1.2.2`, whose tarball, integrity hash, repository and `AGPL-3.0-or-later` licence are recorded in `validation/real-corpus.json`. The project licence is `AGPL-3.0-only`, so the `or-later` grant permits use under the project's terms. No example text was copied into this repository: the runner verifies the installed package's provenance and the SHA-256 corpus hash against the committed validation report, excludes the seven accepted parser-gap examples, then selects every 20th clean example for a deterministic 24-example sample. Benchmark runs are offline after installation and do not fetch the tarball.
+
+This is authoritative JSDoc example material rather than a capture of private user projects. It supplements, and does not replace, the synthetic fixtures that deliberately cover malformed live-coding states and large composition shapes.
 
 ## End-to-end installed-binary workload
 
@@ -52,9 +58,9 @@ The fixtures use syntax representative of Strudel 1.2.6 as pinned by `package.js
 
 | Workload                            | Fixture                   | Measured p50 | Measured p95 | Measured p99 | Samples |
 | ----------------------------------- | ------------------------- | -----------: | -----------: | -----------: | ------: |
-| `jsonrpc-installed-document-symbol` | `small-live-edit.strudel` |        0.337 |        0.575 |        0.735 |     100 |
+| `jsonrpc-installed-document-symbol` | `small-live-edit.strudel` |        0.443 |        0.921 |        1.120 |     100 |
 
-These values are advisory evidence from darwin-arm64 with Node `v26.8.2` and an Apple M4 Pro. The machine-readable report is `benchmarks/end-to-end.json`; it has `advisory: true`, no thresholds and no entry in `benchmarks/baseline.json`. This is not an editor-latency measurement and is not a blocking correctness gate; ADR-057 records the separation from the layer results.
+These values are advisory evidence from linux-x64 with Node `v26.13.1` and a 12th Gen Intel Core i9-12900KF. The machine-readable report is `benchmarks/end-to-end.json`; it has `advisory: true`, no thresholds and no entry in `benchmarks/baseline.json`. The harness builds, packs and installs the current working tree, so the `packageVersion: "0.4.0"` output is only the unchanged manifest version, not a registry download. This is not an editor-latency measurement and is not a blocking correctness gate; ADR-057 records the separation from the layer results.
 
 ## Measurement methodology
 
@@ -62,11 +68,11 @@ These values are advisory evidence from darwin-arm64 with Node `v26.8.2` and an 
 2. Run five warm-up iterations per workload, then five batches of 20 measured iterations.
 3. Time each operation with `node:perf_hooks.performance.now` in milliseconds. Preparation, file reads for the setup contexts and result consumption are outside the timed expression, except that file discovery is deliberately timed for `workspace-symbols-scan` because it is part of that LSP request.
 4. Within each batch, use nearest-rank percentiles: index `ceil(q × n) - 1`. Report the median of the five batch percentiles for p50, p95 and p99, plus minimum, maximum and the total sample count. This prevents a single GC or scheduling pause from becoming the sole tail sample while still detecting sustained tail latency.
-5. Compare incremental updates against full parse and analysis using the small and large fixtures.
-6. Store the machine-readable baseline in `benchmarks/baseline.json`, including its generating commit's environment.
+5. Compare incremental updates against full parse and analysis using the small, large and real-corpus workloads.
+6. Store the machine-readable baseline in `benchmarks/baseline.json`, including its generating commit's environment and the real-corpus sample size.
 7. Re-run the check on dependency, parser, semantic or feature-provider changes.
 
-Run `npm run benchmark` for layer figures, `npm run benchmark:check` to compare them with the committed baseline, and `npm run benchmark:baseline` to deliberately replace that baseline. Run `npm run benchmark:e2e` for the separate installed-binary figures and `npm run benchmark:e2e:write` to refresh its advisory report. The Makefile exposes the same commands as `make benchmark`, `make benchmark-check`, `make benchmark-baseline`, `make benchmark-e2e` and `make benchmark-e2e-write`.
+Run `npm run benchmark` for layer figures, `npm run benchmark:check` to compare them with the committed baseline, and `npm run benchmark:baseline` to deliberately replace that baseline. Run `npm run benchmark:timing` for the opt-in local-only diagnosis described below. Run `npm run benchmark:e2e` for the separate installed-binary figures and `npm run benchmark:e2e:write` to refresh its advisory report. The Makefile exposes the same commands as `make benchmark`, `make benchmark-check`, `make benchmark-baseline`, `make benchmark-timing`, `make benchmark-e2e` and `make benchmark-e2e-write`.
 
 ## Baseline environment
 
@@ -76,55 +82,53 @@ The committed baseline was generated on 2026-11-27 with:
 - `tree-sitter-strudel` 2.0.2, Strudel core 1.2.6, TypeScript 6.0.3.
 - Development build via `tsc`, no minification and no editor client process.
 
-CI runs on different hardware, so the performance job is advisory. A slower cloud runner can exceed these targets without proving a code regression; a persistent or local failure must be investigated with the recorded environment.
+The published `0.4.0` Phase 18 baseline used the same machine and dependency versions. CI runs on different hardware, so its latency results are advisory. No hardware-normalisation multiplier is invented: comparisons are made against the committed baseline only when the recorded environment matches, and the CI job reports rather than blocks. A persistent local failure must be investigated with the recorded environment.
 
 ## Results and targets
 
-The following values are the committed baseline in milliseconds. Targets are warning thresholds, not correctness assertions.
+The following values are the committed Phase 24 baseline in milliseconds. Targets are warning thresholds, not correctness assertions.
 
-| Workload                 | Baseline p50 | Baseline p95 | Baseline p99 | Target p50 | Target p95 | Target p99 |
-| ------------------------ | -----------: | -----------: | -----------: | ---------: | ---------: | ---------: |
-| `parse-small`            |        0.225 |        0.248 |        0.310 |      0.450 |      0.620 |      0.930 |
-| `parse-analyze-medium`   |        0.922 |        1.456 |        1.628 |      1.844 |      3.640 |      4.884 |
-| `parse-analyze-large`    |        5.953 |        7.158 |        8.281 |     11.906 |     17.895 |     24.843 |
-| `incremental-edit-small` |        0.250 |        0.283 |        0.302 |      0.500 |      0.707 |      0.906 |
-| `incremental-edit-large` |        7.018 |        7.237 |        7.590 |     14.036 |     18.093 |     22.770 |
-| `diagnostics-small`      |        0.002 |        0.002 |        0.002 |      0.050 |      0.050 |      0.050 |
-| `diagnostics-incomplete` |        0.000 |        0.000 |        0.000 |      0.050 |      0.050 |      0.050 |
-| `completion-medium`      |        0.121 |        0.145 |        0.152 |      0.242 |      0.363 |      0.456 |
-| `hover-large`            |        0.002 |        0.002 |        0.003 |      0.050 |      0.050 |      0.050 |
-| `definition-large`       |        0.002 |        0.002 |        0.002 |      0.050 |      0.050 |      0.050 |
-| `signature-help-medium`  |        0.004 |        0.006 |        0.012 |      0.050 |      0.050 |      0.050 |
-| `document-symbols-large` |        0.009 |        0.010 |        0.018 |      0.050 |      0.050 |      0.054 |
-| `workspace-symbols-scan` |        0.887 |        1.088 |        1.156 |      1.774 |      2.720 |      3.468 |
-| `formatting-medium`      |        0.027 |        0.032 |        0.033 |      0.054 |      0.080 |      0.099 |
-| `semantic-tokens-large`  |        0.021 |        0.025 |        0.030 |      0.050 |      0.063 |      0.090 |
-| `quick-fixes-small`      |        0.004 |        0.004 |        0.004 |      0.050 |      0.050 |      0.050 |
-| `refactor-inline-small`  |        0.004 |        0.007 |        0.011 |      0.050 |      0.050 |      0.050 |
-| `rename-large`           |        0.009 |        0.010 |        0.012 |      0.050 |      0.050 |      0.050 |
+| Workload                       | Baseline p50 | Baseline p95 | Baseline p99 | Target p50 | Target p95 | Target p99 |
+| ------------------------------ | -----------: | -----------: | -----------: | ---------: | ---------: | ---------: |
+| `parse-small`                  |        0.209 |        0.241 |        0.263 |      0.418 |      0.603 |      0.789 |
+| `parse-analyze-medium`         |        0.923 |        1.103 |        2.063 |      1.846 |      2.758 |      6.189 |
+| `parse-analyze-large`          |        5.964 |        8.088 |        8.340 |     11.928 |     20.220 |     25.020 |
+| `incremental-edit-small`       |        0.245 |        0.273 |        0.286 |      0.490 |      0.683 |      0.858 |
+| `incremental-edit-large`       |        6.532 |        6.668 |        6.918 |     13.064 |     16.670 |     20.754 |
+| `diagnostics-small`            |        0.004 |        0.005 |        0.005 |      0.050 |      0.050 |      0.050 |
+| `diagnostics-incomplete`       |        0.001 |        0.001 |        0.001 |      0.050 |      0.050 |      0.050 |
+| `completion-medium`            |        0.148 |        0.181 |        0.202 |      0.296 |      0.453 |      0.606 |
+| `hover-large`                  |        0.002 |        0.003 |        0.005 |      0.050 |      0.050 |      0.050 |
+| `definition-large`             |        0.001 |        0.002 |        0.005 |      0.050 |      0.050 |      0.050 |
+| `signature-help-medium`        |        0.004 |        0.012 |        0.023 |      0.050 |      0.050 |      0.069 |
+| `document-symbols-large`       |        0.009 |        0.011 |        0.026 |      0.050 |      0.050 |      0.078 |
+| `workspace-symbols-scan`       |        1.001 |        1.089 |        1.195 |      2.002 |      2.723 |      3.585 |
+| `formatting-medium`            |        0.022 |        0.028 |        0.032 |      0.050 |      0.070 |      0.096 |
+| `semantic-tokens-large`        |        0.022 |        0.023 |        0.042 |      0.050 |      0.057 |      0.126 |
+| `quick-fixes-small`            |        0.002 |        0.004 |        0.005 |      0.050 |      0.050 |      0.050 |
+| `refactor-inline-small`        |        0.005 |        0.008 |        0.012 |      0.050 |      0.050 |      0.050 |
+| `rename-large`                 |        0.006 |        0.007 |        0.007 |      0.050 |      0.050 |      0.050 |
+| `parse-analyze-real-corpus`    |        3.094 |        3.207 |        6.431 |      6.188 |      8.018 |     19.293 |
+| `incremental-edit-real-corpus` |        3.148 |        3.249 |        6.681 |      6.296 |      8.123 |     20.043 |
 
 Targets are computed from the measured baseline as `max(baseline × factor, 0.05 ms)`, with factors of 2 for p50, 2.5 for p95 and 3 for p99. Repeated runs showed stable medians for parser and analysis workloads, occasional GC/JIT spikes in p99, and greater variance for the filesystem-backed workspace scan. The wider factors absorb that observed variability while still detecting order-of-magnitude regressions. The absolute floor avoids false failures on sub-millisecond provider calls where timer and scheduling noise exceed the operation itself.
 
-The large incremental edit is currently slower than a full parse and analysis of the same fixture because Tree-sitter reuses the syntax tree while the semantic engine rebuilds a fresh document snapshot. Improving incremental semantic reuse is deferred; it needs evidence from real editing workloads before adding complexity.
+### Incremental semantic reuse
+
+Global declaration symbol IDs now depend on declaration identity and order, not statement text. An initializer edit that preserves the declaration's inferred type and signature reanalyses only the changed statement while unchanged statements are reused with shifted ranges when necessary; unchanged ranges share immutable statement analyses. Before reusing anything, the engine analyses a changed declaration in isolation and compares its resulting semantics with the previous document. Any inferred-type or signature change, multiple changed declarations, a declaration rename, insertion, removal, reorder or catalog-version change forces a conservative rebuild. This prevents unchanged statements from retaining types derived from an old declaration. `test/semantic/semanticEngine.test.ts` and `test/lsp/incrementalAnalysis.test.ts` cover type-preserving reuse, type-changing rebuilds, reference identity, repeated ranged edits and invalidation.
+
+The Phase 18 baseline for `incremental-edit-large` was 7.018/7.237/7.590 ms. The Phase 24 baseline is 6.532/6.668/6.918 ms, so no latency regression remains unexplained. In an opt-in diagnosis of the large edit, 47–48 of 48 statements were reused; `document.syntax` took roughly 5.8–6.5 ms while `semantic.analyze` took roughly 0.9–1.8 ms. Tree-sitter's incremental reparse now dominates this workload, so the semantic improvement does not translate into a large p50 win, but it removes the semantic rebuild from the tail and improves p95/p99 against Phase 18.
 
 ## Regression monitoring
 
-`npm run benchmark:check` fails when a current layer percentile exceeds the corresponding stored target or when a workload is missing. CI runs this command in the `performance` job with `continue-on-error: true`, so it reports regressions without blocking unrelated correctness failures. The separate installed-binary harness also runs with `continue-on-error: true` and stores no thresholds, so neither benchmark is a correctness gate. The correctness gate remains `npm run check`.
+`npm run benchmark:check` fails locally when a current layer percentile exceeds the corresponding stored target or when a workload is missing. CI runs this command in the `performance` job with `continue-on-error: true`, as it does for the installed-binary harness. ADR-074 records the decision to keep thresholds advisory: the baseline is hardware-specific, CI hardware differs, and no measured normalisation factor can turn a cloud-runner result into a trustworthy correctness gate. Local runs on the recorded environment use the numeric targets to investigate suspected regressions; `npm run check` remains the blocking correctness gate. A contract test asserts that both benchmark steps stay advisory and that the real-corpus workloads are part of the layer baseline.
 
-## Instrumentation plan
+## Local-only timing boundary
 
-- Layer-boundary timing lives in `scripts/benchmark.mjs` and installed-binary timing in `scripts/benchmark-e2e.mjs`; neither adds production timing hooks or user-facing configuration.
-- The runners keep fixtures, baseline data and results separate from `src/` and the published package.
-- Cancellation and superseded-version behaviour are covered by the stdio integration tests rather than by latency samples.
-- The Phase 14 soak suite published in `0.2.0` samples child-process RSS externally from `ps` and reports growth as advisory test diagnostics. Those samples are not latency measurements, do not enter the baseline and do not add production telemetry.
-- Future instrumentation should capture request cancellation counts only when a concrete latency investigation requires them.
+`src/performance/` exposes an opt-in `LocalTimingRecorder` with a no-op default. `SemanticAnalysisOptions.timing` and the optional third argument to `DocumentAnalysisService` accept a recorder; the LSP server constructs both without one, so ordinary editor sessions record nothing and expose no new configuration, environment variable, network call or telemetry. Tests and the layer runner inject an in-memory recorder. `npm run benchmark:timing` prints event counts and durations separately from the baseline; those samples include harness preparation and are diagnostic evidence only, never a performance gate.
+
+The records include `semantic.statements.reused`, `semantic.statements.analyzed`, `semantic.analyze`, `document.syntax` and `document.analyze`. One final-candidate run recorded 8,295 reused statement analyses against 18,480 analyzed across all workloads, confirming that reuse is active. The Phase 14 soak suite continues to sample child-process RSS externally from `ps` and reports growth as advisory diagnostics; those samples are not latency measurements and add no production telemetry.
 
 ## Current status
 
-Phase 8 is implemented. The harness records 18 workloads, the committed baseline contains measured p50/p95/p99 values and numeric warning thresholds, and CI reports advisory regressions. No performance target is a blocking correctness gate. Phase 6 and Phase 7 providers still lack production-side timing instrumentation; their latencies are measured through the harness rather than from live editor sessions.
-
-The Phase 14 diagnostics settings published in `0.2.0` apply a pure default configuration to each diagnostics and quick-fix derivation. The subsequent workspace-file hardening added symlink, containment, unreadable-path and deterministic-order guards. In the final `npm run benchmark:check` on darwin-arm64 with Node 26.8.2, all 18 workloads remained within the committed thresholds; `diagnostics-small` p50/p95/p99 were 0.003/0.003/0.003 ms, `quick-fixes-small` were 0.002/0.002/0.002 ms and `workspace-symbols-scan` was 0.605/0.648/0.684 ms. The committed baseline was not rewritten because these remain layer-level advisory measurements rather than editor latency.
-
-`npm run test:soak` now adds three bounded lifecycle cycles with 64 rapid edits and advisory RSS observation, but it does not measure p50/p95/p99 or change the 18-workload baseline. The full `npm run check` passed 85/85 tests on darwin-arm64 with Node 26.8.2 after the two-client smoke evidence contract was added; the Phase 15 release-evidence contract subsequently raised the gate to 86/86, and the ADR-062 publication-state contract raised it to 87/87, the Phase 17 documentation-contract suite raised it to 90/90, and the Phase 18 compatibility-contract suite raised it to 93/93, and the Phase 19 exact-authorization test raised the candidate gate to 94/94; the post-publication ADR-067 contract raised the gate to 95/95; Phase 20 semantic, metadata, provider, rename and compatibility-contract tests raised the current gate to 103/103. Phase 20 reran `npm run benchmark:check` with all 18 workloads within the committed thresholds, so the advisory baseline was unchanged. Observed RSS growth of roughly 3.3–3.4 MiB per cycle was treated as warm-up evidence, not a regression threshold.
-
-The separate installed-binary workload is implemented under ADR-057. Its advisory report records 0.337/0.575/0.735 ms p50/p95/p99 over 100 samples, while `npm run benchmark:check` still passed all 18 layer workloads after the shared statistics extraction. Neither result is an editor-latency claim or a blocking gate.
+Phase 24 is complete in the development tree. The harness records 20 workloads, the committed baseline contains measured p50/p95/p99 values and numeric warning thresholds, both real workloads verify pinned provenance before running, and CI reports advisory regressions. The final installed-binary report records 0.443/0.921/1.120 ms p50/p95/p99 over 100 samples. No performance target is a blocking correctness gate, and no version bump, tag, publication or registry mutation was performed; Phase 25 owns the `v0.5.0` release.
