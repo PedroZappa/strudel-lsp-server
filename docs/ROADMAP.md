@@ -299,20 +299,20 @@ Exit criteria:
 
 Dependencies: Phase 10 runtime and OS matrix.
 
-**Status: in progress. The required matrix is defined in ADR-035; the compatibility workflow and expanded verifier are implemented, with cross-platform results pending.**
+**Status: clean-install and installed-handshake validation is complete on the required matrix; real-corpus validation and protocol robustness work remains.**
 
 Tasks:
 
-- [ ] Perform clean-room installs on every required OS/Node/npm combination from ADR-035. The six-job workflow and expanded verifier are implemented; both install modes, native parser prebuild loading and a no-compilation check must pass on every job before this item is checked.
-- [ ] Exercise the installed `strudel-lsp-server` executable's stdio handshake on Linux, macOS and Windows, using the platform-specific bin shim where applicable.
+- [x] Perform clean-room installs on every required OS/Node/npm combination from ADR-035. The six-job matrix passed both install modes, native parser prebuild loading and a no-compilation check in run `45990023185`.
+- [x] Exercise the installed `strudel-lsp-server` executable's stdio handshake on Linux, macOS and Windows, using the platform-specific bin shim where applicable. Each matrix job completed the installed handshake.
 - [ ] Validate the parser and semantic engine against a small corpus of real Strudel compositions from authoritative documentation or examples, without copying those compositions into the package.
 - [ ] Complete a protocol robustness review for stdout purity, malformed JSON-RPC, unknown methods, invalid parameters, `$/cancelRequest`, rapid edits, no-workspace and multi-root initialization, document closure, shutdown and exit codes.
 
 Exit criteria:
 
-- [ ] Every required OS/Node/npm combination in ADR-035 passes clean-room installation with and without install scripts where applicable.
-- [ ] Native parser prebuilds work without requiring a local compiler.
-- [ ] Installed executable handshakes pass on every required platform in ADR-035.
+- [x] Every required OS/Node/npm combination in ADR-035 passes clean-room installation with and without install scripts where applicable, recorded in run `45990023185`.
+- [x] Native parser prebuilds work without requiring a local compiler; no parser `build` directory was created in any matrix job.
+- [x] Installed executable handshakes pass on every required platform in ADR-035.
 - [ ] Real-corpus validation and protocol robustness evidence are recorded, with no copied compositions in the package.
 
 ## Phase 12 — Release governance and automation

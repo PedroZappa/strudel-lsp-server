@@ -6,6 +6,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+- Recorded a green six-job compatibility matrix covering Linux x64, macOS arm64 and Windows x64 with Node 24/26 and npm 11.
 - Fixed Windows package verification to invoke `npm.cmd` through the platform shell.
 - Added a cross-platform clean-install compatibility workflow and expanded package verification to cover both install modes, native parser prebuild loading and installed stdio handshakes.
 - Finalized first-release README scope and npm repository/homepage/bugs metadata, with a package metadata contract test.

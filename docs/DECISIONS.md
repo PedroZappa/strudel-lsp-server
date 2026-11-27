@@ -598,4 +598,6 @@ Consequences:
 - `.github/workflows/compatibility.yml` runs on pushes to `main`, pull requests and manual dispatch; it does not publish anything.
 - The workflow is a blocking correctness matrix, unlike the advisory performance check.
 - Phase 11 clean-install and installed-handshake items require a green run of all six jobs before being marked complete.
+- The green matrix run on commit `4c3f6b4` recorded both install modes, parser prebuild loading with no compiled `build` directory, and installed stdio handshakes on all six combinations: <https://github.com/PedroZappa/strudel-lsp-server/actions/runs/45990023185>. Detailed platform, Node and npm results are in `docs/TESTING_STRATEGY.md`.
+- The first matrix run failed only because Windows `npm.cmd` was spawned without a shell; the verifier now uses the platform shell for npm, and the fix was confirmed by the green run.
 - Changes to runner labels, Node majors or npm majors require an update to this ADR and the workflow together.
