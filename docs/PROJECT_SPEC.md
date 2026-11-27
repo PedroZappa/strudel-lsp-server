@@ -95,6 +95,7 @@ All four packages come from `git+https://codeberg.org/uzu/strudel.git` and decla
 | Missing `AGENTS.md` section 9                          | Resolved: complete section approved                                     | `docs/DECISIONS.md`, `docs/TESTING_STRATEGY.md`   |
 | Test tooling                                           | Accepted and installed: `node:test` over compiled TypeScript output     | `docs/TESTING_STRATEGY.md`                        |
 | Metadata source packages and pinned versions           | Resolved: reference 1.2.2 and core/mini/transpiler 1.2.6                | `docs/DECISIONS.md`, `docs/PROJECT_SPEC.md`       |
+| Generated metadata snapshot and offline lookup         | Resolved: Phase 5 generator, committed snapshot and database adapter    | `docs/ARCHITECTURE.md`, `docs/DECISIONS.md`       |
 | Development-only npm audit advisories                  | Resolved: patched transitively; full audit reports zero vulnerabilities | `docs/DECISIONS.md`, `docs/TESTING_STRATEGY.md`   |
 | Repository licence metadata mismatch                   | Resolved: MIT, `Copyright (c) 2025-present Zedro`                       | `docs/DECISIONS.md`, `LICENSE`                    |
 

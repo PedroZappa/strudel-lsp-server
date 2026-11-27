@@ -51,7 +51,7 @@ _INFO    = [$(BLU)INFO$(D)]
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install install-dev build typecheck lint format format-check test test-parser test-semantic benchmark pack-check check verify verify-all ci check-static audit clean docs docs-open
+.PHONY: help install install-dev build typecheck lint format format-check test test-parser test-semantic test-metadata generate-metadata benchmark pack-check check verify verify-all ci check-static audit clean docs docs-open
 
 #==============================================================================#
 #                                  RULES                                       #
@@ -110,6 +110,16 @@ test-semantic:	## Build and run semantic engine tests only
 	@echo "$(YEL)Running semantic engine tests...$(D)"
 	@$(NPM) run test:semantic
 	@echo "$(YEL)* $(_SUCCESS) Semantic engine tests completed$(D)"
+
+test-metadata:	## Build and run language database tests only
+	@echo "$(YEL)Running language database tests...$(D)"
+	@$(NPM) run test:metadata
+	@echo "$(YEL)* $(_SUCCESS) Language database tests completed$(D)"
+
+generate-metadata:	## Regenerate the pinned Strudel language database snapshot
+	@echo "$(YEL)Generating language database...$(D)"
+	@$(NPM) run generate:metadata
+	@echo "$(YEL)* $(_SUCCESS) Language database generated$(D)"
 
 benchmark:	## Run the benchmark command runner (workloads arrive in Phase 8)
 	@echo "$(YEL)Running benchmarks...$(D)"

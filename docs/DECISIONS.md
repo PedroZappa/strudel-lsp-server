@@ -67,7 +67,7 @@ Status: accepted on 2026-11-25.
 
 The selected baseline is Node's built-in `node:test` runner over compiled ESM JavaScript, with the TypeScript compiler producing test output. This avoids a separate test-framework dependency while still supporting module, protocol and subprocess tests.
 
-Vitest remains a documented alternative if richer ergonomics become necessary. Phase 2 added the first stdio transport smoke test, and Phase 4 added the semantic engine suite; language-feature and metadata suites remain to be added.
+Vitest remains a documented alternative if richer ergonomics become necessary. Phase 2 added the first stdio transport smoke test, Phase 4 added the semantic engine suite, and Phase 5 added the metadata-generation and language-database suite; language-feature suites remain to be added.
 
 ## ADR-009 — Repository licence metadata
 
@@ -160,7 +160,7 @@ Validation:
 
 - Importing `@strudel/reference` exposes `reference.docs`, an array of 577 JSDoc records with fields such as `name`, `longname`, `kind`, `params`, `examples` and `description`.
 - Direct Node ESM imports of `@strudel/core`, `@strudel/mini` and `@strudel/transpiler` fail because their transitive `@kabelsalat/web@0.4.1` package points `main` at a browser IIFE without Node-discoverable named exports. These packages are therefore pinned as source/integrity inputs, not as directly importable runtime modules.
-- Generated metadata extraction must use the pinned package files or a bundler-aware process until upstream packaging supports direct Node ESM import.
+- Generated metadata extraction must use the pinned package files or a bundler-aware process until upstream packaging supports direct Node ESM import. Phase 5 satisfies this with `scripts/generate-metadata.mjs`, which imports only `@strudel/reference` and records the other three packages as integrity inputs.
 
 ## ADR-015 — Development dependency advisory remediation
 
@@ -237,3 +237,26 @@ Consequences:
 - Phase 5 must produce a `SemanticCatalog` implementation or adapter.
 - Phase 6 feature providers must treat `Unknown` and unresolved references as uncertainty, not as diagnostics by default.
 - `Boolean` and `SampleName` are part of the type model but have limited inference until metadata and expression coverage expand.
+
+## ADR-019 — Reproducible language database
+
+Status: accepted on 2026-11-27.
+
+Decision: `src/languageDatabase/` owns a committed, versioned metadata snapshot generated from the pinned inputs in ADR-014. `scripts/generate-metadata.mjs` validates package versions, tarball integrity, licences and repository provenance, transforms `reference.docs` into deterministic TypeScript, and excludes machine-specific path data. The snapshot records origin, version and licence for all four Strudel packages.
+
+Metadata is layered:
+
+- Generated records provide documented names, kinds, scopes, parameters, returns, descriptions, examples and conservative `StrudelTypeKind` values.
+- Manual entries in `manual.ts` supply curated return types and mini-notation argument positions for common pattern constructors and controls, with evidence from pinned reference examples.
+- Runtime-derived entries are an explicit `RuntimeSymbolMetadata` option. No runtime import is used by default, so the server works offline after installation.
+
+`createCatalogFromLanguageDatabase` adapts any registered Strudel version to the Phase 4 `SemanticCatalog` boundary. `LanguageDatabaseOptions.versions` permits additional generated snapshots in future without changing semantic-engine code. Catalog versions include a deterministic hash of manual and runtime layers so semantic caches invalidate when those layers change.
+
+Rationale: the design satisfies the offline requirement, avoids direct Node imports of packages with incompatible browser packaging, and preserves provenance for AGPL-3.0-or-later sources. Generated descriptions and examples are included for future hover and signature features; the repository licence remains MIT while source obligations are documented rather than assumed away.
+
+Consequences:
+
+- Regeneration must be deliberate through `npm run generate:metadata` or `make generate-metadata`.
+- Metadata tests compare fresh generator output with the committed snapshot and do not access the network.
+- Pattern-method types are generated from `memberOf: 'Pattern'` and `scope: 'static'`; sample names remain unavailable because no pinned authoritative sample list exists.
+- Full function signatures and token-level mini-notation analysis remain future work.

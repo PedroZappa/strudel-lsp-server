@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: re-implementation roadmap updated with resolved blocker decisions and Phase 4 completion, 2026-11-27. Priorities are proposals and remain subject to approval.
+Status: re-implementation roadmap updated with resolved blocker decisions and Phase 5 completion, 2026-11-27. Priorities are proposals and remain subject to approval.
 
 Authority: `AGENTS.md` sections 2–18 and the other documents in `docs/`.
 
@@ -113,20 +113,24 @@ Exit criteria:
 
 ## Phase 5 — Language database
 
+**Status: complete; changes are not committed.**
+
 Dependencies: Phase 1 metadata versions, Phase 2 scaffold.
 
 Tasks:
 
-- [ ] Define generated, manual and runtime-derived metadata inputs.
-- [ ] Pin and document source versions.
-- [ ] Generate reproducible offline-capable metadata.
-- [ ] Design for future multiple Strudel versions.
+- [x] Define generated, manual and runtime-derived metadata inputs.
+- [x] Pin and document source versions.
+- [x] Generate reproducible offline-capable metadata.
+- [x] Design for future multiple Strudel versions.
+
+`src/languageDatabase/` combines a committed JSDoc-derived snapshot, manually curated semantics and an optional runtime-entry extension point. `scripts/generate-metadata.mjs` validates pinned versions, integrity, licences and repository provenance, then emits deterministic TypeScript. `createCatalogFromLanguageDatabase` adapts the database to the Phase 4 `SemanticCatalog` boundary. Tests run independently via `npm run test:metadata` or `make test-metadata`; regeneration runs via `npm run generate:metadata` or `make generate-metadata`.
 
 Exit criteria:
 
-- [ ] Metadata generation is reproducible from pinned inputs.
-- [ ] Origin and version are documented.
-- [ ] Offline operation works after installation.
+- [x] Metadata generation is reproducible from pinned inputs.
+- [x] Origin and version are documented.
+- [x] Offline operation works after installation.
 
 ## Phase 6 — Core language intelligence
 

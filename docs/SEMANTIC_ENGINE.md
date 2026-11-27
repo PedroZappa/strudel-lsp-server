@@ -1,6 +1,6 @@
 # Semantic Engine
 
-Status: Phase 4 implemented on 2026-11-27. The model is deliberately limited and is not connected to LSP feature providers yet.
+Status: Phase 4 model and Phase 5 database-backed catalog implemented on 2026-11-27. The model is deliberately limited and is not connected to LSP feature providers yet.
 
 Authority: `AGENTS.md` sections 3 and 5.
 
@@ -11,7 +11,7 @@ The semantic engine turns the syntax representation into a Strudel-specific mode
 ## Inputs and boundary
 
 - Input: `SyntaxDocument` from the syntax adapter, plus document version.
-- Side input: `SemanticCatalog`, an injected metadata lookup interface. Phase 5 will implement it from the language database.
+- Side input: `SemanticCatalog`, an injected metadata lookup interface. Phase 5 provides a database-backed adapter with generated, manual and optional runtime-derived entries.
 - Output: parser-independent `SemanticDocument` for a document version.
 - Non-goal: a complete JavaScript/TypeScript type checker.
 
@@ -73,8 +73,8 @@ The engine exposes semantic facts only. Feature providers will decide which fact
 
 ## Current limitations
 
-- The catalog is injected by callers; no authoritative Strudel metadata is generated yet.
-- Sample names are not resolved from string contents.
+- Feature providers do not yet construct the default database-backed catalog for LSP requests.
+- Sample names are not resolved from string contents because no authoritative sample-name source is available in the pinned metadata set.
 - Function return inference handles explicit returns but does not infer parameter types from usage.
 - Incremental reuse is statement-level, not sub-expression-level.
 - No LSP document store, diagnostics, completion or navigation consumes the model yet.
@@ -83,6 +83,6 @@ The engine exposes semantic facts only. Feature providers will decide which fact
 
 - How imports and REPL-style global injections should be selected per document or workspace.
 - Whether mini-notation receives a dedicated semantic submodel or a flattened token model.
-- Which function signatures must be generated from authoritative Strudel sources.
+- Which generated parameter shapes should become full callable signatures.
 - How version-specific metadata is selected per document or workspace.
 - What invalidation granularity gives the best measured responsiveness.

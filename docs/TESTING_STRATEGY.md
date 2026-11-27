@@ -1,6 +1,6 @@
 # Testing Strategy
 
-Status: authoritative. `AGENTS.md` section 9 was completed and approved on 2026-11-25; Phase 4 validation results added on 2026-11-27.
+Status: authoritative. `AGENTS.md` section 9 was completed and approved on 2026-11-25; Phase 5 validation results added on 2026-11-27.
 
 Authority: `AGENTS.md` section 9 and global project requirements.
 
@@ -8,7 +8,7 @@ Authority: `AGENTS.md` section 9 and global project requirements.
 
 Testing is mandatory. The framework and supporting tooling were evaluated and selected based on project requirements, and the decision is recorded here.
 
-The prototype declared Mocha and VS Code test tooling, but its test script pointed at missing compiled files and fixture directories. Phase 2 replaced that path with a compiled ESM smoke test for the stdio transport. Phase 4 added an isolated semantic engine suite using hand-built `SyntaxDocument` fixtures. Language-feature, metadata and performance suites remain to be added in later phases.
+The prototype declared Mocha and VS Code test tooling, but its test script pointed at missing compiled files and fixture directories. Phase 2 replaced that path with a compiled ESM smoke test for the stdio transport. Phase 4 added an isolated semantic engine suite using hand-built `SyntaxDocument` fixtures. Phase 5 added a metadata-generation and language-database suite. Language-feature and performance suites remain to be added in later phases.
 
 ## Test layers
 
@@ -62,7 +62,7 @@ The user approved and the project installed these pinned root dependencies on 20
 
 ## Validation gates
 
-Root scripts established in Phases 2–4:
+Root scripts established in Phases 2–5:
 
 - `npm run typecheck` — TypeScript strict-mode check with no emit.
 - `npm run lint` — ESLint with TypeScript-aware rules over managed source and test files.
@@ -70,12 +70,14 @@ Root scripts established in Phases 2–4:
 - `npm test` — compile to ESM, then run `node --test dist/test`.
 - `npm run test:parser` — compile to ESM, then run only `dist/test/parser` grammar/parser integration tests.
 - `npm run test:semantic` — compile to ESM, then run only `dist/test/semantic` semantic engine tests.
+- `npm run test:metadata` — compile to ESM, then run only `dist/test/metadata` language database tests.
+- `npm run generate:metadata` — regenerate the committed snapshot from pinned local inputs.
 - `npm run benchmark` — benchmark command runner; workloads and p50/p95/p99 targets arrive in Phase 8.
 - `npm run check` — chains typecheck, lint, format verification and the full test suite.
 
-The `Makefile` provides convenience targets for these commands; `make check` runs the same combined gate as `npm run check`, `make test-parser` runs the isolated parser suite, and `make test-semantic` runs the isolated semantic suite.
+The `Makefile` provides convenience targets for these commands; `make check` runs the same combined gate as `npm run check`, `make test-parser` runs the isolated parser suite, `make test-semantic` runs the isolated semantic suite, `make test-metadata` runs the isolated metadata suite, and `make generate-metadata` regenerates the snapshot.
 
-Prototype and generated directories are outside the lint/format/build scopes. Results must be reported honestly; failures are not suppressed to make validation pass.
+Prototype directories remain outside the lint/format/build scopes. The committed `src/languageDatabase/generated.ts` snapshot is inside those scopes and must be generator-formatted. Results must be reported honestly; failures are not suppressed to make validation pass.
 
 ## Current validation status (2026-11-27)
 
@@ -88,12 +90,13 @@ Prototype and generated directories are outside the lint/format/build scopes. Re
 | `npm run typecheck`       | Pass   | Strict TypeScript check succeeds for `src/` and `test/`.                                                                                              |
 | `npm run lint`            | Pass   | ESLint succeeds with type-aware rules and the retained `@stylistic/eslint-plugin`.                                                                    |
 | `npm run format:check`    | Pass   | Prettier succeeds for managed files.                                                                                                                  |
-| `npm test`                | Pass   | Thirteen tests pass: one stdio handshake test, five parser integration tests and seven semantic engine tests.                                         |
+| `npm test`                | Pass   | Eighteen tests pass: one stdio handshake, five parser, seven semantic and five metadata tests.                                                        |
 | `npm run test:parser`     | Pass   | Five parser integration tests pass independently of semantic tests.                                                                                   |
 | `npm run test:semantic`   | Pass   | Seven semantic engine tests pass independently of parser tests.                                                                                       |
+| `npm run test:metadata`   | Pass   | Five metadata generation and language database tests pass independently of parser and semantic suites.                                                |
 | `npm run benchmark`       | Pass   | The runner starts and reports that no workloads are registered; no latency figures are claimed.                                                       |
 | `npm run check`           | Pass   | The combined typecheck, lint, format and test gate passes.                                                                                            |
 | `git diff --check`        | Pass   | Working-tree diff has no whitespace errors.                                                                                                           |
 | `npm ls --all`            | Pass   | `tree-sitter-strudel@2.0.2` declares `tree-sitter ^0.25.0`; no invalid peer-range warning remains. Only unrelated optional peer notices are reported. |
 
-Phase 1 parser smoke evidence and the Phase 3 upgrade validation are recorded in `docs/PARSER_INTEGRATION.md` and `docs/DECISIONS.md`. The parser suite runs against `tree-sitter-strudel@2.0.2` and covers stable node kinds and ranges, chained method calls, variable declarations, UTF-16 positions with non-ASCII input, incremental edit/reparse, and malformed-input recovery. The Phase 4 semantic suite covers symbol and scope resolution, pattern inference, mini-notation argument contexts, imports, incomplete input, incremental reuse, invalidation and cancellation. No language-feature, metadata-generation or performance suites exist yet.
+Phase 1 parser smoke evidence and the Phase 3 upgrade validation are recorded in `docs/PARSER_INTEGRATION.md` and `docs/DECISIONS.md`. The parser suite runs against `tree-sitter-strudel@2.0.2` and covers stable node kinds and ranges, chained method calls, variable declarations, UTF-16 positions with non-ASCII input, incremental edit/reparse, and malformed-input recovery. The Phase 4 semantic suite covers symbol and scope resolution, pattern inference, mini-notation argument contexts, imports, incomplete input, incremental reuse, invalidation and cancellation. The Phase 5 metadata suite covers deterministic regeneration, pinned provenance, offline catalog lookup, version selection, runtime-derived entries and semantic-engine integration. No language-feature or performance suites exist yet.

@@ -1,6 +1,6 @@
 # Architecture
 
-Status: transport, syntax adapter and semantic engine layers implemented on 2026-11-27; language database, feature providers and LSP request integration remain to be implemented.
+Status: transport, syntax adapter, semantic engine and language database layers implemented on 2026-11-27; feature providers and LSP request integration remain to be implemented.
 
 Authority: `AGENTS.md` sections 3–6.
 
@@ -52,7 +52,7 @@ Side inputs:
   - User configuration (focused, user-facing options only)
 ```
 
-The current `src/server.ts` implements only the LSP transport lifecycle and advertises `textDocumentSync: None`. `src/syntax/` implements the pinned Tree-sitter adapter and the parser-independent `SyntaxDocument` contract. `src/semantic/` implements parser-independent snapshots, scopes, symbols, references, limited type inference, incremental reuse and cancellation checks. It is not yet connected to LSP requests. Feature providers, the language database and the LSP document store are not yet implemented.
+The current `src/server.ts` implements only the LSP transport lifecycle and advertises `textDocumentSync: None`. `src/syntax/` implements the pinned Tree-sitter adapter and the parser-independent `SyntaxDocument` contract. `src/semantic/` implements parser-independent snapshots, scopes, symbols, references, limited type inference, incremental reuse and cancellation checks. `src/languageDatabase/` implements a reproducible, offline-capable metadata snapshot with a `SemanticCatalog` adapter. Neither is yet connected to LSP requests. Feature providers and the LSP document store are not yet implemented.
 
 ## Responsibilities
 
@@ -100,6 +100,8 @@ The current `src/server.ts` implements only the LSP transport lifecycle and adve
 - Work offline after installation.
 - Support future selection between Strudel versions.
 
+`src/languageDatabase/generated.ts` is committed output of `scripts/generate-metadata.mjs`. It contains 576 named records from `@strudel/reference@1.2.2`, source provenance for all four pinned Strudel packages, and no machine-specific paths. The generator validates versions, tarball integrity, licences and repository URLs before writing output. `manual.ts` supplies curated semantics for common pattern constructors and controls, while `LanguageDatabaseOptions` permits explicit runtime-derived entries and additional Strudel versions.
+
 ## Data flow
 
 ### Document change
@@ -129,12 +131,19 @@ Implemented semantic contracts (exported from `src/semantic/index.ts`):
 
 - `SemanticDocument` — immutable scopes, symbols, references, mini-notation argument contexts and resolved types for a document version.
 - `SemanticEngine` — versioned analysis with optional previous snapshot and cancellation token.
-- `SemanticCatalog` — metadata lookup boundary used until the Phase 5 language database exists.
+- `SemanticCatalog` — metadata lookup boundary consumed by the semantic engine.
 - `StrudelType`, `SemanticScope`, `SemanticSymbol`, `SemanticReference` — parser-independent semantic values.
+
+Implemented language database contracts (exported from `src/languageDatabase/index.ts`):
+
+- `LanguageDatabase` — versioned lookup of global, pattern-method and sample metadata.
+- `GeneratedMetadataSnapshot` — deterministic JSDoc-derived records with source provenance.
+- `ManualSemanticEntry` — curated return types and mini-notation argument positions.
+- `RuntimeSymbolMetadata` — optional runtime-derived extension point; no runtime import is used by default.
+- `createCatalogFromLanguageDatabase` — adapter from the database to `SemanticCatalog`.
 
 Proposed contracts for later phases:
 
-- `LanguageDatabase` — versioned metadata lookup interface.
 - `FeatureProvider` — common request contract for language intelligence features.
 - `RequestContext` — document version, position, configuration, cancellation and progress plumbing.
 

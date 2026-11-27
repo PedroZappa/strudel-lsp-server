@@ -24,9 +24,9 @@ None of this behaviour is treated as a specification.
 | ---------------------------- | --------------- | --------------- | -------------------------------------------------------------------------------- |
 | Diagnostics                  | Not implemented | Early           | Must be resilient, source-accurate and live-coding aware; see policy below.      |
 | Quick fixes                  | Not implemented | Later           | Depends on actionable diagnostic kinds and safe edits.                           |
-| Completion                   | Not implemented | Early           | Must use position, scope and Strudel metadata rather than a static list.         |
+| Completion                   | Not implemented | Early           | Generated metadata is available; provider needed.                                |
 | Completion resolution        | Not implemented | With completion | Only if additional lazy metadata adds real value.                                |
-| Hover documentation          | Not implemented | Early           | Requires documentation provenance in the language database.                      |
+| Hover documentation          | Not implemented | Early           | Metadata provenance and docs are available.                                      |
 | Signature help               | Not implemented | Early           | Requires authoritative function signatures.                                      |
 | Go to definition             | Not implemented | Early           | Prototype stub is not a foundation.                                              |
 | References                   | Not implemented | Early           | Prototype stub is not a foundation.                                              |

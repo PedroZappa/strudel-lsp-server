@@ -35,7 +35,7 @@ export default tseslint.config(
     },
     rules: {
       '@stylistic/comma-dangle': ['error', 'always-multiline'],
-      '@stylistic/quotes': ['error', 'single'],
+      '@stylistic/quotes': ['error', 'single', { avoidEscape: true }],
       '@stylistic/semi': ['error', 'always'],
       '@typescript-eslint/consistent-type-imports': 'error',
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
