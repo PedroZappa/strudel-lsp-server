@@ -31,7 +31,7 @@ None of this behaviour is treated as a specification.
 | Go to definition             | Not implemented | Early           | Prototype stub is not a foundation.                                              |
 | References                   | Not implemented | Early           | Prototype stub is not a foundation.                                              |
 | Rename                       | Not implemented | Later           | Requires reliable symbol resolution and workspace awareness.                     |
-| Document symbols             | Not implemented | Later           | Requires semantic scope/symbol model.                                            |
+| Document symbols             | Not implemented | Later           | Semantic scope/symbol model exists; needs LSP provider and document store.       |
 | Workspace symbols            | Not implemented | Later           | Requires workspace indexing strategy.                                            |
 | Semantic tokens              | Not implemented | Later           | Useful only if it reflects verified Strudel semantics, not generic highlighting. |
 | Formatting                   | Not implemented | Later           | Needs explicit user-facing preferences and safe, deterministic edits.            |
@@ -40,7 +40,7 @@ None of this behaviour is treated as a specification.
 | Selection ranges             | Deferred        | Deferred        | Evaluate editor benefit against implementation cost.                             |
 | Inlay hints                  | Deferred        | Deferred        | Evaluate only with concrete, non-noisy use cases.                                |
 | Call hierarchy               | Deferred        | Deferred        | Depends on robust cross-reference semantics.                                     |
-| Mini-notation-aware analysis | Design subject  | Early           | Must be Strudel-specific; scope depends on parser integration decision.          |
+| Mini-notation-aware analysis | Design subject  | Early           | Phase 4 records argument contexts; token-level rules need validation.            |
 
 Priorities are proposed by phase in `docs/ROADMAP.md` and remain subject to approval once licensing and metadata sources are resolved.
 

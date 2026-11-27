@@ -1,6 +1,6 @@
 # Architecture
 
-Status: transport and syntax adapter layers implemented on 2026-11-26; remaining layers are proposed and not yet implemented.
+Status: transport, syntax adapter and semantic engine layers implemented on 2026-11-27; language database, feature providers and LSP request integration remain to be implemented.
 
 Authority: `AGENTS.md` sections 3–6.
 
@@ -52,7 +52,7 @@ Side inputs:
   - User configuration (focused, user-facing options only)
 ```
 
-The current `src/server.ts` implements only the LSP transport lifecycle and advertises `textDocumentSync: None`. `src/syntax/` implements the pinned Tree-sitter adapter and the parser-independent `SyntaxDocument` contract. Feature providers, the semantic engine and the language database are not yet implemented.
+The current `src/server.ts` implements only the LSP transport lifecycle and advertises `textDocumentSync: None`. `src/syntax/` implements the pinned Tree-sitter adapter and the parser-independent `SyntaxDocument` contract. `src/semantic/` implements parser-independent snapshots, scopes, symbols, references, limited type inference, incremental reuse and cancellation checks. It is not yet connected to LSP requests. Feature providers, the language database and the LSP document store are not yet implemented.
 
 ## Responsibilities
 
@@ -118,16 +118,22 @@ The current `src/server.ts` implements only the LSP transport lifecycle and adve
 
 ## Stable contracts
 
-Implemented contracts (exported from `src/syntax/index.ts`):
+Implemented syntax contracts (exported from `src/syntax/index.ts`):
 
 - `TextDocumentSnapshot` — immutable text and version input to the syntax layer.
 - `SyntaxDocument` — parser-independent syntax representation with source ranges.
 - `SyntaxAdapter` — operations for incremental parse, update and node inspection.
 - `SyntaxNode`, `SyntaxRange`, `SyntaxKind` — normalized syntax tree values with no Tree-sitter types.
 
+Implemented semantic contracts (exported from `src/semantic/index.ts`):
+
+- `SemanticDocument` — immutable scopes, symbols, references, mini-notation argument contexts and resolved types for a document version.
+- `SemanticEngine` — versioned analysis with optional previous snapshot and cancellation token.
+- `SemanticCatalog` — metadata lookup boundary used until the Phase 5 language database exists.
+- `StrudelType`, `SemanticScope`, `SemanticSymbol`, `SemanticReference` — parser-independent semantic values.
+
 Proposed contracts for later phases:
 
-- `SemanticDocument` — scopes, symbols, references and resolved types for a document version.
 - `LanguageDatabase` — versioned metadata lookup interface.
 - `FeatureProvider` — common request contract for language intelligence features.
 - `RequestContext` — document version, position, configuration, cancellation and progress plumbing.

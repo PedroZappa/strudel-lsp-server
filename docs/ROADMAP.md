@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: re-implementation roadmap updated with resolved blocker decisions and Phase 3 completion, 2026-11-26. Priorities are proposals and remain subject to approval.
+Status: re-implementation roadmap updated with resolved blocker decisions and Phase 4 completion, 2026-11-27. Priorities are proposals and remain subject to approval.
 
 Authority: `AGENTS.md` sections 2–18 and the other documents in `docs/`.
 
@@ -93,19 +93,23 @@ Exit criteria:
 
 ## Phase 4 — Semantic engine
 
+**Status: complete; changes are not committed.**
+
 Dependencies: Phase 3.
 
 Tasks:
 
-- [ ] Implement scopes, symbols, references and the limited Strudel-specific type model.
-- [ ] Implement versioned semantic snapshots and incremental invalidation.
-- [ ] Keep all Tree-sitter types behind the syntax adapter boundary.
+- [x] Implement scopes, symbols, references and the limited Strudel-specific type model.
+- [x] Implement versioned semantic snapshots and incremental invalidation.
+- [x] Keep all Tree-sitter types behind the syntax adapter boundary.
+
+`src/semantic/` provides an injected `SemanticCatalog` boundary so authoritative Strudel metadata can arrive in Phase 5 without rewriting the engine. Semantic tests under `test/semantic/` hand-build `SyntaxDocument` fixtures and can be run independently with `npm run test:semantic` or `make test-semantic`. Incremental reuse is statement-level; global declaration changes trigger a conservative full rebuild.
 
 Exit criteria:
 
-- [ ] Semantic engine tests pass without parser API types in their contracts.
-- [ ] Incremental updates reuse unaffected state.
-- [ ] Cancellation behaviour is testable.
+- [x] Semantic engine tests pass without parser API types in their contracts.
+- [x] Incremental updates reuse unaffected state.
+- [x] Cancellation behaviour is testable.
 
 ## Phase 5 — Language database
 

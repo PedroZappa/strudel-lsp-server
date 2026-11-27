@@ -67,7 +67,7 @@ Status: accepted on 2026-11-25.
 
 The selected baseline is Node's built-in `node:test` runner over compiled ESM JavaScript, with the TypeScript compiler producing test output. This avoids a separate test-framework dependency while still supporting module, protocol and subprocess tests.
 
-Vitest remains a documented alternative if richer ergonomics become necessary. Phase 2 added the first stdio transport smoke test; language-feature and semantic suites remain to be added.
+Vitest remains a documented alternative if richer ergonomics become necessary. Phase 2 added the first stdio transport smoke test, and Phase 4 added the semantic engine suite; language-feature and metadata suites remain to be added.
 
 ## ADR-009 — Repository licence metadata
 
@@ -216,3 +216,24 @@ Consequences:
 - Parser integration tests under `test/parser/` import only the stable `SyntaxAdapter` contract, never Tree-sitter APIs. They run independently via `npm run test:parser`.
 - `update` falls back to a full parse when no native tree is associated with the previous document or when edits are empty but text changed. This is a correctness fallback, not a performance claim.
 - Grammar/parser/bindings are consumed as npm dependencies only; none are copied into this repository.
+
+## ADR-018 — Phase 4 semantic model boundaries
+
+Status: accepted on 2026-11-27.
+
+Decision: the semantic engine consumes the stable `SyntaxDocument` contract and exposes its own `SemanticDocument`, `SemanticCatalog`, `SemanticEngine` and cancellation contracts. It does not import Tree-sitter APIs, and semantic tests hand-build syntax fixtures rather than invoking the parser adapter.
+
+Strudel-specific knowledge is injected as a `SemanticCatalog`; no authoritative function, method or sample list is hardcoded in Phase 4. Pattern constructors, pattern methods and mini-notation argument positions come from catalog entries, so the Phase 5 language database can supply versioned metadata without rewriting the engine.
+
+Incremental analysis reuses unchanged top-level statements by stable content key and shifts their ranges after edits. A change to the global declaration signature forces a conservative full rebuild, preventing stale global binding types. Cancellation is cooperative and checked at analysis boundaries; a cancelled analysis is never cached.
+
+Mini-notation initially uses a flattened context model: the engine records string ranges, owner names and `MiniNotationPattern` inference. A richer token or submodel is deferred to Phase 6 after language-feature requirements are validated.
+
+Rationale: these boundaries satisfy ADR-007, keep the Phase 4 scope to semantics rather than metadata generation or LSP features, and make correctness under live edits more important than maximum reuse granularity. The reuse strategy is deliberately coarse until Phase 8 measurements justify finer invalidation.
+
+Consequences:
+
+- Semantic engine tests are independent of parser/grammar tests and do not import Tree-sitter APIs.
+- Phase 5 must produce a `SemanticCatalog` implementation or adapter.
+- Phase 6 feature providers must treat `Unknown` and unresolved references as uncertainty, not as diagnostics by default.
+- `Boolean` and `SampleName` are part of the type model but have limited inference until metadata and expression coverage expand.
