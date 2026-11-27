@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: re-implementation roadmap complete through Phase 15, with Phases 16–22 complete. `strudel-lsp-server@0.4.0` was published on 2026-11-27 from tag `v0.4.0` at commit `1d39c14cba2152116ce1c2c5d5b827bf6af5c144` through the controlled OIDC workflow with `pedrozappa` as operator and remains available. `strudel-lsp-server@0.5.0` was published on 2026-11-27 from tag `v0.5.0` at commit `51f2aa511028a970a92c62e43efdabf141d0b0e9` through the controlled OIDC workflow with `pedrozappa` as operator and is the latest release; `0.3.0`, `0.2.0` and `0.1.0` remain available. ADR-060 records the exact publication authorization and ADR-061 records the registry, signature, provenance and smoke evidence for `0.2.0`. ADR-051 records the scope and deferred work, ADR-052 records the configuration contract, ADR-053 records the filesystem boundary, ADR-054 records the `.npmrc` removal, ADR-055 records hermetic pack caching, ADR-056 records the advisory soak/lifecycle design, ADR-057 records the separate advisory benchmark report, ADR-058 records the independent editor-client smoke evidence, ADR-059 records the release-preparation authorization, ADR-062 records publication-state-aware verification, ADR-063 records the initial v1 stability charter, ADR-064 records the Phase 17 package, support and SBOM decisions, and ADR-065 records the Phase 18 parser, metadata and platform compatibility closure, ADR-066 authorizes the exact Phase 19 publication, ADR-067 records its publication and smoke evidence, ADR-070 records the registry-visibility wait, ADR-071 authorizes the exact Phase 22 publication and ADR-072 records its publication and smoke evidence. ADR-075 authorizes the exact Phase 25 publication and ADR-076 records its publication and smoke evidence. Missing provenance for the operator-managed first publish is recorded in ADR-050. The feature-expanded route below describes proposed work through `v1.0.0`, split into `v0.3.0`, `v0.4.0`, `v0.5.0` and `v1.0.0` increments. Phases 16–25 are complete; Phase 24 was committed as `0f30fe5` and pushed; the Phase 25 release was published from `51f2aa5` and verified under ADR-076; Phases 26–27 remain proposed and subject to approval.
+Status: re-implementation roadmap complete through Phase 25; the proposed route continues with Phases 26–29. `strudel-lsp-server@0.4.0` was published on 2026-11-27 from tag `v0.4.0` at commit `1d39c14cba2152116ce1c2c5d5b827bf6af5c144` through the controlled OIDC workflow with `pedrozappa` as operator and remains available. `strudel-lsp-server@0.5.0` was published on 2026-11-27 from tag `v0.5.0` at commit `51f2aa511028a970a92c62e43efdabf141d0b0e9` through the controlled OIDC workflow with `pedrozappa` as operator and is the latest release; `0.3.0`, `0.2.0` and `0.1.0` remain available. ADR-060 records the exact publication authorization and ADR-061 records the registry, signature, provenance and smoke evidence for `0.2.0`. ADR-051 records the scope and deferred work, ADR-052 records the configuration contract, ADR-053 records the filesystem boundary, ADR-054 records the `.npmrc` removal, ADR-055 records hermetic pack caching, ADR-056 records the advisory soak/lifecycle design, ADR-057 records the separate advisory benchmark report, ADR-058 records the independent editor-client smoke evidence, ADR-059 records the release-preparation authorization, ADR-062 records publication-state-aware verification, ADR-063 records the initial v1 stability charter, ADR-064 records the Phase 17 package, support and SBOM decisions, and ADR-065 records the Phase 18 parser, metadata and platform compatibility closure, ADR-066 authorizes the exact Phase 19 publication, ADR-067 records its publication and smoke evidence, ADR-070 records the registry-visibility wait, ADR-071 authorizes the exact Phase 22 publication and ADR-072 records its publication and smoke evidence. ADR-075 authorizes the exact Phase 25 publication, ADR-076 records its publication and smoke evidence, and ADR-077 records the v1 scope amendment and post-v1 roadmap. Missing provenance for the operator-managed first publish is recorded in ADR-050. The route below describes proposed work through post-v1, split into `v0.3.0`, `v0.4.0`, `v0.5.0`, `v1.0.0`, `v1.1` and `v1.x` increments. Phases 16–25 are complete; Phase 24 was committed as `0f30fe5` and pushed; the Phase 25 release was published from `51f2aa5` and verified under ADR-076; Phases 26–29 remain proposed and subject to phase-specific approval.
 
 Authority: `AGENTS.md` sections 2–18 and the other documents in `docs/`.
 
@@ -412,7 +412,7 @@ Post-release hardening: ADR-062 makes `npm run verify:release` publication-state
 
 ## Proposed feature-expanded route to `v1.0.0`
 
-**Status: Phases 16–22 are complete; Phases 23–27 are proposed only and are not authorized for implementation or release.** This route includes every optional capability identified after `0.2.0` and splits the work into four independently verifiable increments. Each controlled release requires its own ADR naming the exact version, tag and operator; no release below is approved by the roadmap alone.
+**Status: Phases 16–25 are complete; Phases 26–29 are proposed only and are not authorized for implementation or release.** This route includes every optional capability identified after `0.2.0` and splits the work into independently verifiable increments. Each controlled release requires its own ADR naming the exact version, tag and operator; no release below is approved by the roadmap alone.
 
 | Increment | Phases | Theme                                                  |
 | --------- | ------ | ------------------------------------------------------ |
@@ -420,6 +420,7 @@ Post-release hardening: ADR-062 makes `npm run verify:release` publication-state
 | `v0.4.0`  | 20–22  | Semantic depth and mini-notation structure             |
 | `v0.5.0`  | 23–25  | Editor ergonomics, navigation and scale                |
 | `v1.0.0`  | 26–27  | Stability freeze and controlled publication            |
+| `v1.1+`   | 28–29  | Post-v1 live-coding semantics and protocol efficiency  |
 
 Dependency chain:
 
@@ -427,7 +428,7 @@ Dependency chain:
 16 → 17 → 18 → 19
   ↘ 20 → 21 → 22
   ↘ 23 → 24 → 25
-19, 22, 25 → 26 → 27
+19, 22, 25 → 26 → 27 → 28 → 29
 ```
 
 ### Phase 16 — v1 stability charter (complete, `v0.3.0`)
@@ -632,6 +633,11 @@ Dependencies: Phases 19, 22 and 25.
 Tasks:
 
 - [ ] Update the Phase 16 stability ADR to include every capability added in Phases 20–24 and freeze the v1 capability matrix.
+- [ ] Implement context-aware mini-notation step completion and hover sourced first from literal `samples({...})` keys, with note-name candidates only where pinned metadata supports them and no new unknown-sample diagnostic.
+- [ ] Implement relative `.strudel` import-path completion using the bounded workspace scan and its existing symlink, traversal, size, depth and unreadable-file guards.
+- [ ] Surface pinned deprecation metadata in completion and hover without adding a diagnostic code.
+- [ ] Implement `documentHighlight` only if it passes the same gate as the other additions; otherwise record an explicit deferral to Phase 28 under ADR-077.
+- [ ] Add feature, protocol, live-coding and negative-capability tests for each implemented addition before advertising it.
 - [ ] Add contract tests for advertised providers, deliberately unsupported capabilities, configuration schema and diagnostic-code identity.
 - [ ] Align the release workflow with the full CI gate, including configuration, LSP filesystem, soak, corpus, consumer-install, package, audit and benchmark checks.
 - [ ] Decide whether the compatibility matrix must run `verify:consumer` on every supported OS/Node pair.
@@ -642,9 +648,9 @@ Tasks:
 Exit criteria:
 
 - [ ] The full candidate gate is green on the exact commit proposed for `v1.0.0`.
-- [ ] The v1 contract is accepted and all deviations from earlier planned scope are recorded in `docs/DECISIONS.md`.
+- [ ] The v1 contract is accepted and all deviations from earlier planned scope, including the ADR-077 additions and any conditional deferral, are recorded in `docs/DECISIONS.md`.
 - [ ] The v1 tag will contain ADR-062 verification and the final capability contract tests.
-- [ ] No planned v1 capability is advertised without implementation evidence.
+- [ ] Every ADR-077 v1 addition is either implemented, advertised and verified, or explicitly deferred under ADR-077; no planned v1 capability is advertised without implementation evidence.
 
 ### Phase 27 — `v1.0.0` controlled release (proposed)
 
@@ -662,7 +668,56 @@ Exit criteria:
 - [ ] `1.0.0` is published through the controlled workflow with verified SLSA provenance matching the package, repository, workflow and resolved commit.
 - [ ] The GitHub release is published with no binary assets and notes matching the versioned changelog section.
 - [ ] No deprecation, dist-tag change, unpublish, retag or other unapproved registry mutation occurs.
-- [ ] The v1 stability contract takes effect and subsequent changes follow the SemVer rules accepted in Phase 16 and frozen in Phase 26.
+- [ ] The v1 stability contract takes effect, including the ADR-077 additions that passed the Phase 26 gate, and subsequent changes follow the SemVer rules accepted in Phase 16 and frozen in Phase 26.
+
+### Phase 28 — v1.1 live-coding semantics (proposed, post-v1)
+
+Dependencies: Phase 27 and a phase-specific ADR recording authoritative evidence for `$:` active-pattern semantics and any new diagnostic behaviour.
+
+Tasks:
+
+- [ ] Model `$:` labelled active-pattern declarations and evaluate document-symbol or context hints that do not claim runtime playback state.
+- [ ] Define unknown-sample diagnostics only with a complete, versioned and authoritative sample catalog; suppress all speculative cases during incomplete edits.
+- [ ] Extend note/scale-aware mini-notation completion beyond the v1 baseline only with pinned language evidence.
+- [ ] Investigate editor-agnostic eval/hush code lens commands; advertise none until a command contract and explicit ADR are accepted.
+
+Exit criteria:
+
+- [ ] Each added behaviour is backed by official Strudel documentation or source evidence, or by bounded local declarations, with tests for incomplete input, cancellation and recovery.
+- [ ] No capability claims runtime execution, editor-specific behaviour or telemetry.
+- [ ] Any new diagnostic code is additive under the ADR-063 SemVer framework and has documented suppression semantics.
+
+### Phase 29 — v1.x protocol efficiency and deferred provider review (proposed, post-v1)
+
+Dependencies: Phase 27; Phase 28 only where its semantic additions are accepted before this phase.
+
+Tasks:
+
+- [ ] Evaluate and implement pull diagnostics (`textDocument/diagnostic`) and diagnostic tags where a concrete client benefit is evidenced.
+- [ ] Evaluate semantic-token range and delta requests against real editor workloads while preserving full-document tokens as the fallback.
+- [ ] Review declaration/type-definition/implementation navigation, document links, color providers, linked editing, inline values, monikers and on-type formatting; implement only with a concrete usefulness and safety case.
+- [ ] Investigate bounded numeric constant folding from the language-specification open questions without building a JavaScript or TypeScript type checker.
+- [ ] Re-run p50/p95/p99 benchmarks for any protocol or analysis change and keep thresholds advisory unless a blocking target is accepted in an ADR.
+
+Exit criteria:
+
+- [ ] Implemented changes are additive MINOR candidates under ADR-063, and negative capability tests are updated only when a provider is actually advertised.
+- [ ] No standing non-goal is reversed without an explicit ADR.
+- [ ] Performance evidence is recorded in `docs/PERFORMANCE.md` with p50/p95/p99 and no unmeasured editor-latency claim.
+
+## Post-v1 candidate backlog
+
+This section records every post-v1 suggestion from the `0.5.0` roundup and the language-specification open questions. It is planning only; no item below is authorized for implementation.
+
+- `$:` active-pattern awareness — Phase 28; requires authoritative runtime semantics and must not claim playback state without evidence.
+- Eval/hush code lens — Phase 28 conditional; requires an editor-agnostic command contract and explicit ADR.
+- Unknown-sample diagnostics — Phase 28 conditional; requires a complete, versioned catalog and live-input suppression.
+- Pull diagnostics and diagnostic tags — Phase 29; must preserve push diagnostics as the default unless a client contract is accepted.
+- Semantic-token range and delta requests — Phase 29; must preserve full-document tokens as a fallback.
+- Bounded numeric constant folding and an evaluable mini-notation AST — Phase 29 research; neither may become a JavaScript or TypeScript type checker.
+- Declaration/type-definition/implementation navigation, document links, color providers, linked editing, inline values, monikers and on-type formatting — Phase 29 review; not scheduled.
+- Strudel compatibility/version selection — deferred until multiple metadata snapshots are supported, as recorded in `docs/LSP_FEATURES.md`.
+- Complete JavaScript/TypeScript compiler, standalone binary distribution, editor-specific dependencies in the server core, runtime execution or production telemetry in the server, persistent workspace indexing or file watching as a navigation prerequisite, vendored grammar or generated parser source, and TCP transport — standing non-goals, not roadmap candidates unless explicitly reopened.
 
 ## Phase 13 release-quality backlog (post-publication status)
 
@@ -688,13 +743,16 @@ These items were deferred after the first release and are not selected for `0.2.
 - [x] **Assigned to Phase 24 and committed as `0f30fe5`.** Opt-in local timing is available to tests and benchmarks with a no-op production default; see ADR-074.
 - [x] **Assigned to Phase 23 and committed as `46b2cd7`.** Folding, selection ranges, opt-in inlay hints, call hierarchy, completion resolution, range formatting, conservative extract refactoring and bounded cross-file navigation have feature, protocol and live-coding coverage with negative capability assertions; publication is deferred to Phase 25.
 
-## Standing non-goals (not proposed for v1)
+## Standing non-goals (not proposed for v1 or post-v1 unless explicitly reopened)
 
 - Complete JavaScript or TypeScript compiler/type checker.
 - Standalone binary distribution instead of the npm package.
 - Editor-specific dependencies in the server core.
+- Runtime execution, eval/hush commands or production telemetry in the server core.
+- Persistent workspace index or file watcher as a prerequisite for navigation.
+- Vendored grammar or generated parser source, and TCP transport.
 
-The earlier deferral of folding, selection ranges, inlay hints and call hierarchy was superseded and implemented in Phase 23; those capabilities are now included in the feature-expanded route to `v1.0.0`, pending release and Phase 26 freeze.
+The earlier deferral of folding, selection ranges, inlay hints and call hierarchy was superseded and implemented in Phase 23; those capabilities are included in `0.5.0` and await the Phase 26 freeze. ADR-077 adds four further v1 goals; all remain unimplemented and unadvertised until their phase is separately authorized and passes the full gate.
 
 ## Transition constraint
 
