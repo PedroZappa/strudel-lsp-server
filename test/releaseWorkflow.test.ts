@@ -203,7 +203,23 @@ void test('Phase 19 publication evidence records the exact release and completed
   assert.match(evidence, /No local publish, republish/);
   assert.match(roadmap, /^### Phase 19 — `v0\.3\.0` controlled release \(complete\)$/m);
   assert.match(changelog, /Version `0\.3\.0` was published on 2026-11-27/);
-  assert.match(readme, /latest published version is `0\.3\.0`/);
+  // The README is live documentation; ADR-067 retains the historical 0.3.0 record.
+  const latestVersion = packageJson.version.replaceAll('.', '\\.');
+  assert.match(readme, new RegExp(`latest published version is \`${latestVersion}\``));
+});
+
+void test('Phase 22 authorization records the exact version tag and operator', () => {
+  const marker = '## ADR-071 — Phase 22 controlled publication authorization';
+  const start = decisions.indexOf(marker);
+  assert.notEqual(start, -1);
+  const authorization = decisions.slice(start);
+  assert.match(authorization, /exactly `strudel-lsp-server@0\.4\.0`/);
+  assert.match(authorization, /tagging exactly `v0\.4\.0`/);
+  assert.match(authorization, /`pedrozappa` as the named release operator/);
+  assert.match(authorization, /controlled OIDC workflow/);
+  assert.match(authorization, /RELEASE_NOTES_v0\.4\.0\.md/);
+  assert.match(authorization, /does not permit a local publish/);
+  assert.match(roadmap, /^### Phase 22 — `v0\.4\.0` controlled release \(proposed\)$/m);
 });
 
 void test('first-publish bootstrap exception is version-limited and blocks workflow publishing', () => {

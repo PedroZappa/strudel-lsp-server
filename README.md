@@ -25,7 +25,7 @@ Install the package and configure an LSP client to launch `strudel-lsp-server` o
 npm install --global strudel-lsp-server
 ```
 
-The latest published version is `0.3.0`; pin `@0.3.0` for a reproducible install. Installation uses default npm peer resolution; `legacy-peer-deps=true` is not required.
+The latest published version is `0.4.0`; pin `@0.4.0` for a reproducible install. Installation uses default npm peer resolution; `legacy-peer-deps=true` is not required.
 
 ```json
 {

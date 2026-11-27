@@ -2,9 +2,11 @@
 
 All notable changes to the `strudel-lsp-server` npm package are documented in this file. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-Version `0.3.0` was published on 2026-11-27 from tag `v0.3.0` at commit `b3451e283986b576b526534136026adba0bf5217` through the controlled OIDC workflow with `pedrozappa` as operator and is the latest published release; `0.2.0` and `0.1.0` remain available. ADR-067 records the publication and smoke evidence, including the transient workflow-verification race. Full user-facing notes for `0.3.0` are in `.github/RELEASE_NOTES_v0.3.0.md`; the published `0.2.0` body remains immutable in `.github/RELEASE_TEMPLATE.md`.
+Version `0.3.0` was published on 2026-11-27 from tag `v0.3.0` at commit `b3451e283986b576b526534136026adba0bf5217` through the controlled OIDC workflow with `pedrozappa` as operator. ADR-067 records the publication and smoke evidence, including the transient workflow-verification race. Version `0.4.0` is prepared from the exact Phase 20 and Phase 21 candidate under ADR-071 and is not yet published. Full user-facing notes for `0.4.0` are in `.github/RELEASE_NOTES_v0.4.0.md`; the published `0.2.0` body remains immutable in `.github/RELEASE_TEMPLATE.md`.
 
 ## [Unreleased]
+
+## [0.4.0] - 2026-11-27
 
 ### Added
 
@@ -25,6 +27,13 @@ Version `0.3.0` was published on 2026-11-27 from tag `v0.3.0` at commit `b3451e2
 - Signature help now uses alias names in labels, suppresses catalog fallback for shadowed builtins, clamps the active parameter for rest signatures, preserves generated documentation in curated signatures, falls back on empty curated signature arrays and reads user rest parameters from the pinned grammar's `error`-node shape.
 - Definition and rename ranges for default and rest parameters cover only the identifier; ambiguous or conflicting receiver methods no longer infer `Pattern` parameters.
 - Hardened the controlled release workflow with a bounded registry-visibility wait before post-publication install and signature checks, preventing npm propagation lag from marking a successful publish as failed. See ADR-070.
+
+### Known issues
+
+- Seven pinned documentation examples still expose two upstream `tree-sitter-strudel@2.0.2` grammar gaps: `%` modulo in JavaScript expressions and `//` inside string literals. The grammar is not vendored or patched.
+- Strudel version selection remains deferred, and the narrow configuration surface does not expose internal engine settings.
+- Incremental semantic reuse is statement-level. The mini-notation AST is recovery-oriented and structural, not a full Strudel 1.2.6 compiler; note pitch, sample identity, velocity and random outcomes remain unmodelled.
+- The 1,277 unresolved corpus references remain a conservative baseline because runtime globals and sample names are outside the pinned metadata; they are not speculative diagnostics.
 
 ## [0.3.0] - 2026-11-27
 

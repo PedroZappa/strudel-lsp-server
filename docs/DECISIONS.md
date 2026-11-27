@@ -1373,3 +1373,22 @@ Consequences:
 - Future controlled releases, including Phase 22, use the hardened workflow from the tag being published; a rerun of an older tag still uses its historical workflow file.
 - Contract tests assert that the visibility wait precedes installation, uses fresh metadata and is bounded.
 - No version bump, tag, publish, deprecation, dist-tag change, unpublish or retag is authorized by this decision.
+
+## ADR-071 — Phase 22 controlled publication authorization
+
+Status: accepted on 2026-11-27. The user explicitly authorized publishing exactly `strudel-lsp-server@0.4.0`, tagging exactly `v0.4.0`, and using `pedrozappa` as the named release operator through the controlled OIDC workflow with `npm-release` approval. This authorization permits the version bump, versioned changelog, version-specific release notes, exact candidate gate, commit, exact `v0.4.0` deployment tag policy, creation and push of the exact tag, workflow publication, post-publication smoke checks and a GitHub release generated from the exact candidate. It does not permit a local publish, the ADR-049 bootstrap exception, deprecation, dist-tag changes, unpublishing, retagging or any other registry mutation.
+
+Problem: Phase 22 cannot be derived from the roadmap alone; it requires an exact authorization record binding package version, Git tag and operator. Phases 20 and 21 are complete but unreleased, and the published `0.3.0` release body is immutable evidence that cannot be reused as `0.4.0` notes.
+
+Decision: publish the exact validated candidate only through `.github/workflows/release.yml` with `npm-release` approval. ADR-049 applies only to `0.1.0`; `0.4.0` must not be published locally. The `0.4.0` changelog section and user-facing notes are generated from the exact candidate in `.github/RELEASE_NOTES_v0.4.0.md`, while `.github/RELEASE_TEMPLATE.md` remains the published `0.2.0` record. The exact candidate commit and publication evidence are recorded later in a separate evidence ADR rather than asserted before validation.
+
+Evidence: the authorization was given through a direct question naming exact npm version `strudel-lsp-server@0.4.0`, exact tag `v0.4.0`, operator `pedrozappa`, and controlled OIDC workflow publication with `npm-release` approval; the selected response explicitly confirmed `pedrozappa`. No npm credential, token, password, OTP, recovery code or private key was supplied, read or recorded. A read-only registry check before preparation returned `E404` for `0.4.0`, confirming that the candidate version was unpublished.
+
+Consequences:
+
+- `package.json` and `package-lock.json` declare `0.4.0`; dependencies, engines, published file allowlist, parser pin and metadata pins are unchanged.
+- A deterministic contract test records the exact version, tag and operator authorization.
+- The exact candidate must pass the full local gate, focused suites, corpus validation, package and consumer verification, dependency audits, benchmarks and client smoke runs before the tag is created.
+- The exact `v0.4.0` tag is created only after that gate and must point to the validated candidate commit; exact-tag CI must pass before workflow publication.
+- The hardened post-publish registry visibility wait from ADR-070 is part of the exact tagged workflow.
+- Published `0.3.0`, `0.2.0` and `0.1.0` remain unchanged. No registry mutation other than the controlled `0.4.0` publish is authorized.
