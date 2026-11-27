@@ -15,7 +15,7 @@ An editor-agnostic Language Server Protocol implementation for [Strudel](https:/
 
 The package supports Node.js 24 and 26 with npm 11.x. The validated matrix is Linux x64 with glibc, macOS arm64 and Windows x64; the parser also ships prebuilds for Linux arm64, macOS x64 and Windows arm64, which remain best-effort until validated. See [ADR-035](https://github.com/PedroZappa/strudel-lsp-server/blob/main/docs/DECISIONS.md).
 
-The bundled language database targets `@strudel/core`, `@strudel/mini` and `@strudel/transpiler` `1.2.6`, plus `@strudel/reference` `1.2.2`. Strudel version selection is not exposed in `0.1.0` or `0.2.0`.
+Supported Strudel snapshot: `1.2.6`, with `@strudel/core`, `@strudel/mini` and `@strudel/transpiler` pinned to that version. `@strudel/reference@1.2.2` is the pinned JSDoc metadata source, not a second supported language version. Strudel version selection is not exposed in `0.1.0` or `0.2.0`; ADR-065 records the dependency-update policy.
 
 ## Installation and launch
 
@@ -59,6 +59,7 @@ The published `0.1.0` and `0.2.0` releases deliberately limit scope:
 - Workspace symbols use a bounded on-demand scan of `.strudel` files rather than a persistent workspace index or cross-file module graph; symlink entries and paths outside the workspace root are skipped.
 - Only stdio transport is provided; the package has no TCP mode.
 - Platforms other than the required Linux x64, macOS arm64 and Windows x64 matrix are best-effort until validated.
+- The pinned `tree-sitter-strudel@2.0.2` grammar has two accepted upstream gaps: `%` modulo in JavaScript expressions and `//` inside string literals. Semantic analysis still completes for affected examples; see ADR-065.
 
 ## Configuration
 

@@ -2,7 +2,7 @@
 
 Status: host-language constructs are preliminary; mini-notation token rules below were verified against the pinned Strudel source on 2026-11-27.
 
-Target version: `@strudel/core@1.2.6`, `@strudel/mini@1.2.6` and `@strudel/transpiler@1.2.6`, with `@strudel/reference@1.2.2` for JSDoc metadata.
+Supported Strudel snapshot: `1.2.6`, through `@strudel/core@1.2.6`, `@strudel/mini@1.2.6` and `@strudel/transpiler@1.2.6`. `@strudel/reference@1.2.2` supplies pinned JSDoc metadata and is not a second language target; ADR-065 records the dependency-update policy.
 
 ## Scope
 

@@ -1,6 +1,6 @@
 # Parser Integration
 
-Status: **version 2.0.2 adopted; compatibility, adapter integration, real-corpus validation and AGPL licensing policy resolved.**
+Status: **version 2.0.2 adopted; compatibility, adapter integration, real-corpus validation, accepted upstream gaps and AGPL licensing policy resolved.**
 
 Authority: `AGENTS.md` section 3, "Tree-sitter integration".
 
@@ -159,7 +159,7 @@ Corpus: 577 documentation records, 484 non-empty examples, 34,842 UTF-16 code un
 
 Totals from the run: 697 symbols, 2,044 references (1,308 unresolved), 347 mini-notation arguments, 7 error nodes and 2 missing nodes. Unresolved references are expected because runtime globals and sample names are outside the committed metadata; they are not reported as diagnostics under the live-coding policy.
 
-Seven documentation examples produce parser error or missing nodes. Direct minimal-case checks against `tree-sitter-strudel@2.0.2` isolate two upstream grammar gaps: the `%` modulo operator in a JavaScript expression, and `//` inside a string literal (URL strings in the `samples` documentation). The affected documentation names are `filterHaps`, `register`, `chop`, `loopAt`, `loopAtCps`, `fit` and `samples`; their SHA-256 identifiers are in `validation/real-corpus.json`. The grammar is consumed as an external dependency and is not vendored or patched here. Semantic analysis completes for all seven examples with in-bounds ranges. Any parser or corpus change alters the committed report, so `npm run validate:corpus` fails until the change is reviewed and the report is regenerated deliberately.
+Seven documentation examples produce parser error or missing nodes. Direct minimal-case checks against `tree-sitter-strudel@2.0.2` isolate two upstream grammar gaps: the `%` modulo operator in a JavaScript expression, and `//` inside a string literal (URL strings in the `samples` documentation). The affected documentation names are `filterHaps`, `register`, `chop`, `loopAt`, `loopAtCps`, `fit` and `samples`; their SHA-256 identifiers are in `validation/real-corpus.json`. Phase 18 and ADR-065 formally accept both gaps for this pinned snapshot: the grammar remains an external versioned dependency and is not vendored, patched or locally worked around. Semantic analysis completes for all seven examples with in-bounds ranges. A parser upgrade must reassess the gaps and rerun the parser suite and full corpus; any parser or corpus change alters the committed report, so `npm run validate:corpus` fails until the change is reviewed and the report is regenerated deliberately.
 
 The check runs as `npm run validate:corpus` or `make validate-corpus`, with deliberate regeneration through `npm run validate:corpus:write` or `make validate-corpus-write`. CI runs the check on Node 24 and 26; `validation/README.md` describes the evidence format.
 

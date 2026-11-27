@@ -10,6 +10,7 @@ Version `0.2.0` was published on 2026-11-27 through the controlled OIDC workflow
 
 - ADR-063 records the initial v1 stability contract: package, transport, runtime and platform support, capability baseline, diagnostics settings and codes, parser/metadata pins, known limitations, additive candidates, standing non-goals and SemVer rules. The roadmap's Phase 16 charter is complete; later phases may extend the contract before Phase 26 freezes it.
 - ADR-064 records the Phase 17 package-content, support-guidance and SBOM decisions: the npm allowlist stays minimal, README documents privacy-preserving problem reports, and SBOM generation is deferred to the Phase 26 review. Documentation-contract tests cover the recorded decisions.
+- ADR-065 closes Phase 18 compatibility: Strudel `1.2.6` is named as the supported language snapshot, the two upstream `tree-sitter-strudel@2.0.2` grammar gaps and the 1,308 unresolved corpus references are accepted baselines, and explicit Strudel/parser/Node update triggers, corpus/compatibility reruns and SemVer rules are recorded. The refreshed corpus report is byte-identical and compatibility-contract tests cover the pins and matrix.
 
 ### Fixed
 

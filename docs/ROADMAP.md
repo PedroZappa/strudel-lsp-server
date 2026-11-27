@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: re-implementation roadmap complete through Phase 15. `strudel-lsp-server@0.2.0` was published on 2026-11-27 from tag `v0.2.0` at commit `7d611a8d61dae2ab2eea21a12ce2ebdec59e4488` through the controlled OIDC workflow with `pedrozappa` as operator; `0.1.0` remains available. ADR-060 records the exact publication authorization and ADR-061 records the registry, signature, provenance and smoke evidence. ADR-051 records the scope and deferred work, ADR-052 records the configuration contract, ADR-053 records the filesystem boundary, ADR-054 records the `.npmrc` removal, ADR-055 records hermetic pack caching, ADR-056 records the advisory soak/lifecycle design, ADR-057 records the separate advisory benchmark report, ADR-058 records the independent editor-client smoke evidence, ADR-059 records the release-preparation authorization, ADR-062 records publication-state-aware verification, ADR-063 records the initial v1 stability charter, and ADR-064 records the Phase 17 package, support and SBOM decisions. Missing provenance for the operator-managed first publish is recorded in ADR-050. Proposed Phases 16–27 below describe a feature-expanded route to `v1.0.0`, split into `v0.3.0`, `v0.4.0`, `v0.5.0` and `v1.0.0` increments. Phases 16 and 17 are complete; Phases 18–27 remain proposed and subject to approval.
+Status: re-implementation roadmap complete through Phase 15. `strudel-lsp-server@0.2.0` was published on 2026-11-27 from tag `v0.2.0` at commit `7d611a8d61dae2ab2eea21a12ce2ebdec59e4488` through the controlled OIDC workflow with `pedrozappa` as operator; `0.1.0` remains available. ADR-060 records the exact publication authorization and ADR-061 records the registry, signature, provenance and smoke evidence. ADR-051 records the scope and deferred work, ADR-052 records the configuration contract, ADR-053 records the filesystem boundary, ADR-054 records the `.npmrc` removal, ADR-055 records hermetic pack caching, ADR-056 records the advisory soak/lifecycle design, ADR-057 records the separate advisory benchmark report, ADR-058 records the independent editor-client smoke evidence, ADR-059 records the release-preparation authorization, ADR-062 records publication-state-aware verification, ADR-063 records the initial v1 stability charter, ADR-064 records the Phase 17 package, support and SBOM decisions, and ADR-065 records the Phase 18 parser, metadata and platform compatibility closure. Missing provenance for the operator-managed first publish is recorded in ADR-050. The feature-expanded route below describes proposed work through `v1.0.0`, split into `v0.3.0`, `v0.4.0`, `v0.5.0` and `v1.0.0` increments. Phases 16–18 are complete; Phases 19–27 remain proposed and subject to approval.
 
 Authority: `AGENTS.md` sections 2–18 and the other documents in `docs/`.
 
@@ -412,7 +412,7 @@ Post-release hardening: ADR-062 makes `npm run verify:release` publication-state
 
 ## Proposed feature-expanded route to `v1.0.0`
 
-**Status: Phases 16 and 17 are complete; Phases 18–27 are proposed only and are not authorized for implementation or release.** This route includes every optional capability identified after `0.2.0` and splits the work into four independently verifiable increments. Each controlled release requires its own ADR naming the exact version, tag and operator; no release below is approved by the roadmap alone.
+**Status: Phases 16–18 are complete; Phases 19–27 are proposed only and are not authorized for implementation or release.** This route includes every optional capability identified after `0.2.0` and splits the work into four independently verifiable increments. Each controlled release requires its own ADR naming the exact version, tag and operator; no release below is approved by the roadmap alone.
 
 | Increment | Phases | Theme                                                  |
 | --------- | ------ | ------------------------------------------------------ |
@@ -468,23 +468,25 @@ Exit criteria:
 - [x] The package allowlist, support policy and SBOM decision are recorded and reflected in validation.
 - [x] The published `v0.2.0` release body in `.github/RELEASE_TEMPLATE.md` is not rewritten to describe later work.
 
-### Phase 18 — Parser, metadata and platform compatibility closure (proposed, `v0.3.0`)
+### Phase 18 — Parser, metadata and platform compatibility closure (complete, `v0.3.0`)
 
 Dependencies: Phase 17.
 
+**Status: complete. ADR-065 accepts the two pinned upstream parser gaps, names Strudel `1.2.6` as the language snapshot, records the dependency-update policy and confirms the support matrix. It does not authorize a version bump, tag or publication.**
+
 Tasks:
 
-- [ ] Resolve or formally accept the two known upstream grammar gaps: `%` modulo in JavaScript expressions and `//` inside string literals. The grammar remains a versioned dependency and is not vendored or patched in this repository.
-- [ ] Name the supported Strudel snapshot explicitly: the current pinned core/mini/transpiler metadata is `1.2.6`, with the older `1.2.2` reference reconciled or removed from authoritative wording.
-- [ ] Record a dependency-update policy covering Strudel, the parser, Tree-sitter and Node: triggers for metadata regeneration, corpus reruns, compatibility reruns and SemVer impact.
-- [ ] Confirm the supported matrix as Linux x64, macOS arm64 and Windows x64 on Node 24/26, with other prebuild platforms explicitly best-effort or separately validated.
-- [ ] Refresh `validation/real-corpus.json` and document any accepted unresolved-reference baseline.
+- [x] Resolve or formally accept the two known upstream grammar gaps: `%` modulo in JavaScript expressions and `//` inside string literals. ADR-065 formally accepts both for `tree-sitter-strudel@2.0.2`; the grammar remains a versioned dependency and is not vendored, patched or locally worked around.
+- [x] Name the supported Strudel snapshot explicitly: Strudel `1.2.6` is the language snapshot for core/mini/transpiler, while `@strudel/reference@1.2.2` is only the pinned JSDoc metadata source.
+- [x] Record a dependency-update policy covering Strudel, the parser, Tree-sitter and Node: triggers for metadata regeneration, corpus reruns, compatibility reruns and SemVer impact. ADR-065 defines the triggers and ADR-063/ADR-033 supply the SemVer rules.
+- [x] Confirm the supported matrix as Linux x64, macOS arm64 and Windows x64 on Node 24/26, with other prebuild platforms explicitly best-effort or separately validated. `.github/workflows/compatibility.yml` covers the confirmed matrix.
+- [x] Refresh `validation/real-corpus.json` and document any accepted unresolved-reference baseline. Regeneration from the final pins was byte-identical: 484 examples, 477 clean parses, seven accepted parser gaps and 1,308 unresolved references.
 
 Exit criteria:
 
-- [ ] Corpus validation passes on the final pins with no invariant failures.
-- [ ] Parser integration tests remain separate from semantic-engine tests, and no grammar or generated parser is copied into this repository.
-- [ ] The compatibility ADR states whether parser or metadata upgrades are patch, minor or major events under the v1 contract.
+- [x] Corpus validation passes on the final pins with no invariant failures.
+- [x] Parser integration tests remain separate from semantic-engine tests, and no grammar or generated parser is copied into this repository.
+- [x] ADR-065 states whether parser or metadata upgrades are patch, minor or major events under the v1 contract.
 
 ### Phase 19 — `v0.3.0` controlled release (proposed)
 
@@ -652,7 +654,7 @@ Exit criteria:
 
 ## Phase 13 release-quality backlog (post-publication status)
 
-These were the recommended, non-blocking items carried out of first publication. Items assigned to v0.2.0 are complete and recorded in Phase 14. Phase 17 items are complete under ADR-064; remaining items are mapped to Phases 18 or 26 below and stay unscheduled until the relevant phase is authorized.
+These were the recommended, non-blocking items carried out of first publication. Items assigned to v0.2.0 are complete and recorded in Phase 14. Phase 17 items are complete under ADR-064 and Phase 18 items under ADR-065; the remaining item is mapped to Phase 26 below and stays unscheduled until that phase is authorized.
 
 - [x] **Assigned to Phase 14 and completed.** VS Code and Neovim smoke clients exercise initialization, diagnostics, completion, document symbols, incremental change and shutdown through stdio; client configuration stays in `smoke/` and evidence is in `validation/client-smoke.json`; see ADR-058.
 - [x] Add deterministic stdio error-path tests for malformed input and cancellation; `test/protocolRobustness.test.ts` now covers both at the JSON-RPC transport layer in addition to the semantic-engine suite.
@@ -660,7 +662,7 @@ These were the recommended, non-blocking items carried out of first publication.
 - [x] **Assigned to Phase 14 and completed.** Workspace-symbol discovery now rejects symlinks, unsafe entry names and paths outside the normalized root, ignores unreadable or oversized files, enforces depth and file-count limits, and uses deterministic ordering; see ADR-053 and `test/lsp/workspaceFiles.test.ts`.
 - [x] **Assigned to Phase 14 and completed.** `npm run benchmark:e2e` measures a rapid edit and document-symbol request through stdio JSON-RPC and the installed bin; `benchmarks/end-to-end.json` reports advisory p50/p95/p99 separately from the layer-level baseline; see ADR-057.
 - [x] **Assigned to Phase 17 and completed.** The npm `files` allowlist remains intentionally minimal: compiled `dist/src` outputs and `LICENSE`, with mandatory `package.json` and `README.md`. Generated declarations and source maps are existing compiled outputs; see ADR-064.
-- [ ] **Proposed Phase 18.** Record a dependency-update policy for Strudel, the parser and Node: what triggers compatibility retesting and when the pinned metadata snapshot may be regenerated.
+- [x] **Assigned to Phase 18 and completed.** ADR-065 records dependency-update triggers for Strudel, the parser, Tree-sitter and Node, including metadata regeneration, corpus/compatibility reruns and SemVer impact; no dependency was changed.
 - [x] **Assigned to Phase 17 and completed, revisited in Phase 26.** No SBOM or additional attestation tool is added; npm signatures and OIDC SLSA provenance remain the release evidence, and any future tool requires separate dependency approval; see ADR-064.
 - [x] **Assigned to Phase 17 and completed.** `README.md` documents the diagnostic, log and reproduction details to include, with explicit credential and privacy redaction; see ADR-064.
 - [x] **Assigned to Phase 14 and completed.** Clean consumer installs pass with isolated npm configuration and `legacy-peer-deps=false`; the repository `.npmrc` was removed; see ADR-054 and `npm run verify:consumer`.

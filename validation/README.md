@@ -6,7 +6,7 @@
 
 The corpus is every non-empty JSDoc example in the pinned `@strudel/reference@1.2.2` package. That package is generated from the official Strudel source at `git+https://codeberg.org/uzu/strudel.git`, is pinned by tarball integrity in `package-lock.json`, and is a development dependency only. The validator rechecks version, tarball, integrity, licence and repository before use, then parses and analyses each example unmodified with the pinned `tree-sitter-strudel@2.0.2` adapter and the default language database. One appended newline exercises incremental update and semantic reuse for every example.
 
-The report stores source provenance, a corpus hash, aggregate counts and SHA-256 identifiers for examples that expose upstream parser gaps. It does **not** store example source text, and no corpus file is added to the npm package or copied into this repository. Validation is offline and deterministic; no network request is made at test time. Results and known limitations are interpreted in `docs/PARSER_INTEGRATION.md`, with the decision recorded in `docs/DECISIONS.md`.
+The report stores source provenance, a corpus hash, aggregate counts and SHA-256 identifiers for examples that expose upstream parser gaps. It does **not** store example source text, and no corpus file is added to the npm package or copied into this repository. Validation is offline and deterministic; no network request is made at test time. Phase 18 regenerated the report from the final pins with no byte change; the seven parser gaps and 1,308 unresolved references are accepted baselines under ADR-065. Results and known limitations are interpreted in `docs/PARSER_INTEGRATION.md`, with the decision recorded in `docs/DECISIONS.md`.
 
 ## Editor-client smoke evidence
 

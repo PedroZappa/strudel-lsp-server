@@ -51,6 +51,7 @@ void test('test scripts use glob patterns supported by Node 24 and 26', () => {
     .flatMap((name) => globSync(testPattern(name), { cwd: repositoryRoot }))
     .sort();
   const rootOnlyTests = [
+    'dist/test/compatibilityPolicy.test.js',
     'dist/test/packageScripts.test.js',
     'dist/test/releaseWorkflow.test.js',
     'dist/test/server.test.js',

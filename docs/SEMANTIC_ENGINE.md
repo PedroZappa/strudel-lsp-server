@@ -81,7 +81,7 @@ The engine exposes semantic facts only. Feature providers decide which facts bec
 - Incremental reuse is statement-level, not sub-expression-level.
 - Mini-notation tokenization is lexical and conservative, not a recovery parser: it does not attempt a full 1.2.6 AST or haskellish statement analysis.
 - Signature labels use the flat JSDoc parameter list; overloads, optional and rest parameters, and user-defined signatures are not modeled beyond resolved symbol kinds.
-- Real-corpus validation recorded 1,308 unresolved references across 484 documentation examples. They remain unresolved rather than speculative diagnostics because runtime globals and sample names are outside the pinned metadata; see `validation/real-corpus.json`.
+- Real-corpus validation recorded an accepted Phase 18 baseline of 1,308 unresolved references across 484 documentation examples. They remain unresolved rather than speculative diagnostics because runtime globals and sample names are outside the pinned metadata; see `validation/real-corpus.json` and ADR-065.
 
 ## Open questions
 

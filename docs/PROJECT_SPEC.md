@@ -22,7 +22,7 @@ Published `0.1.0` and `0.2.0` support Node.js 24 and 26 with npm 11.x, recorded 
 
 ## Target language version
 
-The target is the latest stable Strudel release. As of 2026-11-25, `@strudel/core` latest is `1.2.6` (published 2026-01-17). Metadata generation must pin authoritative source versions, and the metadata design must permit future support for multiple Strudel versions.
+The target remains the latest stable Strudel release; the supported snapshot for the current release is Strudel `1.2.6`, and ADR-065 records its dependency-update policy. The 2026-11-25 latest-release observation was `@strudel/core@1.2.6` (published 2026-01-17). Metadata generation must pin authoritative source versions, and the metadata design must permit future support for multiple Strudel versions.
 
 Source: <https://registry.npmjs.org/@strudel/core>
 
@@ -77,12 +77,12 @@ The repository `.npmrc` was removed on 2026-11-27 after clean consumer and devel
 
 The language database generation inputs are pinned to the following exact packages:
 
-| Package               | Version | Purpose                                          |
-| --------------------- | ------- | ------------------------------------------------ |
-| `@strudel/reference`  | 1.2.2   | Generated JSDoc records for documented functions |
-| `@strudel/core`       | 1.2.6   | Core pattern semantics and export names          |
-| `@strudel/mini`       | 1.2.6   | Mini-notation semantics                          |
-| `@strudel/transpiler` | 1.2.6   | Strudel source transformation behaviour          |
+| Package               | Version | Purpose                                                                 |
+| --------------------- | ------- | ----------------------------------------------------------------------- |
+| `@strudel/reference`  | 1.2.2   | Generated JSDoc records for documented functions (metadata source only) |
+| `@strudel/core`       | 1.2.6   | Core pattern semantics and export names                                 |
+| `@strudel/mini`       | 1.2.6   | Mini-notation semantics                                                 |
+| `@strudel/transpiler` | 1.2.6   | Strudel source transformation behaviour                                 |
 
 All four packages come from `git+https://codeberg.org/uzu/strudel.git` and declare `AGPL-3.0-or-later`. Generated metadata must record package names, versions, tarball integrity and this licence provenance.
 
