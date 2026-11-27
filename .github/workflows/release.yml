@@ -1,0 +1,117 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to validate (X.Y.Z); this mode never publishes'
+        required: true
+        type: string
+      operator:
+        description: 'GitHub handle authorizing the validation'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate release candidate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out release commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '26'
+          registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Verify identity, immutable tag and dry-run parity
+        env:
+          RELEASE_TAG: ${{ github.event_name == 'push' && github.ref_name || '' }}
+          RELEASE_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.version || '' }}
+          RELEASE_OPERATOR: ${{ github.event_name == 'workflow_dispatch' && inputs.operator || github.actor }}
+        run: npm run verify:release
+
+      - name: Run correctness and package gates
+        run: |
+          npm run typecheck
+          npm run lint
+          npm run format:check
+          npm test
+          npm run test:parser
+          npm run test:semantic
+          npm run test:metadata
+          npm run test:features
+          npm run test:mini
+          npm run test:protocol
+          npm run validate:corpus
+          npm run verify:package
+
+      - name: Audit runtime dependencies
+        run: npm audit --omit=dev
+
+  publish:
+    name: Publish with OIDC provenance
+    needs: validate
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: npm-release
+      url: https://www.npmjs.com/package/strudel-lsp-server
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Check out immutable tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '26'
+          registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Reverify immutable release commit
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_OPERATOR: ${{ github.actor }}
+        run: npm run verify:release
+
+      - name: Publish with trusted publishing
+        run: npm publish --access public
+
+      - name: Verify published signatures and attestations
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          version="${RELEASE_TAG#v}"
+          check_dir="$(mktemp -d)"
+          npm install --prefix "$check_dir" --ignore-scripts "strudel-lsp-server@${version}"
+          npm audit signatures --prefix "$check_dir"

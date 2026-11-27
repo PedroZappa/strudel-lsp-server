@@ -85,11 +85,12 @@ Root scripts established in Phases 2–6:
 - `npm run benchmark:check` — build, rerun the workloads and compare them with the committed thresholds.
 - `npm run benchmark:baseline` — deliberately regenerate the committed baseline after a validated change.
 - `npm run verify:package` — build, pack, verify tarball contents, install offline from the tarball and exercise the stdio executable.
+- `npm run verify:release` — build, verify the release version/tag/commit, compare `npm pack --dry-run` with `npm publish --dry-run` in an isolated copy, and check the manifest and tarball allowlist without publishing.
 - `npm run check` — chains typecheck, lint, format verification and the full test suite.
 
 Test discovery uses quoted glob patterns instead of bare directories. Node 24 interprets positional `node --test` arguments as glob patterns and attempts to load a directory as a module; Node 26 additionally accepts directories. `test/packageScripts.test.ts` verifies that the suite patterns use globs and together cover every compiled suite file.
 
-The `Makefile` provides convenience targets for these commands; `make check` runs the same combined gate as `npm run check`, `make test-parser`, `make test-semantic`, `make test-metadata`, `make test-features`, `make test-mini` and `make test-protocol` run isolated suites, `make validate-corpus` and `make validate-corpus-write` wrap corpus validation, `make generate-metadata` regenerates the snapshot, `make benchmark`, `make benchmark-check` and `make benchmark-baseline` wrap the benchmark scripts, and `make verify-package` wraps the packaged installation check.
+The `Makefile` provides convenience targets for these commands; `make check` runs the same combined gate as `npm run check`, `make test-parser`, `make test-semantic`, `make test-metadata`, `make test-features`, `make test-mini` and `make test-protocol` run isolated suites, `make validate-corpus` and `make validate-corpus-write` wrap corpus validation, `make generate-metadata` regenerates the snapshot, `make benchmark`, `make benchmark-check` and `make benchmark-baseline` wrap the benchmark scripts, `make verify-package` wraps the packaged installation check, and `make verify-release` wraps the non-publishing release candidate check.
 
 ## Continuous integration
 
@@ -174,3 +175,20 @@ Evidence:
 - The clean-install OS matrix and corpus validation were not rerun for this server-only change; their existing evidence remains in this document and `validation/real-corpus.json`.
 
 The design decisions and consequences are recorded as ADR-038 in `docs/DECISIONS.md`.
+
+### Release workflow validation (2026-11-27)
+
+Phase 12 added `.github/workflows/release.yml` with a validate job for tag pushes and manual `workflow_dispatch` runs, and a publish job restricted to `v*` tag pushes behind the `npm-release` approval environment. `test/releaseWorkflow.test.ts` asserts the trigger, approval environment, `id-token: write`, one `npm publish --access public` command, SHA-pinned actions, the absence of token references and the wiring of the release verifier; it is a root-level test alongside `packageScripts.test.ts` and `server.test.ts`.
+
+`scripts/verify-release.mjs` checks the npm CLI version, manifest identity and executable, the `vX.Y.Z` tag against the checked-out commit, a clean tracked worktree, and equality of name, version, filename, size, shasum, integrity and file list between `npm pack --dry-run` and `npm publish --dry-run`. Both dry-runs execute in a temporary copy because npm normalises `package.json` in place during `npm publish`; the verifier therefore cannot modify the release candidate. It also compares packed `LICENSE`, `README.md` and executable sizes with the local files and asserts the AGPL notice and node shebang.
+
+Evidence on commit `c6a9200` with only documentation and release-governance changes present:
+
+- `RELEASE_OPERATOR=pedrozappa npm run verify:release` passed: npm 11.19.1, 132 matching files, no publish performed.
+- `npm run check` passed with 66/66 tests, including the three new release-workflow contract tests.
+- `npm run test:protocol`, `npm run validate:corpus` (484 examples, zero invariant failures), `npm run verify:package` and `npm audit --omit=dev` (zero vulnerabilities) passed.
+- The workflow YAML was parsed and its jobs, triggers, approval environment and permissions inspected; no GitHub Actions run was started and no release was published.
+
+A subsequent dry-run comparison on the same candidate confirmed matching file lists, sizes, shasum and integrity for `npm pack --dry-run` and `npm publish --dry-run`, plus AGPL licence text and the `dist/src/server.js` entry point; `npm run verify:package` repeated the installed-package checks. No tag existed, so this is point-in-time evidence and must be repeated on the exact release commit, as recorded in ADR-043.
+
+Actual provenance attestation generation and verification can only be observed after the first successful publication; the publish job includes `npm audit signatures` on the installed released package for that purpose. The design decision and first-publish limitation are recorded as ADR-042 in `docs/DECISIONS.md`.

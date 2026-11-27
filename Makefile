@@ -51,7 +51,7 @@ _INFO    = [$(BLU)INFO$(D)]
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install install-dev build typecheck lint format format-check test test-parser test-semantic test-metadata test-features test-mini test-protocol validate-corpus validate-corpus-write generate-metadata benchmark benchmark-check benchmark-baseline pack-check verify-package check verify verify-all ci check-static audit audit-client clean docs docs-open
+.PHONY: help install install-dev build typecheck lint format format-check test test-parser test-semantic test-metadata test-features test-mini test-protocol validate-corpus validate-corpus-write generate-metadata benchmark benchmark-check benchmark-baseline pack-check verify-package verify-release check verify verify-all ci check-static audit audit-client clean docs docs-open
 
 #==============================================================================#
 #                                  RULES                                       #
@@ -170,6 +170,11 @@ verify-package:	## Verify offline install and stdio launch from the npm tarball
 	@echo "$(YEL)Verifying packaged server...$(D)"
 	@$(NPM) run verify:package
 	@echo "$(YEL)* $(_SUCCESS) Packaged server verification passed$(D)"
+
+verify-release:	## Verify release identity, immutable tag and matching publish/pack dry-runs
+	@echo "$(YEL)Verifying release candidate...$(D)"
+	@$(NPM) run verify:release
+	@echo "$(YEL)* $(_SUCCESS) Release candidate verification passed$(D)"
 
 ##@ Verification ✅
 

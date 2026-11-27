@@ -1,6 +1,6 @@
 # Decisions
 
-Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened or superseded; ADR-021 records the Phase 6 deferred-item completion, ADR-022 records Phase 7 quick fixes, ADR-023 records document-scoped rename, ADR-024 records document symbols, ADR-025 records semantic tokens, ADR-026 records conservative formatting, ADR-027 records prototype client dependency remediation, ADR-028 records inline-constant refactoring, ADR-029 records bounded on-demand workspace symbols, ADR-030 records the Phase 8 performance baseline and advisory check, ADR-031 records Phase 9 local packaging verification, ADR-032 records the AGPL-3.0-only project licence decision, ADR-033 records the `0.1.0` release identity and SemVer policy, ADR-034 records the deferred user configuration boundary, ADR-035 records the `0.1.0` supported runtime and OS matrix, and ADR-036 records the Phase 11 clean-install validation design, ADR-037 records the real documentation corpus validation design, and ADR-038 records the Phase 11 protocol robustness review and transport behaviour.
+Status: decision record for the re-implementation. Resolved decisions are authoritative unless explicitly reopened or superseded; ADR-021 records the Phase 6 deferred-item completion, ADR-022 records Phase 7 quick fixes, ADR-023 records document-scoped rename, ADR-024 records document symbols, ADR-025 records semantic tokens, ADR-026 records conservative formatting, ADR-027 records prototype client dependency remediation, ADR-028 records inline-constant refactoring, ADR-029 records bounded on-demand workspace symbols, ADR-030 records the Phase 8 performance baseline and advisory check, ADR-031 records Phase 9 local packaging verification, ADR-032 records the AGPL-3.0-only project licence decision, ADR-033 records the `0.1.0` release identity and SemVer policy, ADR-034 records the deferred user configuration boundary, ADR-035 records the `0.1.0` supported runtime and OS matrix, ADR-036 records the Phase 11 clean-install validation design, ADR-037 records the real documentation corpus validation design, ADR-038 records the Phase 11 protocol robustness review and transport behaviour, ADR-039 records the npm namespace and publication access review, ADR-040 records the Phase 12 licensing and provenance sign-off, ADR-041 records the Phase 12 dependency and secret audit, ADR-042 records the controlled release workflow design, and ADR-043 records the publish/pack dry-run comparison.
 
 ## ADR-001 — Clean-slate re-implementation
 
@@ -644,3 +644,123 @@ Consequences:
 - `docs/LSP_FEATURES.md` records the observable protocol lifecycle behaviour; `docs/TESTING_STRATEGY.md` records the review evidence.
 - Future transport changes must keep stdout free of non-protocol bytes and extend the raw harness rather than relying only on higher-level feature tests.
 - This decision does not authorize publication; Phase 12 and 13 gates still apply.
+
+## ADR-039 — npm namespace and publication access review
+
+Status: accepted on 2026-11-27; gate closed on 2026-11-27 after the operator enabled 2FA. The exact name, ownership and account state should be rechecked immediately before publication under Phase 13.
+
+Decision: retain the exact unscoped name `strudel-lsp-server` for the first release, enable 2FA on the publishing account before publication, and prefer npm trusted publishing through a GitHub Actions OIDC workflow with a protected environment and manual approval over a long-lived npm token. Trusted publishing is configured from the package's settings page, so it cannot be registered until the package exists; first publication may therefore need an operator-supplied token, which must not be stored in the repository or workflow files. The operator supplied account access and enabled 2FA themselves; neither this agent nor the repository performed account changes. No trusted-publisher registration or publication has occurred because Phase 13 has not authorized a release. Sources: <https://docs.npmjs.com/trusted-publishers>, <https://docs.npmjs.com/cli/v11/commands/npm-profile> and <https://docs.npmjs.com/configuring-two-factor-authentication>.
+
+Evidence collected on 2026-11-27:
+
+- `npm config get registry` returned `https://registry.npmjs.org/`; `npm view strudel-lsp-server --json` returned `E404` from that registry, so the exact unscoped name in `package.json` is currently unregistered and available.
+- `package.json` declares `name: strudel-lsp-server`, version `0.1.0`, `bin.strudel-lsp-server`, and `repository`, `homepage` and `bugs` URLs under `github.com/PedroZappa/strudel-lsp-server`. The Git remote is `git@github.com:PedroZappa/strudel-lsp-server.git`.
+- `gh auth status --hostname github.com` succeeded as account `PedroZappa` with `repo` scope; this confirms repository access only and does not imply npm account access.
+- `npm whoami` initially returned `ENEEDAUTH`. The operator subsequently ran `npm login` themselves and `npm whoami` now returns `pedrozappa`, confirming account access. The login credential is held by npm in the operator's `~/.npmrc` outside the repository; it is not recorded here. After login, `npm view strudel-lsp-server --json` still returned `E404`, so the name remains available.
+- `npm profile get` initially reported `two-factor auth: disabled` and `npm profile get --json` reported `tfa: false`. The operator enabled 2FA through the npmjs.com web UI; it now reports `two-factor auth: auth-and-writes` and `tfa: {"pending":null,"mode":"auth-and-writes"}`. This satisfies the `2FA or trusted-publisher setup` sub-item. No trusted publisher is registered.
+- Trusted publishing is configured from the package's settings page on npmjs.com, but `strudel-lsp-server` is still unregistered; npm issue <https://github.com/npm/cli/issues/8910> confirms the package must be published before a trusted publisher can be added. Consequently 2FA is the only sub-item that can be satisfied before first publication.
+- `.github/workflows` contains `ci.yml` and `compatibility.yml` only. No release or publish workflow exists, so no trusted-publisher entry has been configured against a workflow in this repository.
+
+Rationale: the unscoped name is already the documented package identity and is available on the configured registry, so changing it would add needless churn. Trusted publishing is preferred because it removes long-lived tokens and can attach provenance, while an approval-gated environment prevents ordinary commits from publishing. Account access, name availability and 2FA are now verified; the final name recheck and trusted-publisher registration remain release-time operator actions because publication is not authorized.
+
+Consequences:
+
+- Account access, name availability and 2FA are confirmed. The CLI path `npm profile enable-2fa auth-and-writes` failed with `E403` on `POST /-/npm/v1/user` after password prompts; the operator enabled 2FA through the npmjs.com account settings web UI instead. No account security change was made by this agent. Name availability is point-in-time and must be rechecked against the Phase 13 gate.
+- The controlled release workflow remains a separate Phase 12 task. It must define the trusted-publisher mapping, the protected environment with manual approval, `id-token: write` for OIDC, provenance generation and no publish path from ordinary commits. Its first-publish path must account for the package not yet existing; trusted publishing is configured after that first publish.
+- No publication is authorized by this decision; Phases 12 and 13 gates still apply.
+
+## ADR-040 — Phase 12 licensing and provenance sign-off
+
+Status: accepted on 2026-11-27. This is a release review based on repository and package evidence; it is not legal advice.
+
+Decision: record the first-release licensing and provenance review as complete for the current commit. No licence identifier, dependency or source file was changed for this review.
+
+Evidence:
+
+- Distributed artifact: `npm pack --dry-run --json` produced `strudel-lsp-server-0.1.0.tgz` with 132 files and a size of 146,981 bytes. The file list contains only `LICENSE`, `README.md`, `package.json` and `dist/src/**`. No grammar, generated parser, native binding, parser `build/`, test, benchmark, editor or `.npmrc` file is included. `git ls-files` contains no `grammar.js`, `binding.gyp`, C/C++ source or `build/` entry; the parser remains an external dependency under ADR-032.
+- AGPL notices: the root `LICENSE` carries `Copyright (c) 2025-present Zedro`, the AGPL-3.0-only grant text and the full 677-line GNU Affero General Public License version 3 text. `package.json` declares `AGPL-3.0-only`, README documents the project and dependency licences, and `scripts/verify-package.mjs` asserts that the installed manifest has `license: AGPL-3.0-only` and the installed `LICENSE` contains the AGPL heading.
+- Dependency licences: all 15 declared runtime and development dependencies are exact-pinned in `package.json` and integrity-pinned in `package-lock.json`. Runtime dependencies are `tree-sitter@0.25.1` (MIT), `tree-sitter-strudel@2.0.2` (AGPL-3.0-only, with a matching bundled AGPL `LICENSE`), `vscode-languageserver@11.0.1` (MIT) and `vscode-languageserver-textdocument@1.0.16` (MIT), each with a registry URL and integrity in the lockfile. The four dev Strudel packages are AGPL-3.0-or-later; remaining dev tooling is MIT or Apache-2.0. These identifiers and the earlier parser history are recorded in ADR-014, ADR-032 and `docs/PARSER_INTEGRATION.md`.
+- Generated metadata provenance: `npm run generate:metadata` regenerated `src/languageDatabase/generated.ts` from 576 reference records with no working-tree diff. The generator rechecks each pinned version, tarball integrity, `AGPL-3.0-or-later` licence and Codeberg repository before emitting. The snapshot records package name, version, tarball URL, integrity, licence, repository and role for all four Strudel sources. No compiled source map under `dist/src` contains a local `/Users/zedro` path.
+- Real-corpus provenance: ADR-037 records the 484 pinned JSDoc examples; no composition text is copied into the repository or package, only hashes and aggregate counts in `validation/real-corpus.json`.
+- No secrets: a scan of all tracked text files for npm/GitHub token patterns, `_authToken`/`_auth`, private-key headers and key/secret/password assignments returned zero hits. `.npmrc` contains only the `legacy-peer-deps=true` setting and its comment, and is excluded from the tarball. No workflow references `secrets.*`.
+- Public source URL: `package.json` `repository`, `homepage` and `bugs` URLs and the README source/documentation/issues links all point to `https://github.com/PedroZappa/strudel-lsp-server`. `test/packageScripts.test.ts` asserts the name, licence, bin entry and those URLs.
+- Verification: `npm pack --dry-run --json`, `npm run generate:metadata`, `npm run verify:package` (both clean offline install modes, native parser prebuild load, installed AGPL metadata and stdio handshakes, 132 files), `git ls-files`, the tracked-file secret scan and the source-map path scan all passed. No code changed for this review, and `git diff --check` was clean.
+
+Rationale: the evidence is drawn from the actual tarball, lockfile, installed dependency metadata, generated snapshot and committed tests rather than from assumed declarations. Keeping the parser external and the project AGPL-3.0-only maintains the conservative licence position of ADR-032.
+
+Consequences:
+
+- This sign-off is point-in-time. It must be repeated against the exact release commit before publication; a changed dependency, licence field, generated snapshot or tarball file list invalidates it.
+- The remaining Phase 12 audit, workflow, dry-run comparison, changelog, rollback and smoke-plan tasks still apply.
+- This review does not authorize publication; Phase 13 gates still apply.
+
+## ADR-041 — Phase 12 dependency and secret audit
+
+Status: accepted on 2026-11-27. Release audit evidence for commit `c6a9200d0f7d4aa5fbf2480b6684800cfc13ae7c`; it is not publication authorization.
+
+Decision: record the final dependency and secret audit as complete for the current release candidate, with `npm audit --omit=dev` as the blocking gate. No dependency, lockfile or source change was made for this audit.
+
+Evidence:
+
+- `npm audit --omit=dev --json` exited 0 with `metadata.vulnerabilities` reporting zero info, low, moderate, high and critical findings and no advisories. The blocking gate passes.
+- `npm audit --json` for the full tree including development dependencies also exited 0 with zero findings in every severity.
+- The unshipped prototype manifests `client/package.json` and `server/package.json` each have a committed `package-lock.json`. `npm audit --json --prefix client` and `npm audit --json --prefix server` both exited 0 with zero findings in every severity. These manifests are excluded from the published tarball under ADR-040.
+- A scan of all 123 tracked text files for npm/GitHub token patterns, `_authToken`/`_auth`, PEM private-key headers and key/secret/password assignments found zero hits. No matched values were recorded.
+- A static scan of `src/` and `scripts/`, excluding the generated metadata snapshot, found no imports of Node network modules, no `fetch`/`WebSocket` use and no telemetry or analytics identifiers. Occurrences of `segment` in generated Strudel examples are music-pattern text, not network code.
+- A runtime guard used a temporary Node `--require` preload that patched `net.Socket.connect`, `http`/`https` `request` and `get`, `dns.lookup` and `resolve*`, `tls.connect`, `dgram.createSocket` and `globalThis.fetch` to log any invocation. The built server was spawned with that preload and completed an `initialize`/`shutdown`/`exit` stdio handshake: exit code 0, both request responses observed, empty stderr and zero probe hits. The harness lives in the approved temporary directory and was not added to the repository or its dependencies.
+- `npm run verify:package` passed both offline install modes, native parser prebuild load and installed stdio handshakes on darwin-arm64, as recorded in ADR-040.
+
+Rationale: `npm audit --omit=dev` is the blocking gate because runtime dependencies determine consumer exposure; the full-tree and prototype audits were reviewed as supporting evidence. The runtime guard checks observable behaviour instead of relying only on source inspection.
+
+Consequences:
+
+- This audit is point-in-time for commit `c6a9200`. It must be rerun on the exact release commit; a changed dependency, lockfile, generated snapshot or server code invalidates it.
+- No new dependency, npm script or committed test was introduced by the audit.
+- This decision does not authorize publication; Phase 13 gates still apply.
+
+## ADR-042 — Controlled release workflow
+
+Status: accepted on 2026-11-27. Source: <https://docs.npmjs.com/trusted-publishers> and <https://docs.npmjs.com/generating-provenance-statements>. This decision adds automation only; it does not authorize or perform publication.
+
+Decision: use a single `.github/workflows/release.yml` with a validate job and a publish job. Pushes of `vX.Y.Z` tags run validation and then the publish job; `workflow_dispatch` is validation-only and requires an explicit version and operator. The publish job requires the protected `npm-release` environment, uses `id-token: write` for npm trusted publishing with automatic provenance, runs on a GitHub-hosted runner, pins `actions/checkout` and `actions/setup-node` to the same commit SHAs as CI, and contains no npm token reference. Ordinary branch commits cannot publish. No `--provenance` flag is used because trusted publishing generates attestations automatically.
+
+Evidence and implementation:
+
+- Workflow triggers are `push.tags: ['v*']` and `workflow_dispatch` inputs `version` and `operator`. The publish job is guarded by `github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')`; the validate job runs for both trigger types. The workflow YAML was parsed and its jobs, triggers, environment and permissions inspected locally.
+- The publish job declares `environment.name: npm-release` and `permissions: { contents: read, id-token: write }`. GitHub repository settings must add required reviewers to that environment; this cannot be expressed in the workflow file and remains an operator action. Tag protection is likewise a repository setting.
+- `scripts/verify-release.mjs`, exposed as `npm run verify:release` and `make verify-release`, requires npm >= 11.5.1, checks manifest identity and the executable shebang, requires `v${version}` to equal `RELEASE_TAG`, checks that the tag resolves to `HEAD`, rejects tracked worktree changes, requires a named operator for manual validation, and compares `npm pack --dry-run` with `npm publish --dry-run`. Both dry-runs run in a temporary copy because npm normalises `package.json` in place during publish; a local dry-run was observed adding `main`, `directories`, a `git+` repository prefix and a normalised `bin` path, and none of those mutations are retained.
+- The comparison covers name, version, filename, size, shasum, integrity and the complete sorted file list. It requires `LICENSE`, `README.md`, `package.json` and `dist/src/server.js`, and rejects tests, prototypes, scripts, parser grammar/binding files, `node_modules` and `.npmrc`. The isolated dry-runs agreed on 132 files for `0.1.0` with shasum `c9e7f8a9b5c5450b03d988e56e119fcb9a3f1daf` in that local run.
+- `test/releaseWorkflow.test.ts` asserts the trigger, approval environment, OIDC permission, single publish command, pinned action SHAs, absence of `secrets.`/token names, the post-publish `npm audit signatures` step and the verifier wiring in `package.json` and the `Makefile`. `test/packageScripts.test.ts` was updated to treat it as a root-level test.
+- Validation on commit `c6a9200`: `RELEASE_OPERATOR=pedrozappa npm run verify:release`, `npm run check` (66/66), `npm run test:protocol` (8/8), `npm run validate:corpus` (484 examples, zero invariant failures), `npm run verify:package` (132 files, both offline install modes and stdio handshakes), `npm audit --omit=dev` (zero vulnerabilities) and `git diff --check` all passed. No workflow run was triggered and no package was published.
+
+Rationale: a tag trigger gives an immutable commit identity, while the approval environment provides the explicit human gate without editor-specific assumptions. OIDC trusted publishing removes long-lived tokens from repository settings and workflow files. Keeping manual dispatch validation-only avoids a second publish path and the workflow-name ambiguity npm documents for manual publishing. Comparing pack and publish dry-runs in an isolated copy checks the exact artifact contract without altering the candidate.
+
+Consequences:
+
+- Before a release, the operator must create the `npm-release` environment with required reviewers, protect `v*` tags, and register the trusted publisher on npmjs.com with owner `PedroZappa`, repository `strudel-lsp-server`, workflow filename `release.yml`, environment `npm-release` and `npm publish` permission. npm states a new trusted-publisher configuration must complete its first successful publish within two days, so it should be registered close to the authorized release.
+- The exact unscoped package is still unregistered, so trusted publishing cannot be configured yet. The first publication therefore needs a separately authorized bootstrap decision: an operator-supplied short-lived credential outside repository files, or an operator-managed publish, with provenance verified afterwards. This workflow cannot provide OIDC authentication until the package exists, and no bootstrap token path is committed. Phase 13 must resolve this explicitly before publication.
+- npm requires the published package and source repository to be public and the manifest repository URL to match the source; provenance attestations cannot be generated for a private repository. The manifest currently uses the unsuffixed HTTPS repository URL that npm normalises at publish time; the release-time gate must confirm that normalisation does not break trusted publishing.
+- Provenance generation and the `npm audit signatures` verification step cannot be exercised before publication. The roadmap's provenance exit criterion remains open until the first successful release is inspected.
+- This decision does not authorize publication; Phase 13 gates still apply.
+
+## ADR-043 — Publish and pack dry-run comparison
+
+Status: accepted on 2026-11-27. This is a release-candidate review on HEAD `c6a9200d0f7d4aa5fbf2480b6684800cfc13ae7c`; it is not publication authorization.
+
+Decision: treat `npm run verify:release` as the canonical `npm pack --dry-run` versus `npm publish --dry-run` comparison, cross-checked against `npm run verify:package`. The publish dry-run executes in an isolated copy because npm normalises `package.json` in place; the comparison therefore leaves the candidate unchanged. No package was published.
+
+Evidence:
+
+- The repository currently has no `v*` tag. HEAD is `c6a9200` and the release-governance changes are uncommitted, so the exact final release commit does not yet exist. This review uses the current candidate state, including the `verify:release` script addition in `package.json`; it must be repeated on the exact tagged commit.
+- `RELEASE_OPERATOR=pedrozappa npm run verify:release` passed with npm 11.19.1. It reported version `0.1.0`, 132 dry-run files and matching name, version, filename, size, shasum and integrity from both commands. The local-run shasum was `c9e7f8a9b5c5450b03d988e56e119fcb9a3f1daf`; this is an artifact of that isolated build and is not a stable release identifier.
+- The verifier asserts the manifest name, version, `AGPL-3.0-only` licence, public source URLs, `files` allowlist, `dist/src/server.js` bin target and node shebang. It also checks that the packed `LICENSE`, `README.md` and `dist/src/server.js` sizes match the local files, and that `LICENSE` contains the Zedro copyright and full AGPL v3 text.
+- `npm run verify:package` passed on darwin-arm64 with Node v26.8.2 and npm 11.19.1: both offline install modes, parser prebuild load, installed `AGPL-3.0-only` manifest and AGPL licence text, a 132-file `strudel-lsp-server-0.1.0.tgz`, and installed stdio initialize/shutdown handshakes.
+- `git diff --check` was clean. No workflow was triggered and no registry mutation occurred.
+
+Rationale: dry-run parity checks the artifact contract before the irreversible publish step, while `verify-package.mjs` checks the same tarball after a clean consumer-style install. Running the publish dry-run in a temporary copy prevents npm's manifest normalisation from contaminating the release candidate.
+
+Consequences:
+
+- This comparison is point-in-time. A changed manifest, dependency, generated snapshot or build output invalidates it, and the exact tagged release commit must be rechecked before publication.
+- The published tarball must still be verified from the public registry after publication; this review covers only local dry-runs and the locally packed tarball.
+- This decision does not authorize publication; Phase 13 gates still apply.

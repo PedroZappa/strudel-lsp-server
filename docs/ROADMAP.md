@@ -1,6 +1,6 @@
 # Roadmap
 
-Status: re-implementation roadmap updated with completed Phases 0–10, completed Phase 11 clean-install, platform handshake, real Strudel corpus and protocol robustness validation, plus Phases 12–13 for release governance and controlled first publication, 2026-11-27. Priorities are proposals and remain subject to approval.
+Status: re-implementation roadmap updated with completed Phases 0–11, the completed Phase 12 npm access review, licensing/provenance sign-off, dependency/secret audit, controlled release workflow and dry-run comparison, and remaining Phase 12 governance plus Phase 13 controlled first publication, 2026-11-27. Priorities are proposals and remain subject to approval.
 
 Authority: `AGENTS.md` sections 2–18 and the other documents in `docs/`.
 
@@ -320,24 +320,24 @@ Exit criteria:
 
 Dependencies: Phases 10 and 11.
 
-**Status: not started.**
+**Status: npm access, licensing/provenance sign-off, dependency/secret audit, the controlled release workflow and the dry-run comparison are complete; the changelog, rollback and smoke-plan tasks are pending.**
 
 Tasks:
 
-- [ ] Recheck npm namespace/ownership immediately before publication, including account access, 2FA or trusted-publisher setup, and the exact unscoped package name.
-- [ ] Complete a licensing/provenance sign-off: AGPL notices in the distributed artifact, pinned dependency licences, generated metadata provenance, no copied grammar/parser/binding source, no secrets, and a public source URL in package metadata and README. This is a release review, not legal advice.
-- [ ] Re-run the final dependency and secret audit on the release commit: `npm audit --omit=dev` as a blocking gate, full `npm audit` reviewed, prototype client audit reviewed, and a runtime check confirming no telemetry or network use by the stdio server.
-- [ ] Add a controlled release workflow: tag or GitHub release trigger, manual approval environment, pinned actions, immutable release commit, npm trusted publishing/OIDC with automatic provenance, no automatic publish from ordinary commits, and no long-lived npm token when trusted publishing is available. Source: <https://docs.npmjs.com/trusted-publishers>.
-- [ ] Run `npm publish --dry-run` from the exact release commit and compare its file list, licence, manifest and executable entry point with `npm pack --dry-run` and `scripts/verify-package.mjs`.
+- [x] Recheck npm namespace/ownership immediately before publication, including account access, 2FA or trusted-publisher setup, and the exact unscoped package name. Verified on 2026-11-27: exact unscoped name `strudel-lsp-server` remains unregistered on `https://registry.npmjs.org/`, repository ownership is `PedroZappa`, `npm whoami` returns `pedrozappa`, and `npm profile get` reports `two-factor auth: auth-and-writes` after operator setup. Trusted publishing cannot be configured until the package exists, so 2FA satisfies this gate; name availability must be rechecked immediately before publication. Evidence: ADR-039.
+- [x] Complete a licensing/provenance sign-off: AGPL notices in the distributed artifact, pinned dependency licences, generated metadata provenance, no copied grammar/parser/binding source, no secrets, and a public source URL in package metadata and README. This is a release review, not legal advice. Verified against the 132-file tarball, exact-pinned lockfile, regenerated metadata, tracked-file secret scan and installed-package check; evidence and repeat-before-publication requirement in ADR-040.
+- [x] Re-run the final dependency and secret audit on the release commit: `npm audit --omit=dev` as a blocking gate, full `npm audit` reviewed, prototype client audit reviewed, and a runtime check confirming no telemetry or network use by the stdio server. Both root audits and both prototype audits reported zero findings; a tracked-file secret scan found zero hits; an instrumented stdio handshake produced zero network API calls. Evidence for commit `c6a9200` in ADR-041.
+- [x] Add a controlled release workflow: tag or GitHub release trigger, manual approval environment, pinned actions, immutable release commit, npm trusted publishing/OIDC with automatic provenance, no automatic publish from ordinary commits, and no long-lived npm token when trusted publishing is available. `.github/workflows/release.yml` publishes only from `v*` tags after `npm-release` approval, with OIDC `id-token: write`, pinned actions and no token reference; `scripts/verify-release.mjs` enforces tag/commit integrity and dry-run parity. Source: <https://docs.npmjs.com/trusted-publishers>. Design, validation evidence and the unresolved first-publish bootstrap decision are in ADR-042.
+- [x] Run `npm publish --dry-run` from the exact release commit and compare its file list, licence, manifest and executable entry point with `npm pack --dry-run` and `scripts/verify-package.mjs`. Verified on the current candidate (HEAD `c6a9200`, no tag yet): `npm run verify:release` compared both dry-runs in an isolated copy across 132 files, manifest, AGPL licence and node shebang entry point; `npm run verify:package` passed both offline install modes. Point-in-time evidence in ADR-043; repeat on the exact tagged commit before publication.
 - [ ] Prepare versioned `CHANGELOG.md` entries and GitHub release notes covering supported Strudel/Node versions, implemented capabilities, explicit limitations, installed-package verification and known issues.
 - [ ] Decide and document rollback policy before publishing: npm versions are immutable, so define whether a correction uses a patch release, deprecation or unpublish request, and how users will be notified.
 - [ ] Define the post-publication smoke plan: verify registry metadata and licence, install from the public registry on a clean machine, run the stdio handshake, confirm the documented launch command, and create the Git/GitHub release record.
 
 Exit criteria:
 
-- [ ] Licensing, provenance and audit sign-offs are recorded with evidence.
-- [ ] The release workflow is validated without publishing and produces provenance.
-- [ ] Publish dry-run matches the verified package contents and manifest.
+- [x] Licensing, provenance and audit sign-offs are recorded with evidence in ADR-040 and ADR-041.
+- [ ] The release workflow is validated without publishing and produces provenance. Local validation passed (ADR-042); provenance attestation can only be confirmed after the first publish, so this exit criterion stays open for Phase 13.
+- [x] Publish dry-run matches the verified package contents and manifest on the current candidate (ADR-043); repeat on the exact tagged release commit before publication.
 - [ ] Changelog, release notes, rollback policy and post-publication plan are ready for the exact release commit.
 
 ## Phase 13 — Controlled first publication
