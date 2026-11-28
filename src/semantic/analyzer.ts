@@ -130,6 +130,24 @@ function collectDeclarationPlans(
       return;
     }
 
+    if (target.kind === 'labeledStatement') {
+      const children = namedChildren(target);
+      const label = children.find((child) => child.kind === 'identifier');
+      const body = children.find((child) => child.kind === 'expressionStatement');
+      const expression =
+        body === undefined ? undefined : namedChildren(body).find((child) => !child.isMissing);
+      if (
+        label !== undefined &&
+        expression !== undefined &&
+        !label.hasError &&
+        !expression.hasError &&
+        label.text === '$'
+      ) {
+        addPlan('activePattern', '$', label, expression);
+      }
+      return;
+    }
+
     const assignment = findNodes(target, 'assignmentExpression')[0];
     if (assignment !== undefined) {
       const left = namedChildren(assignment)[0];
@@ -336,7 +354,9 @@ export class SemanticEngine {
     const globalBindings = new Map<string, GlobalBinding>();
     for (const plan of plans) {
       const symbol = symbolsById.get(plan.symbolId);
-      if (symbol !== undefined) {
+      // `$` is a registration marker, not a binding; it must never resolve as
+      // an identifier reference.
+      if (symbol !== undefined && plan.kind !== 'activePattern') {
         globalBindings.set(plan.name, { plan, symbol });
       }
     }
@@ -491,7 +511,9 @@ export class SemanticEngine {
     const globalBindings = new Map<string, GlobalBinding>();
     for (const plan of plans) {
       const symbol = symbolsById.get(plan.symbolId);
-      if (symbol !== undefined) {
+      // `$` is a registration marker, not a binding; it must never resolve as
+      // an identifier reference.
+      if (symbol !== undefined && plan.kind !== 'activePattern') {
         globalBindings.set(plan.name, { plan, symbol });
       }
     }
@@ -540,6 +562,8 @@ export class SemanticEngine {
         return 'function';
       case 'import':
         return 'import';
+      case 'activePattern':
+        return 'activePattern';
       case 'assignment':
       case 'variable':
         return 'variable';

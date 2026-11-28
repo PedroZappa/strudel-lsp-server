@@ -183,6 +183,65 @@ void test('builds parser-independent symbols, scopes, references and pattern typ
   assert.equal(findReferenceAt(result, text.indexOf('pat.gain') + 1)?.name, 'pat');
 });
 
+void test('models dollar active patterns without creating an identifier binding', () => {
+  const text = '$: s("bd")\n$';
+  const body: FixtureNodeSpec = {
+    kind: 'expressionStatement',
+    text: 's("bd")',
+    children: [
+      {
+        kind: 'callExpression',
+        text: 's("bd")',
+        children: [
+          { kind: 'identifier', text: 's' },
+          {
+            kind: 'arguments',
+            text: '("bd")',
+            children: [{ kind: 'string', text: '"bd"' }],
+          },
+        ],
+      },
+    ],
+  };
+  const { document } = createFixtureDocument(text, [
+    {
+      kind: 'labeledStatement',
+      text: '$: s("bd")',
+      children: [{ kind: 'identifier', text: '$' }, { kind: 'token', text: ':' }, body],
+    },
+    {
+      kind: 'expressionStatement',
+      text: '$',
+      children: [{ kind: 'identifier', text: '$', occurrence: 1 }],
+    },
+  ]);
+
+  const result = createSemanticEngine(catalog).analyze(document);
+  const symbol = firstSymbol(result, '$');
+  assert.equal(symbol.kind, 'activePattern');
+  assert.equal(sameType(symbol.type, PATTERN_TYPE), true);
+  assert.equal(symbol.declaration?.startOffset, 0);
+  assert.equal(symbol.declaration?.endOffset, 1);
+  assert.equal(findSymbolAt(result, 0)?.kind, 'activePattern');
+
+  const reference = findReferenceAt(result, text.lastIndexOf('$'));
+  assert.ok(reference !== undefined);
+  assert.equal(reference.name, '$');
+  assert.equal(reference.resolvedSymbolId, undefined);
+
+  const incomplete = createFixtureDocument('$:', [
+    {
+      kind: 'labeledStatement',
+      text: '$:',
+      children: [
+        { kind: 'identifier', text: '$' },
+        { kind: 'token', text: ':' },
+      ],
+    },
+  ]);
+  assert.equal(createSemanticEngine(catalog).analyze(incomplete.document).symbols.size, 0);
+});
+
 void test('resolves user functions, parameters and lexical scopes', () => {
   const text = 'const x = 1\nfunction shape(x){ return note(x) }\nshape("c e")';
   const innerX: FixtureNodeSpec = { kind: 'identifier', text: 'x', occurrence: 2 };

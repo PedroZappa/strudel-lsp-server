@@ -261,6 +261,13 @@ export class StatementAnalyzer {
         case 'import':
           this.analyzeImportPlan(plan);
           break;
+        case 'activePattern': {
+          const symbol = this.symbolsById.get(plan.symbolId);
+          if (symbol !== undefined) {
+            symbol.type = this.inferExpression(plan.node, GLOBAL_SCOPE_ID);
+          }
+          break;
+        }
         case 'assignment': {
           const symbol = this.symbolsById.get(plan.symbolId);
           if (symbol !== undefined) {

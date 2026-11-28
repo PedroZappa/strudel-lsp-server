@@ -41,7 +41,8 @@ export interface MutableReference {
   resolvedSymbolId?: string;
 }
 
-export type DeclarationPlanKind = 'variable' | 'function' | 'import' | 'assignment';
+export type DeclarationPlanKind =
+  'variable' | 'function' | 'import' | 'assignment' | 'activePattern';
 
 export interface DeclarationPlan {
   readonly kind: DeclarationPlanKind;

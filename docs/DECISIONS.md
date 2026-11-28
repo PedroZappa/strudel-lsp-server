@@ -1790,3 +1790,66 @@ Consequences:
 - `typedoc.json` is the single source of truth for API-reference generation. `docs/api/` is gitignored and excluded from Prettier and ESLint; `make clean` removes it with other generated output.
 - API documentation is validated in the same local and CI gates as type checking, linting and formatting, so a comment or link regression fails before merge.
 - `test/packageScripts.test.ts` pins the dependency, scripts, configuration, Makefile targets, ignore rules and CI wiring. `test/releaseWorkflow.test.ts` and the CI audit contract pin the blocking runtime audit and advisory full audit. No parser, semantic, protocol or published-artifact behaviour is changed.
+
+## ADR-087 — Phase 28 `$:` active-pattern declarations
+
+Status: accepted on 2026-11-28 for the authorized first Phase 28 task. This decision adds a bounded static syntax model and documentation hints. It does not add an LSP capability, diagnostic code, metadata record, runtime command, version, tag or publication.
+
+Problem: Phase 28 requires a phase-specific ADR with authoritative evidence before `$:` active-pattern semantics may be modelled. The language server must expose useful editor context without claiming playback, scheduler, mute or solo state that cannot be known from source alone.
+
+Evidence:
+
+- The official Strudel FAQ (<https://strudel.cc/learn/faq/>) says “Using the $ operator, several patterns can be played at once” and its cheat sheet says “`$:` at the start of a line, defines a member of the stack”. The same guidance is present in the pinned `@strudel/core@1.2.6` website source at <https://codeberg.org/uzu/strudel/src/tag/@strudel%2Fcore%401.2.6/website/src/pages/learn/faq.mdx>.
+- Installed `@strudel/transpiler@1.2.6` (`node_modules/@strudel/transpiler/transpiler.mjs:118-119`) rewrites every acorn `LabeledStatement`. Its `labelToP` helper comments “converts label expressions to p calls: \"x: y\" to \"y.p('x')\"” (`:468`), uses `node.body.expression` as the receiver (`:477`) and passes `node.label.name` as the string argument (`:486`). The rewrite is therefore source-level semantics for a label followed by an expression statement, not a declaration of a JavaScript value.
+- ECMAScript labelled statements (§14.13, <https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#sec-labelled-statements>) are only targets for labelled `break`/`continue`; the label does not create a binding. Strudel deliberately overloads this unused syntax, as recorded in the maintainer discussion at <https://codeberg.org/uzu/strudel/issues/990>.
+- The pinned `tree-sitter-strudel@2.0.2` grammar already exposes `labeled_statement` and the syntax adapter normalizes it as `labeledStatement`, so no grammar change or copied parser code is needed.
+
+Decision:
+
+- Model only a top-level `$:` label followed by a non-error expression statement as a parser-independent internal `activePattern` symbol. Named labels, `_$`, `S$`, mute/solo behaviour and runtime registration state are out of scope.
+- The symbol is a registration marker, not a binding: it is excluded from global bindings so an identifier `$` never resolves to it and it cannot enter completion, rename, inlay hints or semantic-token classification.
+- Infer the symbol's Strudel type from the labelled body expression. A malformed or incomplete statement produces no `activePattern` symbol.
+- Expose the marker through the existing document-symbol and hover surfaces only: an outline entry uses the already-advertised `variable` kind and the exact `$` token range, while hover calls it an “Active pattern marker” and states that `$:` transpiles to `.p('$')` on the following pattern expression with no playback or scheduler state inferred.
+- No capability, diagnostic code, metadata snapshot, parser dependency, runtime evaluation or published package state changes.
+
+Rationale: the official docs establish `$:` as user-facing syntax, and the pinned transpiler gives an exact, versioned rewrite that can be described safely from source. Reusing internal symbol plumbing keeps the feature parser-independent and incremental. Reusing existing document-symbol and hover capabilities provides useful context while the dedicated internal kind prevents accidental variable semantics. Runtime state, named-label variants and mute/solo conventions require separate evidence and an explicit later decision.
+
+Consequences:
+
+- `docs/LANGUAGE_SPECIFICATION.md`, `docs/SEMANTIC_ENGINE.md`, `docs/LSP_FEATURES.md` and `CHANGELOG.md` record the bounded behaviour. The active roadmap task remains a proposal checkbox until phase-level release planning accepts it.
+- Parser, semantic, feature and live-coding/recovery tests cover the stable syntax node, inferred `Pattern` type, non-binding behaviour, outline entry, hover wording and incomplete input. No frozen capability or diagnostic-code contract changes.
+- Any later extension to named labels, mute/solo markers, diagnostics or code lenses needs new authoritative evidence and a separate ADR under the Phase 28 gate.
+
+Implementation note: parser, semantic and feature suites pass for the new cases; the focused gate covers `npm run typecheck`, `npm run test:parser`, `npm run test:semantic` and `npm run test:features`. Final validation ran `npm run check` with typecheck, lint, formatting, TypeDoc and 183/183 tests passing, plus `npm run benchmark:check` with all 20 workloads within existing p50/p95/p99 thresholds.
+
+## ADR-088 — Phase 28 unknown-sample diagnostic catalog gate
+
+Status: accepted on 2026-11-28 for the authorized Phase 28 unknown-sample task. This decision records that the required catalog gate fails for the pinned Strudel 1.2.6 target. It rejects a global unknown-sample diagnostic and changes no runtime behaviour, capability, diagnostic code, configuration key, metadata snapshot, version, tag or registry state.
+
+Problem: Phase 28 permits unknown-sample diagnostics only with a complete, versioned and authoritative sample catalog whose source, version and coverage gate are recorded, with all speculative cases suppressed during incomplete edits. The decision must establish whether such a catalog exists before any diagnostic certainty is advertised.
+
+Evidence:
+
+- Pinned official documentation treats the sound inventory as mutable runtime state. `website/src/pages/learn/samples.mdx` describes a built-in “sample map” (`:19`) and names `bd`, `sd`, `hh` and `misc` only as defaults (`:23`); it directs users to the REPL `sounds` tab for available names (`:60`) and documents arbitrary `samples({...})` maps that can override defaults (`:119,136-137`) and remote `strudel.json` maps (`:153-162`). The pinned FAQ asks where to see “all the samples and synths” and answers that the tab lists what is “currently loaded” (`website/src/pages/learn/faq.mdx:90-92`). The technical manual documents open registration through `registerSound(name, ...)` (`website/src/pages/technical-manual/sounds.mdx:14,18,32`) and `soundAlias` (`samples.mdx:62-67`). These sources are tied to the `@strudel/core@1.2.6` tag commit `d198910a86fcaecd658ef528bfa6d7884e93490b`.
+- `@strudel/reference` has versions through `1.2.2` and no `1.2.6`. Its README (`node_modules/@strudel/reference/README.md:3`) describes metadata for “all documented strudel functions”, not sample names. Inspection of its 577 records found no entries for `bd`, `sd`, `hh`, `misc`, `RolandTR909`, `RolandTR808_bd`, `white`, `pink`, `z_sine`, `gm_piano` or `bassdrum`; `sine` and `square` are signal constants, not samples. The generated `strudel-1.2.6` snapshot explicitly records `@strudel/reference@1.2.2` as its record source (`src/languageDatabase/generated.ts:5-16`), so it cannot establish 1.2.6 sample completeness.
+- `@strudel/repl@1.2.6/prebake.mjs:23-41` loads sample-map URLs from mutable GitHub `main` branches (`felixroos/dough-samples`, `todepond/samples`), registers finite synth/ZZFX/soundfont names and applies bank aliases. `@strudel/repl@1.2.6/package.json:28-37` still depends on `@strudel/core@1.2.4`, `@strudel/mini@1.2.4`, `@strudel/webaudio@1.2.5` and `@strudel/soundfonts@1.2.5`. A point-in-time 2026-11-28 read of the mutable maps found drift from the documented defaults, including a missing `uzu-drumkit.json`. The published REPL package therefore does not define a reproducible all-1.2.6 catalog.
+- Finite built-in subsets exist — waveform names in `superdough@1.2.6/synth.mjs:20-24`, noise names in `helpers.mjs:6`, `zzfx`/`z_*` names in `zzfx.mjs:80-82` and `gm_*` names from `@strudel/soundfonts@1.2.5` — but they do not close the set of valid names because sample maps, aliases, imports and runtime registrations remain open-ended.
+- The server supplies no runtime inventory: `src/server.ts:137` constructs `createDefaultLanguageDatabase()` without runtime sample records. The seven-code frozen diagnostic vocabulary in `src/configuration/diagnostics.ts:5-13` and `test/lsp/frozenBaselineContract.test.ts:59-67,159-163` explicitly rejects `unknown-sample`. Semantic analysis creates a `sample` reference only for an explicit catalog entry (`src/semantic/statementAnalyzer.ts:801-849`), and the mini-notation AST deliberately excludes sample identity (`src/miniNotation/ast.ts:132-137`). Source-local literal `samples({...})` keys remain authoritative for completion and hover (`src/features/miniNotationCandidates.ts:79-114,153-214`).
+- Third-party sample maps inspected for provenance carry mixed CC-BY, CC0 and CC-BY-SA attribution in `felixroos/dough-samples/README.md`. Any future derived catalog must pin source revisions and integrity and record attribution; audio redistribution is a separate question.
+
+Decision:
+
+- **Fail the completeness gate. Do not add a global `unknown-sample` diagnostic for Strudel 1.2.6.** Keep the seven frozen diagnostic codes and the configuration contract that ignores an `unknown-sample` severity entry.
+- Keep source-local literal `samples({...})` keys and explicitly injected runtime sample records as the only authoritative sample-name facts. An unmatched name remains silent; it is not evidence of invalidity.
+- Finite, pinned built-in sound names may be considered for completion or hover only with recorded provenance. They must not be used to assert that every other name is wrong.
+- A future global diagnostic requires a new ADR proving: an immutable catalog pinned to the exact Strudel target and covering every default map, synth, soundfont and alias; recorded source revision, integrity, version and attribution; a closed-world contract addressing local maps, imports, aliases and runtime registration; exact source ranges; suppression for syntax errors, incomplete edits, dynamic/spread keys and unknown provenance; and an additive MINOR contract update under ADR-063.
+
+Rationale: official sources make the valid-name set open-world and session-dependent. The bundled metadata is documented-function metadata one minor version behind the pinned language target, and the REPL uses mutable remote map URLs with mixed package versions. A global verdict would therefore produce false positives exactly during live coding, when maps are incomplete or user-defined. The current conservative model already provides useful completion and hover from authoritative document-local or injected facts without claiming completeness.
+
+Consequences:
+
+- No diagnostic, capability, configuration, metadata, parser, runtime, version, tag or publication change is made by this decision. The active roadmap task remains unchecked because active phases are proposal-only until a phase release gate accepts work.
+- `docs/LANGUAGE_SPECIFICATION.md`, `docs/SEMANTIC_ENGINE.md` and `docs/LSP_FEATURES.md` record the gate result. The frozen baseline contract and its negative `unknown-sample` assertions remain authoritative.
+- Any later attempt to add the diagnostic must reopen this gate with immutable catalog evidence and explicit acceptance of the diagnostic-code contract change; incomplete input and dynamic samples remain silent until then.
+
+Implementation note: this is an evidence-only outcome. Final validation ran `npm run check` with typecheck, lint, formatting, TypeDoc and 184/184 tests passing. No benchmark run was required because runtime code did not change.

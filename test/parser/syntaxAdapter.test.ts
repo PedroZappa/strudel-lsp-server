@@ -72,6 +72,27 @@ void test('parses variable declarations with chained methods', () => {
   assert.equal(member.text, 's("bd").fast');
 });
 
+void test('parses dollar-labelled active patterns and recovers from an incomplete label', () => {
+  const adapter = createSyntaxAdapter();
+  const text = '$: s("bd")';
+  const document = adapter.parse(snapshot(text));
+
+  assert.equal(document.hasErrors, false);
+  const labeled = findNodes(document.root, 'labeledStatement')[0];
+  assert.ok(labeled !== undefined);
+  assert.equal(labeled.text, text);
+  assert.deepEqual(
+    labeled.children.filter((child) => child.named).map((child) => [child.kind, child.text]),
+    [
+      ['identifier', '$'],
+      ['expressionStatement', 's("bd")'],
+    ],
+  );
+
+  const incomplete = adapter.parse(snapshot('$:'));
+  assert.equal(incomplete.hasErrors, true);
+});
+
 void test('maps non-ASCII offsets to UTF-16 source positions', () => {
   const adapter = createSyntaxAdapter();
   const text = '// 🎵\nnote("bd sd")';

@@ -14,6 +14,8 @@ function documentSymbolKind(kind: SemanticSymbolKind): DocumentSymbolKind | unde
     case 'parameter':
     case 'import':
       return kind;
+    case 'activePattern':
+      return 'variable';
     default:
       return undefined;
   }

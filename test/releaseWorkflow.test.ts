@@ -72,6 +72,37 @@ void test('active roadmap contains only post-v1 planning and links the completed
   }
 });
 
+void test('Phase 28 active-pattern ADR records pinned evidence and static-only scope', () => {
+  const languageSpec = readFileSync(
+    join(repositoryRoot, 'docs', 'LANGUAGE_SPECIFICATION.md'),
+    'utf8',
+  );
+
+  assert.match(decisions, /^## ADR-087 — Phase 28 `\$:` active-pattern declarations$/m);
+  assert.match(decisions, /@strudel\/transpiler@1\.2\.6/);
+  assert.match(decisions, /labelToP/);
+  assert.match(decisions, /no playback or scheduler state inferred/);
+  assert.match(decisions, /Named labels, `_?\$`, `S\$`/);
+  assert.match(languageSpec, /ADR-087/);
+  assert.match(languageSpec, /static active-pattern declarations/);
+  assert.match(featuresDoc, /active pattern marker/);
+});
+
+void test('Phase 28 unknown-sample gate records catalog failure and preserves frozen codes', () => {
+  const languageSpec = readFileSync(
+    join(repositoryRoot, 'docs', 'LANGUAGE_SPECIFICATION.md'),
+    'utf8',
+  );
+
+  assert.match(decisions, /^## ADR-088 — Phase 28 unknown-sample diagnostic catalog gate$/m);
+  assert.match(decisions, /Fail the completeness gate/);
+  assert.match(decisions, /Do not add a global `unknown-sample` diagnostic/);
+  assert.match(decisions, /mutable GitHub `main` branches/);
+  assert.match(capabilityContract, /FROZEN_DIAGNOSTIC_CODES\.includes\('unknown-sample'\), false/);
+  assert.match(featuresDoc, /Phase 28 catalog gate \(ADR-088\)/);
+  assert.match(languageSpec, /blocked by ADR-088/);
+});
+
 void test('release workflow publishes only from a tagged commit after approval', () => {
   assert.match(workflow, /^[ ]{2}push:\n[ ]{4}tags:\n[ ]{6}- 'v\*'$/m);
   assert.doesNotMatch(workflow, /^[ ]{4}branches:/m);

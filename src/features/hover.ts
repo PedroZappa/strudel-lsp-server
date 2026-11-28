@@ -19,6 +19,8 @@ function symbolLabel(kind: string): string {
       return 'Parameter';
     case 'import':
       return 'Import';
+    case 'activePattern':
+      return 'Active pattern marker';
     default:
       return 'Variable';
   }
@@ -115,6 +117,11 @@ export function provideHover(context: FeatureContext, offset: number): HoverResu
     `**${symbol.name}** — ${symbolLabel(symbol.kind)}`,
     `Type: \`${formatStrudelType(symbol.type)}\``,
   ];
+  if (symbol.kind === 'activePattern') {
+    sections.push(
+      "Static syntax: `$:` transpiles to `.p('$')` on the following pattern expression. No playback or scheduler state is inferred.",
+    );
+  }
   const record = metadataRecordForSymbol(context, symbol);
   const documentation = record === undefined ? undefined : recordDocumentation(record);
   if (documentation !== undefined) {

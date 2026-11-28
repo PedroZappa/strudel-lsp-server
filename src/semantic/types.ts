@@ -45,7 +45,14 @@ export interface SemanticSignature {
 }
 
 export type SemanticSymbolKind =
-  'variable' | 'function' | 'parameter' | 'import' | 'builtin' | 'method' | 'sample';
+  | 'variable'
+  | 'function'
+  | 'parameter'
+  | 'import'
+  | 'builtin'
+  | 'method'
+  | 'sample'
+  | 'activePattern';
 
 export interface SemanticSymbol {
   readonly id: string;

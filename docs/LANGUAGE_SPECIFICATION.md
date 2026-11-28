@@ -11,6 +11,7 @@ Strudel is a JavaScript-hosted live-coding language. Language intelligence must 
 Sources:
 
 - Strudel mini-notation documentation: <https://strudel.cc/learn/mini-notation/>
+- Strudel FAQ and `$:` stack-member guidance: <https://strudel.cc/learn/faq/>
 - `@strudel/core` package: <https://registry.npmjs.org/@strudel/core>
 - Parser project README: <https://github.com/PedroZappa/tree-sitter-strdl>
 
@@ -21,10 +22,12 @@ Verified examples from authoritative sources include:
 ```js
 s('bd').fast(2);
 note('c e g b');
+$: s('bd*4');
 ```
 
 Constructs to model:
 
+- Dollar-labelled expression statements (`$: expr`) as static active-pattern declarations. Strudel 1.2.6 transpiles them to `expr.p('$')`; the label is a registration key, not a JavaScript binding, and editor hints must not infer playback or scheduler state. See ADR-087.
 - Variable declarations and user-defined functions.
 - Calls to pattern-producing functions such as `s`, `sound`, `n`, `note` and `stack`.
 - Chainable pattern methods such as `.fast`.
@@ -83,5 +86,5 @@ The language server's submodel is lexical plus a Strudel-owned recovery AST. The
 
 - How optional, rest and overloaded parameters should be represented if authoritative metadata gains them.
 - Whether the additive recovery AST should later become an evaluable mini-notation syntax tree with new, evidence-backed language facts.
-- Exact diagnostic rules for unknown sample names and malformed mini-notation beyond verified structural faults.
+- Exact diagnostic rules for malformed mini-notation beyond verified structural faults; global unknown-sample diagnostics are blocked by ADR-088 unless a complete, versioned and authoritative catalog becomes available.
 - How much JavaScript expression evaluation is needed for useful constant folding without building a JS type checker.

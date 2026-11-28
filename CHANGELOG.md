@@ -6,6 +6,10 @@ Version `0.3.0` was published on 2026-11-27 from tag `v0.3.0` at commit `b3451e2
 
 ## [Unreleased]
 
+### Added
+
+- Static `$:` active-pattern markers in document symbols and hover, inferred from the labelled pattern expression without claiming playback, scheduler, mute or solo state (ADR-087).
+
 ## [1.0.0] - 2026-11-28
 
 Published on 2026-11-28 from tag `v1.0.0` at commit `447736d3d1664e34d17e9fe6b5394e64f4327518` through the controlled OIDC workflow with `pedrozappa` as operator. ADR-083 records the exact local-tag audit, ADR-084 records the exact publication authorization, and ADR-085 records the registry identity, signatures, SLSA v1 provenance, tarball identity, clean installs and installed stdio handshake. See ADR-081, ADR-082 and `.github/RELEASE_NOTES_v1.0.0.md` for the candidate and release contract.

@@ -128,6 +128,14 @@ void test('hover uses database documentation for globals and semantic types for 
   assert.ok(localHover !== undefined);
   assert.match(localHover.contents, /Variable/);
   assert.match(localHover.contents, /Pattern/);
+
+  const activePattern = createFeatureHarness('$: s("bd")', 0);
+  const activeHover = provideHover(activePattern.context, 0);
+  assert.ok(activeHover !== undefined);
+  assert.match(activeHover.contents, /Active pattern marker/);
+  assert.match(activeHover.contents, /Type: `Pattern`/);
+  assert.match(activeHover.contents, /\.p\('\$'\)/);
+  assert.match(activeHover.contents, /No playback or scheduler state is inferred/);
 });
 
 void test('definition and references use resolved semantic symbols', () => {

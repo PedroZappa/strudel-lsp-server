@@ -77,6 +77,8 @@ ADR-063 establishes the initial v1 contract and Phase 26 first froze the publish
 
 Current implementation: outermost non-empty syntax error nodes produce warnings; missing nodes and speculative semantic conclusions are suppressed. Unknown calls and pattern methods produce informational diagnostics only when the syntax tree is clean. Unresolved value references are intentionally not reported because runtime globals may be injected outside the document. Mini-notation reports empty groups, unmatched or mismatched closers and missing steps at the start of or between `,` or `|` separators; unclosed groups, trailing separators, other trailing operators and unsupported characters are not reported during live editing. The configuration implemented for the published `0.2.0` release in ADR-052 can globally disable these diagnostics or remap/suppress individual codes through `workspace/configuration` or a settings notification, but never changes which findings the providers consider reliable.
 
+Phase 28 catalog gate (ADR-088): no complete, versioned and authoritative sample catalog exists for Strudel 1.2.6. No global unknown-sample diagnostic is added; unmatched sample names, dynamic keys, imports and locally registered sounds remain silent. Literal `samples({...})` keys and explicitly injected runtime records remain authoritative only for completion and hover.
+
 ## Mini-notation policy
 
 - The pinned lexer remains the source of token ranges, descriptions and the four stable structural diagnostic codes.
@@ -118,6 +120,7 @@ Current implementation: outermost non-empty syntax error nodes produce warnings;
 ## Document symbols policy
 
 - Only symbols declared in the current document and still matching their recorded source range appear in the outline.
+- A `$:` active-pattern marker appears as a `variable` outline entry with the exact `$` token as its selection range; `detail` is the type inferred from the labelled body expression. Hover labels it an active pattern marker and states only the static `.p('$')` rewrite, never playback or scheduler state (ADR-087).
 - Catalog-only builtins, methods and samples have no declaration and are omitted.
 - A named function owns the declarations in its function scope as children; scopes without a declared owner are flattened into the enclosing level.
 - `detail` reports the limited Strudel type inferred by the semantic engine, not a JavaScript type.

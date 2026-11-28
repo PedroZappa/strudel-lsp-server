@@ -44,6 +44,22 @@ void test('document symbols expose declared symbols with function scopes as chil
   assert.equal(mix.children[1]?.detail, 'Pattern');
 });
 
+void test('document symbols expose dollar active patterns without claiming runtime state', () => {
+  const text = '$: s("bd")';
+  const symbols = provideDocumentSymbols(createFeatureHarness(text).context);
+
+  assert.deepEqual(
+    symbols.map((symbol) => [symbol.name, symbol.kind, symbol.detail]),
+    [['$', 'variable', 'Pattern']],
+  );
+  const active = symbols[0];
+  assert.ok(active !== undefined);
+  assert.equal(text.slice(active.selectionRange.startOffset, active.selectionRange.endOffset), '$');
+
+  const incomplete = createFeatureHarness('$:');
+  assert.deepEqual(provideDocumentSymbols(incomplete.context), []);
+});
+
 void test('document symbols omit catalog-only symbols and keep incomplete declarations', () => {
   const catalogOnly = createFeatureHarness('s("bd").fast(2)');
   assert.deepEqual(provideDocumentSymbols(catalogOnly.context), []);

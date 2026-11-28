@@ -1,6 +1,6 @@
 # Semantic Engine
 
-Status: Phase 4 model, Phase 5 database-backed catalog, Phase 6 provider integration, signature help, mini-notation token analysis and recovery AST, and Phase 7 quick-fix inputs implemented on 2026-11-27. Real documentation corpus validation also passed on 2026-11-27 with no semantic invariant failures over 484 pinned examples. Phase 20 adds unambiguous generated aliases, metadata-gated sample-name resolution, conservative receiver-based parameter inference and additive multi-signature models under ADR-068. The model remains deliberately limited.
+Status: Phase 4 model, Phase 5 database-backed catalog, Phase 6 provider integration, signature help, mini-notation token analysis and recovery AST, and Phase 7 quick-fix inputs implemented on 2026-11-27. Real documentation corpus validation also passed on 2026-11-27 with no semantic invariant failures over 484 pinned examples. Phase 20 adds unambiguous generated aliases, metadata-gated sample-name resolution, conservative receiver-based parameter inference and additive multi-signature models under ADR-068. Phase 28 adds parser-independent `activePattern` markers under ADR-087. The model remains deliberately limited.
 
 Authority: `AGENTS.md` sections 3 and 5.
 
@@ -26,6 +26,7 @@ The semantic engine imports only the stable syntax contract and never imports Tr
 Symbol kinds:
 
 - `variable` — user variables and top-level assignments.
+- `activePattern` — a static `$:` registration marker inferred from its body expression. It is not a binding, is excluded from identifier resolution and feature candidate sets, and carries no playback or scheduler state.
 - `function` — user-defined functions.
 - `parameter` — function and arrow-function parameters.
 - `import` — imported local bindings.
@@ -84,7 +85,7 @@ The engine exposes semantic facts only. Feature providers decide which facts bec
 ## Current limitations
 
 - The LSP server constructs the default database-backed catalog; editor clients cannot yet select a Strudel metadata version per workspace.
-- The default catalog has no sample records, so sample-name resolution is available only when explicit sample catalog metadata is injected; mini-notation strings are never guessed as samples.
+- The default catalog has no sample records, so sample-name resolution is available only when explicit sample catalog metadata is injected; mini-notation strings are never guessed as samples. ADR-088 confirms that no complete Strudel 1.2.6 sample catalog passes the Phase 28 gate, so unmatched names produce no unknown-sample diagnostic.
 - Parameter inference covers only unambiguous Pattern-method receiver usage; other JavaScript or runtime evidence is intentionally ignored. The pinned grammar exposes user rest parameters as an `error` node, so they are recognized conservatively from that shape rather than as a dedicated syntax node.
 - Incremental reuse is statement-level, not sub-expression-level.
 - Mini-notation analysis is lexical plus an additive recovery-oriented AST. It is not a full 1.2.6 compiler, pattern evaluator or haskellish statement parser; operator nodes record syntactic targets without applying operations.
