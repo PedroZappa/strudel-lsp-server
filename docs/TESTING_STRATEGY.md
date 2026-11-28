@@ -703,3 +703,21 @@ This closes the Phase 26 task for contract tests over the advertised providers, 
 | `git diff --check`    | Pass   | No whitespace errors in the release workflow gate-alignment changes.                                                                                                                                                                          |
 
 This closes the Phase 26 release workflow alignment task. The exact `v1.0.0` candidate still needs the full gate rerun and explicit release authorization; this change only strengthens the pre-publish validation job.
+
+## Phase 26 candidate dependency, licence, provenance and secret audit
+
+ADR-079 records this audit on the clean candidate tree at commit `5889ca9d00491421e68b89067b5e75aad28c6681`, darwin-arm64, Node `v26.8.2` and npm `11.19.1`. The manifest still declares `0.5.0`, so this is candidate-tree evidence rather than exact tagged v1 evidence.
+
+| Check                          | Result | Evidence                                                                                                                                                                                                                                     |
+| ------------------------------ | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm audit --omit=dev --json`  | Pass   | Exit 0; zero info, low, moderate, high and critical findings and zero advisories. This is the blocking runtime gate.                                                                                                                         |
+| `npm audit --json`             | Pass   | Exit 0; zero findings in every severity for the full dependency tree.                                                                                                                                                                        |
+| Prototype client/server audits | Pass   | `npm audit --prefix client --json` and `npm audit --prefix server --json` each exited 0 with zero findings.                                                                                                                                  |
+| `npm pack --dry-run --json`    | Pass   | 171 files, 189,605 bytes; only `LICENSE`, `README.md`, `package.json` and `dist/src/**`; no grammar, binding, C/C++ source or parser `build/` entry among 171 tracked files.                                                                 |
+| Dependency licences and pins   | Pass   | All 15 declared dependencies match installed versions and carry lockfile `resolved`/`integrity` entries; runtime licences are MIT, AGPL-3.0-only, MIT and MIT, Strudel dev packages are AGPL-3.0-or-later, remaining tooling MIT/Apache-2.0. |
+| `npm run generate:metadata`    | Pass   | Regenerated 576 reference records with no working-tree diff; no local `/Users/zedro` path appears in `dist/src`.                                                                                                                             |
+| `npm run verify:package`       | Pass   | 171-file tarball passed both offline install modes, parser prebuild load, installed AGPL metadata and stdio handshakes.                                                                                                                      |
+| Tracked-file secret scan       | Pass   | Zero hits after excluding the two known pattern references in `docs/DECISIONS.md` and `test/releaseWorkflow.test.ts`; no matched value was recorded.                                                                                         |
+| Runtime network probe          | Pass   | A temporary preload patched socket, HTTP(S), DNS, TLS, dgram and `fetch` APIs; `initialize`/`shutdown`/`exit` exited 0 with both responses, empty stderr and zero probe hits. No harness or dependency was added to the repository.          |
+
+The audit set remains point-in-time. Phase 27 must repeat it on the exact tagged `v1.0.0` candidate if the manifest version, tag, lockfile, generated snapshot, tarball contents or server code changes.
