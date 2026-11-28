@@ -1,4 +1,4 @@
-Release notes for `strudel-lsp-server@1.0.0` (release candidate). This candidate is prepared from the exact working tree whose manifest declares `1.0.0`; no `v1.0.0` tag is pushed and the version is not published. A local tag may identify the candidate commit for audit without authorizing publication. Publication requires a separate exact-authorization ADR naming the version, tag and operator, followed by the controlled OIDC workflow. The published `0.5.0` notes remain in `.github/RELEASE_NOTES_v0.5.0.md`, and the immutable `0.2.0` release body remains in `.github/RELEASE_TEMPLATE.md`.
+Release notes for `strudel-lsp-server@1.0.0` (release candidate). This candidate is prepared from the exact working tree whose manifest declares `1.0.0`; no `v1.0.0` tag is pushed and the version is not published. ADR-083 records the exact local `v1.0.0` tag audit at commit `447736d3d1664e34d17e9fe6b5394e64f4327518`; the tag identifies the candidate commit. ADR-084 explicitly authorizes controlled publication of that exact version, tag and commit with `pedrozappa` as operator through the controlled OIDC workflow; the authorization itself performs no tag push or publish. The published `0.5.0` notes remain in `.github/RELEASE_NOTES_v0.5.0.md`, and the immutable `0.2.0` release body remains in `.github/RELEASE_TEMPLATE.md`.
 
 ## Requirements and pinned versions
 
@@ -49,7 +49,7 @@ Details and evidence are in `docs/LSP_FEATURES.md`, `docs/PERFORMANCE.md`, `docs
 
 ## Candidate verification
 
-The exact candidate gate is recorded in `docs/TESTING_STRATEGY.md`: strict typecheck, lint, formatting, the full test suite, focused suites, corpus validation, package and consumer installation checks, runtime and client audits, and both advisory benchmark harnesses. ADR-079 records the candidate dependency, licence, provenance and secret audits; ADR-080 records the package, support and performance policy confirmation; ADR-082 records the re-frozen capability matrix and its contract tests. These are pre-publication observations only.
+The exact candidate gate is recorded in `docs/TESTING_STRATEGY.md`: strict typecheck, lint, formatting, the full test suite, focused suites, corpus validation, package and consumer installation checks, runtime and client audits, and both advisory benchmark harnesses. The tagged tree passed 172/172 tests, all 20 advisory workloads and both install-script modes. ADR-079 records the earlier candidate dependency, licence, provenance and secret audits; ADR-080 records the package, support and performance policy confirmation; ADR-082 records the re-frozen capability matrix and its contract tests; ADR-083 repeats the audit and gate on the exact local tag. These are pre-publication observations only.
 
 ## Corrections and rollback
 

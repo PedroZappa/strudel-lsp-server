@@ -265,6 +265,75 @@ void test('Phase 26 re-freezes v1 with all ADR-077 additions advertised', () => 
   );
 });
 
+void test('Phase 26 exact v1 candidate audit records the local tag identity and gates', () => {
+  const marker = '## ADR-083 — Phase 26 exact `v1.0.0` candidate audit';
+  const start = decisions.indexOf(marker);
+  assert.notEqual(start, -1);
+  const section = decisions.slice(start);
+
+  assert.match(section, /447736d3d1664e34d17e9fe6b5394e64f4327518/);
+  assert.match(section, /The tag was not pushed/);
+  assert.match(section, /171 entries and 189,614 bytes/);
+  assert.match(section, /exact-pinned, installed at the declared version/);
+  assert.match(section, /zero npm\/GitHub token prefixes/);
+  assert.match(section, /zero probe hits/);
+  assert.match(section, /172\/172 tests/);
+  assert.match(section, /No registry mutation, GitHub release, signature, provenance attestation/);
+  assert.match(section, /not part of the tagged tree/);
+
+  assert.match(
+    roadmap,
+    /^- \[x\] The full candidate gate is green on the exact commit proposed for `v1\.0\.0`\. ADR-083 records 172\/172 at commit `447736d3`\.$/m,
+  );
+  assert.match(
+    roadmap,
+    /^- \[x\] The v1 tag contains ADR-062 verification and the final capability contract tests\.$/m,
+  );
+  assert.match(
+    roadmap,
+    /^- \[x\] Repeat dependency, licence, provenance and secret audits on the exact v1 candidate\. ADR-083/m,
+  );
+  assert.match(testingStrategy, /^## Phase 26 exact local `v1\.0\.0` candidate audit$/m);
+  assert.match(testingStrategy, /post-audit working-tree gate is 174\/174/);
+  assert.match(performanceDoc, /ADR-083 records the exact tagged gate/);
+  assert.match(changelog, /ADR-083 records the exact local `v1\.0\.0` tag audit/);
+  assert.match(currentReleaseNotes, /ADR-083 records the exact local `v1\.0\.0` tag audit/);
+});
+
+void test('Phase 27 records exact publication authorization without executing publication', () => {
+  const marker = '## ADR-084 — Phase 27 controlled publication authorization';
+  const start = decisions.indexOf(marker);
+  assert.notEqual(start, -1);
+  const section = decisions.slice(start);
+
+  assert.match(section, /Status: accepted on 2026-11-28/);
+  assert.match(section, /publication of exactly `strudel-lsp-server@1\.0\.0`/);
+  assert.match(section, /exactly local tag `v1\.0\.0`/);
+  assert.match(section, /commit `447736d3d1664e34d17e9fe6b5394e64f4327518`/);
+  assert.match(section, /`pedrozappa` as the named release operator/);
+  assert.match(section, /controlled OIDC workflow and `npm-release` approval/);
+  assert.match(section, /does not permit a local publish/);
+  assert.match(
+    section,
+    /does not itself push the tag, start the workflow, publish a package or create a GitHub release/,
+  );
+
+  assert.match(
+    roadmap,
+    /^### Phase 27 — `v1\.0\.0` controlled release \(authorized, not published\)$/m,
+  );
+  assert.match(
+    roadmap,
+    /^- \[x\] Obtain explicit authorization for exactly `1\.0\.0`, exactly `v1\.0\.0` and the named operator\. ADR-084 records/m,
+  );
+  assert.match(roadmap, /Phase 27 publication is authorized by ADR-084 but not executed/);
+  assert.match(
+    currentReleaseNotes,
+    /ADR-084 explicitly authorizes controlled publication of that exact version, tag and commit/,
+  );
+  assert.match(changelog, /ADR-084 authorizes the exact `v1\.0\.0` controlled publication/);
+});
+
 void test('post-publication smoke plan covers registry, installed launch and release record', () => {
   assert.match(decisions, /^## ADR-046 — Post-publication smoke plan$/m);
   assert.match(testingStrategy, /^### Post-publication smoke plan/m);
