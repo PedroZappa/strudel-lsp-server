@@ -121,7 +121,7 @@ The Phase 18 baseline for `incremental-edit-large` was 7.018/7.237/7.590 ms. The
 
 ## Regression monitoring
 
-`npm run benchmark:check` fails locally when a current layer percentile exceeds the corresponding stored target or when a workload is missing. CI runs this command in the `performance` job with `continue-on-error: true`, as it does for the installed-binary harness. ADR-074 records the decision to keep thresholds advisory: the baseline is hardware-specific, CI hardware differs, and no measured normalisation factor can turn a cloud-runner result into a trustworthy correctness gate. Local runs on the recorded environment use the numeric targets to investigate suspected regressions; `npm run check` remains the blocking correctness gate. A contract test asserts that both benchmark steps stay advisory and that the real-corpus workloads are part of the layer baseline.
+`npm run benchmark:check` fails locally when a current layer percentile exceeds the corresponding stored target or when a workload is missing. CI runs this command in the `performance` job with `continue-on-error: true`, as it does for the installed-binary harness; the release workflow `validate` job mirrors both advisory steps. ADR-074 records the decision to keep thresholds advisory: the baseline is hardware-specific, CI hardware differs, and no measured normalisation factor can turn a cloud-runner result into a trustworthy correctness gate. Local runs on the recorded environment use the numeric targets to investigate suspected regressions; `npm run check` remains the blocking correctness gate. A contract test asserts that both benchmark steps stay advisory and that the real-corpus workloads are part of the layer baseline.
 
 ## Local-only timing boundary
 

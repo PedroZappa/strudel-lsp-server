@@ -30,7 +30,7 @@ jobs:
   validate:
     name: Validate release candidate
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 45
     steps:
       - name: Check out release commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -56,23 +56,78 @@ jobs:
           RELEASE_OPERATOR: ${{ github.event_name == 'workflow_dispatch' && inputs.operator || github.actor }}
         run: npm run verify:release
 
-      - name: Run correctness and package gates
-        run: |
-          npm run typecheck
-          npm run lint
-          npm run format:check
-          npm test
-          npm run test:parser
-          npm run test:semantic
-          npm run test:metadata
-          npm run test:features
-          npm run test:mini
-          npm run test:protocol
-          npm run validate:corpus
-          npm run verify:package
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Run full test suite
+        run: npm test
+
+      - name: Run parser integration suite
+        run: npm run test:parser
+
+      - name: Run semantic engine suite
+        run: npm run test:semantic
+
+      - name: Run language database suite
+        run: npm run test:metadata
+
+      - name: Run configuration suite
+        run: npm run test:configuration
+
+      - name: Run LSP layer suite
+        run: npm run test:lsp
+
+      - name: Run language feature suite
+        run: npm run test:features
+
+      - name: Run mini-notation suite
+        run: npm run test:mini
+
+      - name: Run protocol robustness suite
+        run: npm run test:protocol
+
+      - name: Run bounded soak/lifecycle suite
+        run: npm run test:soak
+
+      - name: Validate real Strudel documentation corpus
+        run: npm run validate:corpus
+
+      - name: Build package
+        run: npm run build
+
+      - name: Check package contents
+        run: npm run verify:contents
+
+      - name: Verify offline installation and stdio launch
+        run: npm run verify:package
+
+      - name: Verify clean consumer installation without inherited npm configuration
+        run: npm run verify:consumer
+
+      # Performance regressions remain advisory under ADR-074; correctness gates block release.
+      - name: Run advisory benchmark regression check
+        continue-on-error: true
+        run: npm run benchmark:check
+
+      - name: Run advisory installed-binary JSON-RPC benchmark
+        continue-on-error: true
+        run: npm run benchmark:e2e
 
       - name: Audit runtime dependencies
         run: npm audit --omit=dev
+
+      - name: Audit all dependencies
+        continue-on-error: true
+        run: npm audit
+
+      - name: Audit prototype client dependencies
+        run: npm audit --prefix client
 
   publish:
     name: Publish with OIDC provenance

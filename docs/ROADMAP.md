@@ -639,7 +639,7 @@ Tasks:
 - [x] Implement `documentHighlight` only if it passes the same gate as the other additions; otherwise record an explicit deferral to Phase 28 under ADR-077.
 - [x] Add feature, protocol, live-coding and negative-capability tests for each implemented addition before advertising it.
 - [x] Add contract tests for advertised providers, deliberately unsupported capabilities, configuration schema and diagnostic-code identity.
-- [ ] Align the release workflow with the full CI gate, including configuration, LSP filesystem, soak, corpus, consumer-install, package, audit and benchmark checks.
+- [x] Align the release workflow with the full CI gate, including configuration, LSP filesystem, soak, corpus, consumer-install, package, audit and benchmark checks.
 - [ ] Decide whether the compatibility matrix must run `verify:consumer` on every supported OS/Node pair.
 - [ ] Repeat dependency, licence, provenance and secret audits on the exact v1 candidate.
 - [ ] Confirm the package allowlist, SBOM decision, support guidance and performance policy are implemented and documented.
@@ -658,6 +658,8 @@ Document-highlight evidence: `test/features/documentHighlight.test.ts` and the s
 Consolidated ADR-077 evidence: `test/server.test.ts` now exercises all four additions in one stdio session with an incomplete live chain. It verifies bounded import-path completion, mini-notation step completion and hover, completion/resolve/hover deprecation metadata and exact document-highlight ranges while asserting unchanged completion triggers, unchanged diagnostic-code identity and no `documentHighlight`, code-lens, inline-value or pull-diagnostic provider.
 
 Frozen-baseline contract evidence: `test/lsp/frozenBaselineContract.test.ts` compares the entire `initialize` result with the published `0.5.0` capability matrix, explicitly rejects declaration, type-definition, implementation, document-highlight, document-link, color, code-lens, on-type-formatting, linked-editing, inline-value, moniker and pull-diagnostic providers, fixes the documented configuration keys and value vocabulary, and freezes the seven diagnostic codes and five severities. Unknown settings, invalid severities and the unapproved `unknown-sample` code cannot enter the contract. The full working-tree gate is 167/167. The four ADR-077 tasks remain outside the final matrix until the remaining release-readiness gates and an explicit re-freeze pass.
+
+Phase 26 release workflow evidence: `.github/workflows/release.yml` now mirrors `.github/workflows/ci.yml` in the `validate` job: correctness checks; full, parser, semantic, metadata, configuration, LSP, feature, mini-notation, protocol and soak suites; corpus validation; build, package-content, offline-installation and clean-consumer checks; runtime, full and prototype-client audits; and both advisory benchmark harnesses. Benchmark and full-dependency audits remain advisory as in CI, while correctness and blocking audits remain release gates. The validation timeout is 45 minutes. No publish trigger, environment, tag condition, OIDC permission or registry action was changed. The full working-tree gate is 168/168.
 
 Exit criteria:
 

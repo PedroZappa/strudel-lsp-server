@@ -73,6 +73,53 @@ void test('release workflow uses pinned actions and no npm token', () => {
   }
 });
 
+void test('release validation job mirrors the full CI gate', () => {
+  const requiredCommands = [
+    'npm run typecheck',
+    'npm run lint',
+    'npm run format:check',
+    'npm test',
+    'npm run test:parser',
+    'npm run test:semantic',
+    'npm run test:metadata',
+    'npm run test:configuration',
+    'npm run test:lsp',
+    'npm run test:features',
+    'npm run test:mini',
+    'npm run test:protocol',
+    'npm run test:soak',
+    'npm run validate:corpus',
+    'npm run build',
+    'npm run verify:contents',
+    'npm run verify:package',
+    'npm run verify:consumer',
+    'npm run benchmark:check',
+    'npm run benchmark:e2e',
+    'npm audit --omit=dev',
+    'npm audit',
+    'npm audit --prefix client',
+  ];
+  for (const command of requiredCommands) {
+    assert.ok(workflow.includes(`run: ${command}\n`), `release workflow omits: ${command}`);
+  }
+
+  assert.match(
+    workflow,
+    /name: Run advisory benchmark regression check\n\s+continue-on-error: true\n\s+run: npm run benchmark:check/,
+  );
+  assert.match(
+    workflow,
+    /name: Run advisory installed-binary JSON-RPC benchmark\n\s+continue-on-error: true\n\s+run: npm run benchmark:e2e/,
+  );
+  assert.match(
+    workflow,
+    /name: Audit all dependencies\n\s+continue-on-error: true\n\s+run: npm audit\n/,
+  );
+  assert.match(workflow, /timeout-minutes: 45/);
+  assert.match(roadmap, /^Phase 26 release workflow evidence:/m);
+  assert.match(testingStrategy, /^## Phase 26 release workflow gate alignment/m);
+});
+
 void test('release verifier is wired into npm and make, and checks package parity', () => {
   assert.equal(
     packageJson.scripts['verify:release'],
