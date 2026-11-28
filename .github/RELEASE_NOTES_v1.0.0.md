@@ -1,4 +1,4 @@
-Release notes for `strudel-lsp-server@1.0.0` (release candidate). This candidate is prepared from the exact working tree whose manifest declares `1.0.0`; no `v1.0.0` tag is pushed and the version is not published. ADR-083 records the exact local `v1.0.0` tag audit at commit `447736d3d1664e34d17e9fe6b5394e64f4327518`; the tag identifies the candidate commit. ADR-084 explicitly authorizes controlled publication of that exact version, tag and commit with `pedrozappa` as operator through the controlled OIDC workflow; the authorization itself performs no tag push or publish. The published `0.5.0` notes remain in `.github/RELEASE_NOTES_v0.5.0.md`, and the immutable `0.2.0` release body remains in `.github/RELEASE_TEMPLATE.md`.
+Release notes for `strudel-lsp-server@1.0.0`. This release was published from tag `v1.0.0` at commit `447736d3d1664e34d17e9fe6b5394e64f4327518` through the controlled OIDC workflow with `pedrozappa` as operator. ADR-083 records the exact local-tag audit; ADR-084 records the exact publication authorization; ADR-085 records the registry, provenance, tarball, clean-install and stdio evidence. The published `0.5.0` notes remain in `.github/RELEASE_NOTES_v0.5.0.md`, and the immutable `0.2.0` release body remains in `.github/RELEASE_TEMPLATE.md`.
 
 ## Requirements and pinned versions
 
@@ -13,7 +13,7 @@ Release notes for `strudel-lsp-server@1.0.0` (release candidate). This candidate
 - Phase 26 adds the four ADR-077 capabilities to the re-frozen v1 matrix under ADR-082: source-local mini-notation step completion and hover, bounded relative `.strudel` import-path completion, pinned deprecation metadata in completion/resolve/hover and resolved-symbol `documentHighlight`.
 - Readiness work also hardens verification: the controlled release validation job mirrors the full CI gate, the compatibility-matrix scope is fixed by ADR-078, candidate dependency/licence/provenance/secret audits are recorded in ADR-079, and the package, support and performance policies are confirmed in ADR-080.
 - Contract tests freeze the final v1 capability matrix, the eleven deliberately unsupported providers, the configuration schema and diagnostic-code identity. Release-workflow and compatibility-policy contracts prevent silent broadening of the publication path or verification scope.
-- No diagnostic code, configuration key, trigger character, parser pin, metadata pin or transport change is claimed by this candidate.
+- No diagnostic code, configuration key, trigger character, parser pin, metadata pin or transport change is claimed by this release.
 
 ## Implemented capabilities
 
@@ -24,15 +24,13 @@ The server advertises only implemented and accepted capabilities. Exact behaviou
 
 ## Install and launch
 
-For this candidate, install from the source checkout:
+Install the published release:
 
 ```bash
-npm ci
-npm run build
-node dist/src/server.js
+npm install --global strudel-lsp-server@1.0.0
 ```
 
-After publication, the supported command will be `npm install --global strudel-lsp-server@1.0.0`. Configure the LSP client to launch `strudel-lsp-server` over stdio. Editor-specific configuration stays outside the package. Because this version is not published, no public-registry install evidence exists yet.
+Configure the LSP client to launch `strudel-lsp-server` over stdio. For a source checkout, use `npm ci --ignore-scripts`, `npm run build` and `node dist/src/server.js`. Editor-specific configuration stays outside the package. The documented PATH command was verified against a clean install from the public registry.
 
 ## Explicit limitations and known issues
 
@@ -47,22 +45,22 @@ After publication, the supported command will be `npm install --global strudel-l
 
 Details and evidence are in `docs/LSP_FEATURES.md`, `docs/PERFORMANCE.md`, `docs/TESTING_STRATEGY.md`, `validation/real-corpus.json`, `benchmarks/baseline.json` and `benchmarks/end-to-end.json`.
 
-## Candidate verification
+## Verification
 
-The exact candidate gate is recorded in `docs/TESTING_STRATEGY.md`: strict typecheck, lint, formatting, the full test suite, focused suites, corpus validation, package and consumer installation checks, runtime and client audits, and both advisory benchmark harnesses. The tagged tree passed 172/172 tests, all 20 advisory workloads and both install-script modes. ADR-079 records the earlier candidate dependency, licence, provenance and secret audits; ADR-080 records the package, support and performance policy confirmation; ADR-082 records the re-frozen capability matrix and its contract tests; ADR-083 repeats the audit and gate on the exact local tag. These are pre-publication observations only.
+The exact tag passed the controlled validation job with strict typecheck, lint, formatting, all focused suites, corpus validation, package and consumer installs, advisory benchmarks and dependency audits. ADR-083 records the 172/172 local gate on commit `447736d3d1664e34d17e9fe6b5394e64f4327518`; ADR-085 records post-publication verification of the public tarball, registry metadata, signatures, SLSA v1 provenance, fresh local and global installs and the installed stdio handshake. Performance thresholds remain advisory; the exact-tag runs reported 20/20 workloads within layer thresholds and installed-binary p50/p95/p99 of 0.308/0.581/0.727 ms on darwin-arm64.
 
 ## Corrections and rollback
 
 npm versions are immutable. If a defect is found after publication, the fix will use a new version through the same tag-gated workflow; the published version will not be replaced. A known-bad version may be deprecated with an npm warning naming the replacement version. Unpublishing is reserved for exceptional security, legal or policy cases because it is irreversible and does not free the version number; it requires explicit operator authorization. Users will be notified through the npm deprecation warning, an updated changelog, a GitHub release for the fix and a linked issue. See ADR-045 in `docs/DECISIONS.md`.
 
-## Publication status
+## Publication record
 
-Not published. No pushed `v1.0.0` tag, registry mutation, manual dist-tag change, deprecation, unpublish or retag has been performed. A local tag used for audit is not a publication action. An exact publication ADR must name `strudel-lsp-server@1.0.0`, tag `v1.0.0` and the operator before the controlled OIDC workflow may publish it. No signature, provenance attestation, public-registry install or installed stdio evidence exists for `1.0.0` yet.
+Published by operator `pedrozappa` from tag `v1.0.0` at commit `447736d3d1664e34d17e9fe6b5394e64f4327518` through controlled workflow run `46139316105`. Validation job `140962208074` and publish job `140962206772` completed successfully. The first publish job was blocked because the `npm-release` environment had no exact `v1.0.0` tag policy; the exact policy was added and the failed publish job was rerun without changing the candidate or registry. The publish job ran `npm publish --access public` with OIDC, saw the version on attempt 7 of the bounded registry-visibility wait, and passed the post-publish install and signature checks. ADR-084 authorized the release and ADR-085 records its exact evidence. No local publish, republish, deprecation, dist-tag change, unpublish or retag was performed. The versioned release record is <https://github.com/PedroZappa/strudel-lsp-server/releases/tag/v1.0.0>.
 
 ## Links
 
 - Package: <https://www.npmjs.com/package/strudel-lsp-server>
 - README: <https://github.com/PedroZappa/strudel-lsp-server#readme>
-- Changelog: <https://github.com/PedroZappa/strudel-lsp-server/blob/main/CHANGELOG.md>
+- Changelog: <https://github.com/PedroZappa/strudel-lsp-server/blob/main/CHANGELOG.md#100---2026-11-28>
 - Documentation and decisions: <https://github.com/PedroZappa/strudel-lsp-server/tree/main/docs>
 - Issues: <https://github.com/PedroZappa/strudel-lsp-server/issues>

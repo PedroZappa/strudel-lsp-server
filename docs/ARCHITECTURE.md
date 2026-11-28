@@ -1,6 +1,6 @@
 # Architecture
 
-Status: transport, syntax adapter, semantic engine, language database, document store, feature providers, signature help, mini-notation token analysis and recovery AST, quick fixes, conservative refactoring, document-scoped rename, document and workspace symbols, semantic tokens, conservative formatting, folding, selection ranges, opt-in inlay hints, resolve providers, call hierarchy, bounded cross-file navigation, the performance harness and opt-in local timing implemented on 2026-11-27; other extended capabilities remain under evaluation. Phases 23 and 24 are committed and pushed; Phase 25 published `0.5.0` through the controlled OIDC workflow with evidence recorded in ADR-076.
+Status: transport, syntax adapter, semantic engine, language database, document store, feature providers, signature help, mini-notation token analysis and recovery AST, quick fixes, conservative refactoring, document-scoped rename, document and workspace symbols, semantic tokens, conservative formatting, folding, selection ranges, opt-in inlay hints, resolve providers, call hierarchy, bounded cross-file navigation, the performance harness and opt-in local timing implemented on 2026-11-27; other extended capabilities remain under evaluation. Phases 23 and 24 are committed and pushed; Phase 25 published `0.5.0` through the controlled OIDC workflow with evidence recorded in ADR-076; Phase 27 published the re-frozen `1.0.0` contract through the same workflow with evidence recorded in ADR-085.
 
 Authority: `AGENTS.md` sections 3–6.
 

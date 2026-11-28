@@ -175,7 +175,7 @@ void test('release verifier switches from dry-run parity to published registry p
   assert.match(testingStrategy, /^### Post-publication verification hardening/m);
 });
 
-void test('changelog and current candidate release notes match the candidate manifest', () => {
+void test('changelog and current release notes match the release manifest', () => {
   const version = packageJson.version.replaceAll('.', '\\.');
   assert.equal(packageJson.version, '1.0.0');
   assert.equal(packageLock.version, '1.0.0');
@@ -187,11 +187,11 @@ void test('changelog and current candidate release notes match the candidate man
   assert.match(currentReleaseNotes, /@strudel\/reference@1\.2\.2/);
   assert.match(currentReleaseNotes, /Node\.js 24 or 26 with npm 11/);
   assert.match(currentReleaseNotes, /^## Explicit limitations and known issues$/m);
-  assert.match(currentReleaseNotes, /^## Candidate verification$/m);
+  assert.match(currentReleaseNotes, /^## Verification$/m);
   assert.match(currentReleaseNotes, /^## Corrections and rollback$/m);
-  assert.match(currentReleaseNotes, /^## Publication status$/m);
-  assert.match(currentReleaseNotes, /Not published/);
-  assert.doesNotMatch(currentReleaseNotes, /Published by operator/);
+  assert.match(currentReleaseNotes, /^## Publication record$/m);
+  assert.match(currentReleaseNotes, /Published by operator `pedrozappa`/);
+  assert.doesNotMatch(currentReleaseNotes, /Not published/);
 });
 
 void test('Phase 26 prepares candidate-only v1 changelog and release notes', () => {
@@ -212,18 +212,14 @@ void test('Phase 26 prepares candidate-only v1 changelog and release notes', () 
   assert.match(section, /exact authorization ADR naming/);
 
   assert.match(changelog, /^## \[1\.0\.0\] - 2026-11-28$/m);
-  assert.match(changelog, /no `v1\.0\.0` tag is pushed/);
-  assert.match(changelog, /ADR-081/);
+  assert.match(section, /Both state that the version is not published and not tagged/);
   assert.match(
-    currentReleaseNotes,
-    /^Release notes for `strudel-lsp-server@1\.0\.0` \(release candidate\)/m,
+    section,
+    /No signature, provenance, public-registry install or installed stdio evidence is claimed before that workflow runs/,
   );
-  assert.match(currentReleaseNotes, /no `v1\.0\.0` tag is pushed/);
+  assert.match(section, /ADR-082 supersedes only the unadvertised disposition/);
+  assert.match(currentReleaseNotes, /^Release notes for `strudel-lsp-server@1\.0\.0`/m);
   assert.match(currentReleaseNotes, /ADR-082/);
-  assert.match(
-    currentReleaseNotes,
-    /No signature, provenance attestation, public-registry install or installed stdio evidence exists/,
-  );
   assert.match(currentReleaseNotes, /documentHighlight/);
   assert.doesNotMatch(currentReleaseNotes, /codeLens|inlineValues/);
   assert.doesNotMatch(currentReleaseNotes, /138-file|86\/86/);
@@ -297,10 +293,10 @@ void test('Phase 26 exact v1 candidate audit records the local tag identity and 
   assert.match(testingStrategy, /post-audit working-tree gate is 174\/174/);
   assert.match(performanceDoc, /ADR-083 records the exact tagged gate/);
   assert.match(changelog, /ADR-083 records the exact local `v1\.0\.0` tag audit/);
-  assert.match(currentReleaseNotes, /ADR-083 records the exact local `v1\.0\.0` tag audit/);
+  assert.match(currentReleaseNotes, /ADR-083 records the exact local-tag audit/);
 });
 
-void test('Phase 27 records exact publication authorization without executing publication', () => {
+void test('Phase 27 records exact publication authorization and completed publication', () => {
   const marker = '## ADR-084 — Phase 27 controlled publication authorization';
   const start = decisions.indexOf(marker);
   assert.notEqual(start, -1);
@@ -318,20 +314,63 @@ void test('Phase 27 records exact publication authorization without executing pu
     /does not itself push the tag, start the workflow, publish a package or create a GitHub release/,
   );
 
-  assert.match(
-    roadmap,
-    /^### Phase 27 — `v1\.0\.0` controlled release \(authorized, not published\)$/m,
-  );
+  assert.match(roadmap, /^### Phase 27 — `v1\.0\.0` controlled release \(complete\)$/m);
   assert.match(
     roadmap,
     /^- \[x\] Obtain explicit authorization for exactly `1\.0\.0`, exactly `v1\.0\.0` and the named operator\. ADR-084 records/m,
   );
-  assert.match(roadmap, /Phase 27 publication is authorized by ADR-084 but not executed/);
+  assert.match(
+    roadmap,
+    /Phase 27 published that exact commit through the controlled OIDC workflow under ADR-084, with evidence in ADR-085/,
+  );
+  assert.match(
+    section,
+    /explicitly authorized publication of exactly `strudel-lsp-server@1\.0\.0`/,
+  );
+  assert.match(currentReleaseNotes, /ADR-084 records the exact publication authorization/);
+  assert.match(changelog, /ADR-084 authorizes the exact controlled publication/);
+});
+
+void test('Phase 27 records controlled publication evidence without unapproved mutations', () => {
+  const marker = '## ADR-085 — Phase 27 `1.0.0` publication evidence';
+  const start = decisions.indexOf(marker);
+  assert.notEqual(start, -1);
+  const section = decisions.slice(start);
+
+  for (const required of [
+    '46139316105',
+    '140962208074',
+    '140962206772',
+    '68615060',
+    'bdc983ab680d6a012f4eff397ae5ed4b9cf1ae25',
+    '447736d3d1664e34d17e9fe6b5394e64f4327518',
+    '8ac2d097670c0df351c0be0f13f4176a27b3867f',
+    'sha512-iFie0YnRQA0MFSyu/9oMwEpz86Bg8Ts5fFJ4mVkQcUIF68vdEpcRMpxNVI37k2BKD8sHm+HzYg35tLSyMyFdhg==',
+    'SLSA v1',
+    'refs/tags/v1.0.0',
+    'invalid: []',
+    'missing: []',
+    'Node `v26.8.2`',
+    'npm `11.19.1`',
+  ]) {
+    assert.ok(section.includes(required), `publication evidence omits: ${required}`);
+  }
+  assert.match(section, /no local publish, republish or credential handling occurred/i);
+  assert.match(
+    section,
+    /No deprecation, manual dist-tag change, unpublish, retag, second publish or other registry mutation occurred/,
+  );
+  assert.match(testingStrategy, /^## Phase 27 `v1\.0\.0` publication evidence$/m);
+  assert.match(
+    testingStrategy,
+    /All ADR-046 smoke checks passed before release-record publication/,
+  );
+  assert.match(currentReleaseNotes, /^## Publication record$/m);
   assert.match(
     currentReleaseNotes,
-    /ADR-084 explicitly authorizes controlled publication of that exact version, tag and commit/,
+    /No local publish, republish, deprecation, dist-tag change, unpublish or retag was performed/,
   );
-  assert.match(changelog, /ADR-084 authorizes the exact `v1\.0\.0` controlled publication/);
+  assert.match(readme, /The latest published version is `1\.0\.0`/);
 });
 
 void test('post-publication smoke plan covers registry, installed launch and release record', () => {
@@ -410,8 +449,8 @@ void test('Phase 19 publication evidence records the exact release and completed
   assert.match(roadmap, /^### Phase 19 — `v0\.3\.0` controlled release \(complete\)$/m);
   assert.match(changelog, /Version `0\.3\.0` was published on 2026-11-27/);
   // The README is live documentation and must name the current registry release.
-  assert.match(readme, /latest published version is `0\.5\.0`/);
-  assert.match(readme, /release was published from tag `v0\.5\.0`/);
+  assert.match(readme, /latest published version is `1\.0\.0`/);
+  assert.match(readme, /release was published from tag `v1\.0\.0`/);
 });
 
 void test('Phase 22 authorization records the exact version tag and operator', () => {
