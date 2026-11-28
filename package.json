@@ -3,7 +3,7 @@
   "description": "Editor-agnostic Language Server Protocol implementation for Strudel",
   "author": "Zedro",
   "license": "AGPL-3.0-only",
-  "version": "0.5.0",
+  "version": "1.0.0",
   "type": "module",
   "engines": {
     "node": "^24.0.0 || ^26.0.0",

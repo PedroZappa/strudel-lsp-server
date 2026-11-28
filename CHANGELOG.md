@@ -2,9 +2,30 @@
 
 All notable changes to the `strudel-lsp-server` npm package are documented in this file. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-Version `0.3.0` was published on 2026-11-27 from tag `v0.3.0` at commit `b3451e283986b576b526534136026adba0bf5217` through the controlled OIDC workflow with `pedrozappa` as operator. ADR-067 records the publication and smoke evidence, including the transient workflow-verification race. Version `0.4.0` was published on 2026-11-27 from tag `v0.4.0` at commit `1d39c14cba2152116ce1c2c5d5b827bf6af5c144` through the controlled OIDC workflow with `pedrozappa` as operator and remains available. ADR-072 records its exact publication and smoke evidence. Version `0.5.0` was published on 2026-11-27 from tag `v0.5.0` at commit `51f2aa511028a970a92c62e43efdabf141d0b0e9` through the controlled OIDC workflow with `pedrozappa` as operator and is the latest published release; `0.3.0`, `0.2.0` and `0.1.0` remain available. ADR-075 authorized the release and ADR-076 records the exact registry, provenance and smoke evidence. Full user-facing notes for `0.5.0` are in `.github/RELEASE_NOTES_v0.5.0.md`; the published `0.4.0` notes remain in `.github/RELEASE_NOTES_v0.4.0.md`; the immutable `0.2.0` body remains in `.github/RELEASE_TEMPLATE.md`.
+Version `0.3.0` was published on 2026-11-27 from tag `v0.3.0` at commit `b3451e283986b576b526534136026adba0bf5217` through the controlled OIDC workflow with `pedrozappa` as operator. ADR-067 records the publication and smoke evidence, including the transient workflow-verification race. Version `0.4.0` was published on 2026-11-27 from tag `v0.4.0` at commit `1d39c14cba2152116ce1c2c5d5b827bf6af5c144` through the controlled OIDC workflow with `pedrozappa` as operator and remains available. ADR-072 records its exact publication and smoke evidence. Version `0.5.0` was published on 2026-11-27 from tag `v0.5.0` at commit `51f2aa511028a970a92c62e43efdabf141d0b0e9` through the controlled OIDC workflow with `pedrozappa` as operator and is the latest published release; `0.3.0`, `0.2.0` and `0.1.0` remain available. ADR-075 authorized the release and ADR-076 records the exact registry, provenance and smoke evidence. Version `1.0.0` has been prepared as an unpublished release candidate in the exact working tree whose manifest declares `1.0.0`; no pushed tag or registry mutation exists, ADR-081 records the candidate changelog and release-note preparation, and ADR-082 re-freezes the final v1 capability matrix with all four ADR-077 additions advertised. Full user-facing notes for `0.5.0` are in `.github/RELEASE_NOTES_v0.5.0.md`; the published `0.4.0` notes remain in `.github/RELEASE_NOTES_v0.4.0.md`; the immutable `0.2.0` body remains in `.github/RELEASE_TEMPLATE.md`.
 
 ## [Unreleased]
+
+## [1.0.0] - 2026-11-28
+
+Candidate prepared from the exact working tree with manifest version `1.0.0`. It is not published and no `v1.0.0` tag is pushed; see ADR-081, ADR-082 and `.github/RELEASE_NOTES_v1.0.0.md`.
+
+### Added
+
+- ADR-077 v1 capabilities are advertised under ADR-082: mini-notation step completion and hover from source-local literal sample keys and pinned metadata, bounded relative `.strudel` import-path completion, pinned deprecation metadata in completion/resolve/hover, and resolved-symbol `documentHighlight`.
+- Phase 26 release-readiness contract tests for the re-frozen capability matrix, deliberately unsupported providers, configuration schema, diagnostic-code identity, controlled release workflow, compatibility scope and candidate policies under ADR-077 through ADR-082.
+
+### Changed
+
+- Controlled release validation now mirrors the full CI correctness, focused-suite, corpus, package, consumer-install, audit and benchmark gates.
+- Dependency, licence, provenance and secret audits were repeated on the candidate tree with zero findings; see ADR-079.
+- Package allowlist, SBOM deferral, support guidance and advisory performance policy were confirmed without changes; see ADR-080.
+
+### Known issues
+
+- No pushed `v1.0.0` tag, publication, signature, provenance attestation or public-registry install evidence exists. A local tag may identify the candidate for audit without authorizing publication.
+- Accepted upstream parser gaps and the conservative unresolved-reference baseline remain unchanged from `0.5.0`.
+- Post-v1 candidates such as pull diagnostics, `$:` active-pattern semantics, unknown-sample diagnostics and code lens are not part of the v1 matrix.
 
 ## [0.5.0] - 2026-11-27
 

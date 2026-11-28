@@ -13,6 +13,15 @@ const readme = readFileSync(join(repositoryRoot, 'README.md'), 'utf8');
 const roadmap = readFileSync(join(repositoryRoot, 'docs', 'ROADMAP.md'), 'utf8');
 const decisions = readFileSync(join(repositoryRoot, 'docs', 'DECISIONS.md'), 'utf8');
 const testingStrategy = readFileSync(join(repositoryRoot, 'docs', 'TESTING_STRATEGY.md'), 'utf8');
+const performanceDoc = readFileSync(join(repositoryRoot, 'docs', 'PERFORMANCE.md'), 'utf8');
+const featuresDoc = readFileSync(join(repositoryRoot, 'docs', 'LSP_FEATURES.md'), 'utf8');
+const architectureDoc = readFileSync(join(repositoryRoot, 'docs', 'ARCHITECTURE.md'), 'utf8');
+const serverSource = readFileSync(join(repositoryRoot, 'src', 'server.ts'), 'utf8');
+const capabilityContract = readFileSync(
+  join(repositoryRoot, 'test', 'lsp', 'frozenBaselineContract.test.ts'),
+  'utf8',
+);
+const serverTest = readFileSync(join(repositoryRoot, 'test', 'server.test.ts'), 'utf8');
 const releaseTemplate = readFileSync(
   join(repositoryRoot, '.github', 'RELEASE_TEMPLATE.md'),
   'utf8',
@@ -24,6 +33,10 @@ const packageJson = JSON.parse(readFileSync(join(repositoryRoot, 'package.json')
   files: string[];
   bin: Record<string, string>;
   scripts: Record<string, string>;
+};
+const packageLock = JSON.parse(readFileSync(join(repositoryRoot, 'package-lock.json'), 'utf8')) as {
+  version: string;
+  packages: Record<string, { version?: string }>;
 };
 const currentReleaseNotes = readFileSync(
   join(repositoryRoot, '.github', `RELEASE_NOTES_v${packageJson.version}.md`),
@@ -162,9 +175,11 @@ void test('release verifier switches from dry-run parity to published registry p
   assert.match(testingStrategy, /^### Post-publication verification hardening/m);
 });
 
-void test('changelog and current release notes match the published manifest', () => {
+void test('changelog and current candidate release notes match the candidate manifest', () => {
   const version = packageJson.version.replaceAll('.', '\\.');
-  assert.equal(packageJson.version, '0.5.0');
+  assert.equal(packageJson.version, '1.0.0');
+  assert.equal(packageLock.version, '1.0.0');
+  assert.equal(packageLock.packages['']?.version, '1.0.0');
   assert.match(changelog, new RegExp(`^## \\[${version}\\] - \\d{4}-\\d{2}-\\d{2}$`, 'm'));
   assert.match(changelog, /^## \[Unreleased\]$/m);
   assert.match(changelog, /^### Known issues$/m);
@@ -172,10 +187,82 @@ void test('changelog and current release notes match the published manifest', ()
   assert.match(currentReleaseNotes, /@strudel\/reference@1\.2\.2/);
   assert.match(currentReleaseNotes, /Node\.js 24 or 26 with npm 11/);
   assert.match(currentReleaseNotes, /^## Explicit limitations and known issues$/m);
-  assert.match(currentReleaseNotes, /^## Installed-package verification$/m);
+  assert.match(currentReleaseNotes, /^## Candidate verification$/m);
   assert.match(currentReleaseNotes, /^## Corrections and rollback$/m);
-  assert.match(currentReleaseNotes, /^## Publication record$/m);
-  assert.match(currentReleaseNotes, /Published by operator `pedrozappa`/);
+  assert.match(currentReleaseNotes, /^## Publication status$/m);
+  assert.match(currentReleaseNotes, /Not published/);
+  assert.doesNotMatch(currentReleaseNotes, /Published by operator/);
+});
+
+void test('Phase 26 prepares candidate-only v1 changelog and release notes', () => {
+  const marker = '## ADR-081 — Phase 26 candidate changelog and release notes preparation';
+  const start = decisions.indexOf(marker);
+  assert.notEqual(start, -1);
+  const section = decisions.slice(start);
+
+  assert.match(
+    section,
+    /Bump `package\.json` and the two root version fields in `package-lock\.json` to `1\.0\.0`/,
+  );
+  assert.match(
+    section,
+    /No tag, registry mutation, capability re-freeze or GitHub release is performed/,
+  );
+  assert.match(section, /ADR-082 supersedes only the unadvertised disposition/);
+  assert.match(section, /exact authorization ADR naming/);
+
+  assert.match(changelog, /^## \[1\.0\.0\] - 2026-11-28$/m);
+  assert.match(changelog, /no `v1\.0\.0` tag is pushed/);
+  assert.match(changelog, /ADR-081/);
+  assert.match(
+    currentReleaseNotes,
+    /^Release notes for `strudel-lsp-server@1\.0\.0` \(release candidate\)/m,
+  );
+  assert.match(currentReleaseNotes, /no `v1\.0\.0` tag is pushed/);
+  assert.match(currentReleaseNotes, /ADR-082/);
+  assert.match(
+    currentReleaseNotes,
+    /No signature, provenance attestation, public-registry install or installed stdio evidence exists/,
+  );
+  assert.match(currentReleaseNotes, /documentHighlight/);
+  assert.doesNotMatch(currentReleaseNotes, /codeLens|inlineValues/);
+  assert.doesNotMatch(currentReleaseNotes, /138-file|86\/86/);
+  assert.match(
+    roadmap,
+    /^- \[x\] Prepare versioned changelog and GitHub release notes from the exact candidate, without reusing/m,
+  );
+});
+
+void test('Phase 26 re-freezes v1 with all ADR-077 additions advertised', () => {
+  const marker = '## ADR-082 — Phase 26 final v1 capability re-freeze';
+  const start = decisions.indexOf(marker);
+  assert.notEqual(start, -1);
+  const section = decisions.slice(start);
+
+  assert.match(section, /advertise all four ADR-077 additions/);
+  assert.match(section, /documentHighlightProvider: true/);
+  assert.match(
+    section,
+    /Keep the deliberately unsupported surface exact: declaration, type definition, implementation, document link, color, code lens, on-type formatting, linked editing, inline value, moniker and pull diagnostics remain unadvertised/,
+  );
+  assert.match(section, /adds no diagnostic code and no generated metadata change/);
+  assert.match(section, /does not authorize version `1\.0\.0`, tag `v1\.0\.0`, publication/);
+
+  assert.match(serverSource, /documentHighlightProvider: true/);
+  assert.match(capabilityContract, /documentHighlightProvider: true/);
+  assert.doesNotMatch(capabilityContract, /'documentHighlightProvider',/);
+  assert.match(capabilityContract, /re-frozen v1\.0\.0 capability matrix/);
+  assert.match(
+    serverTest,
+    /assert\.equal\(initializeResult\.capabilities\.documentHighlightProvider, true\)/,
+  );
+  assert.match(featuresDoc, /ADR-077 step-context work \(advertised in v1 by ADR-082\)/);
+  assert.match(architectureDoc, /ADR-082 re-freezes the v1 contract/);
+  assert.match(changelog, /ADR-077 v1 capabilities are advertised under ADR-082/);
+  assert.match(
+    roadmap,
+    /^- \[x\] Every ADR-077 v1 addition is implemented, advertised and verified under ADR-082/m,
+  );
 });
 
 void test('post-publication smoke plan covers registry, installed launch and release record', () => {
@@ -365,6 +452,61 @@ void test('Phase 17 records the package, support and SBOM readiness decisions', 
   assert.match(
     verifier,
     /JSON\.stringify\(packageJson\.files\) !== JSON\.stringify\(\['dist\/src', 'LICENSE'\]\)/,
+  );
+});
+
+void test('Phase 26 confirms the package, support and performance policies', () => {
+  const marker =
+    '## ADR-080 — Phase 26 readiness confirmation: package, support and performance policy';
+  const start = decisions.indexOf(marker);
+  assert.notEqual(start, -1);
+  const section = decisions.slice(start);
+
+  assert.deepEqual(packageJson.files, ['dist/src', 'LICENSE']);
+  assert.doesNotMatch(JSON.stringify(packageJson.scripts), /sbom|cyclonedx|spdx/i);
+  assert.match(
+    packageVerifier,
+    /const allowedPrefixes = \['LICENSE', 'README\.md', 'package\.json', 'dist\/src\/'\]/,
+  );
+  assert.match(
+    verifier,
+    /JSON\.stringify\(packageJson\.files\) !== JSON\.stringify\(\['dist\/src', 'LICENSE'\]\)/,
+  );
+
+  assert.match(section, /retain `package\.json` `files` exactly as `\['dist\/src', 'LICENSE'\]`/);
+  assert.match(section, /do not generate an SBOM or add a CycloneDX or SPDX dependency/);
+  assert.match(
+    section,
+    /npm signatures and OIDC-generated SLSA provenance remain the release evidence/,
+  );
+  assert.match(
+    section,
+    /`README\.md` `Reporting problems` section remains the user-facing support contract/,
+  );
+  assert.match(section, /performance thresholds remain advisory/);
+  assert.match(section, /no hardware-normalisation multiplier is invented/);
+  assert.match(section, /no performance target is a blocking correctness gate/);
+  assert.match(section, /exact tagged `v1\.0\.0` candidate must repeat the benchmark checks/);
+
+  assert.match(readme, /^## Reporting problems$/m);
+  assert.match(
+    performanceDoc,
+    /Phase 26 readiness confirmation under ADR-080 kept the policy unchanged/,
+  );
+  assert.match(performanceDoc, /performance thresholds remain advisory/);
+  assert.match(performanceDoc, /No hardware-normalisation multiplier is invented/);
+  assert.match(performanceDoc, /No performance target is a blocking correctness gate/);
+  assert.match(
+    workflow,
+    /name: Run advisory benchmark regression check\n\s+continue-on-error: true\n\s+run: npm run benchmark:check/,
+  );
+  assert.match(
+    workflow,
+    /name: Run advisory installed-binary JSON-RPC benchmark\n\s+continue-on-error: true\n\s+run: npm run benchmark:e2e/,
+  );
+  assert.match(
+    roadmap,
+    /^- \[x\] Confirm the package allowlist, SBOM decision, support guidance and performance policy are implemented and documented\. ADR-080 records/m,
   );
 });
 

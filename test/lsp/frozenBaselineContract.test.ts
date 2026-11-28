@@ -22,6 +22,7 @@ const FROZEN_CAPABILITIES = {
   signatureHelpProvider: { triggerCharacters: ['(', ','] },
   definitionProvider: true,
   referencesProvider: true,
+  documentHighlightProvider: true,
   callHierarchyProvider: true,
   documentSymbolProvider: true,
   workspaceSymbolProvider: { resolveProvider: true },
@@ -45,7 +46,6 @@ const UNSUPPORTED_PROVIDERS = [
   'declarationProvider',
   'typeDefinitionProvider',
   'implementationProvider',
-  'documentHighlightProvider',
   'documentLinkProvider',
   'colorProvider',
   'codeLensProvider',
@@ -78,7 +78,7 @@ const FROZEN_SEVERITY_MAP = {
   'empty-step': 'warning',
 };
 
-void test('initialize advertises exactly the frozen 0.5.0 capability matrix', async (t) => {
+void test('initialize advertises exactly the re-frozen v1.0.0 capability matrix', async (t) => {
   const client = new RawStdioClient();
   t.after(async () => {
     await client.terminate();

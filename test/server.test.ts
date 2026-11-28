@@ -347,7 +347,7 @@ void test('stdio server advertises and serves implemented language capabilities'
   assert.equal(initializeResult.capabilities.declarationProvider, undefined);
   assert.equal(initializeResult.capabilities.typeDefinitionProvider, undefined);
   assert.equal(initializeResult.capabilities.implementationProvider, undefined);
-  assert.equal(initializeResult.capabilities.documentHighlightProvider, undefined);
+  assert.equal(initializeResult.capabilities.documentHighlightProvider, true);
   assert.equal(initializeResult.capabilities.documentLinkProvider, undefined);
   assert.equal(initializeResult.capabilities.colorProvider, undefined);
   assert.equal(initializeResult.capabilities.codeLensProvider, undefined);
@@ -979,7 +979,7 @@ void test('stdio server completes relative .strudel import paths from the bounde
     };
   };
   assert.deepEqual(initializeResult.capabilities.completionProvider.triggerCharacters, ['.']);
-  assert.equal(initializeResult.capabilities.documentHighlightProvider, undefined);
+  assert.equal(initializeResult.capabilities.documentHighlightProvider, true);
   client.notify('initialized', {});
 
   const mainUri = pathToFileURL(mainPath).href;
@@ -1019,7 +1019,7 @@ void test('stdio server completes relative .strudel import paths from the bounde
   await client.waitForExit();
 });
 
-void test('stdio server serves ADR-077 additions without broadening frozen capabilities', async (t) => {
+void test('stdio server serves the re-frozen v1 ADR-077 capability additions', async (t) => {
   const root = await mkdtemp(join(tmpdir(), 'strudel-adr077-'));
   const serverPath = fileURLToPath(new URL('../src/server.js', import.meta.url));
   const client = new StdioLspClient(serverPath);
@@ -1062,7 +1062,7 @@ void test('stdio server serves ADR-077 additions without broadening frozen capab
   assert.deepEqual(initializeResult.capabilities.completionProvider.triggerCharacters, ['.']);
   assert.equal(initializeResult.capabilities.completionProvider.resolveProvider, true);
   assert.equal(initializeResult.capabilities.hoverProvider, true);
-  assert.equal(initializeResult.capabilities.documentHighlightProvider, undefined);
+  assert.equal(initializeResult.capabilities.documentHighlightProvider, true);
   assert.equal(initializeResult.capabilities.codeLensProvider, undefined);
   assert.equal(initializeResult.capabilities.inlineValueProvider, undefined);
   assert.equal(initializeResult.capabilities.diagnosticProvider, undefined);

@@ -558,6 +558,7 @@ connection.onInitialize((params: InitializeParams): InitializeResult => {
       signatureHelpProvider: { triggerCharacters: ['(', ','] },
       definitionProvider: true,
       referencesProvider: true,
+      documentHighlightProvider: true,
       callHierarchyProvider: true,
       documentSymbolProvider: true,
       workspaceSymbolProvider: { resolveProvider: true },
