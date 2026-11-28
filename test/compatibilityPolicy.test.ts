@@ -46,6 +46,8 @@ const semanticEngine = readProjectFile('docs', 'SEMANTIC_ENGINE.md');
 const lspFeatures = readProjectFile('docs', 'LSP_FEATURES.md');
 const validationReadme = readProjectFile('validation', 'README.md');
 const compatibilityWorkflow = readProjectFile('.github', 'workflows', 'compatibility.yml');
+const ciWorkflow = readProjectFile('.github', 'workflows', 'ci.yml');
+const releaseWorkflow = readProjectFile('.github', 'workflows', 'release.yml');
 const corpusReport = JSON.parse(readProjectFile('validation', 'real-corpus.json')) as CorpusReport;
 
 function adrSection(number: number): string {
@@ -211,4 +213,36 @@ void test('Phase 18 support matrix matches compatibility CI', () => {
   );
   assert.doesNotMatch(phase, /^- \[ \]/m);
   assert.match(phase, /ADR-065/);
+});
+
+void test('Phase 26 keeps consumer verification outside the compatibility matrix', () => {
+  assert.match(compatibilityWorkflow, /npm run verify:package/);
+  assert.doesNotMatch(compatibilityWorkflow, /verify:consumer/);
+  assert.match(
+    ciWorkflow,
+    /Verify clean consumer installation without inherited npm configuration/,
+  );
+  assert.match(ciWorkflow, /npm run verify:consumer/);
+  assert.match(releaseWorkflow, /npm run verify:consumer/);
+
+  const adr = adrSection(78);
+  assert.match(adr, /^## ADR-078 — Compatibility matrix consumer verification scope$/m);
+  assert.match(adr, /Keep `\.github\/workflows\/compatibility\.yml` unchanged/);
+  assert.match(adr, /does not add `verify:consumer`/);
+  assert.match(adr, /Keep `verify:consumer` as a required correctness and release gate/);
+  assert.match(adr, /on every final release candidate/);
+  assert.match(
+    adr,
+    /No workflow, provider, capability, diagnostic code, generated metadata, dependency, version, tag, publication or registry state/,
+  );
+
+  const start = roadmap.indexOf('### Phase 26 — v1 readiness freeze');
+  assert.notEqual(start, -1);
+  const phase = roadmap.slice(start, roadmap.indexOf('### Phase 27 —', start));
+  assert.match(
+    phase,
+    /^- \[x\] Decide whether the compatibility matrix must run `verify:consumer` on every supported OS\/Node pair\./m,
+  );
+  assert.match(phase, /ADR-078/);
+  assert.match(phase, /Compatibility-matrix decision evidence/);
 });
