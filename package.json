@@ -35,6 +35,8 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "docs:api": "typedoc",
+    "docs:api:check": "typedoc --emit none",
     "test": "npm run build && node --test \"dist/test/**/*.test.js\"",
     "test:parser": "npm run build && node --test \"dist/test/parser/**/*.test.js\"",
     "test:semantic": "npm run build && node --test \"dist/test/semantic/**/*.test.js\"",
@@ -62,7 +64,7 @@
     "verify:contents": "npm run build && node scripts/verify-package.mjs --contents-only",
     "verify:consumer": "npm run build && node scripts/verify-consumer.mjs",
     "verify:release": "npm run build && node scripts/verify-release.mjs",
-    "check": "npm run typecheck && npm run lint && npm run format:check && npm test"
+    "check": "npm run typecheck && npm run lint && npm run format:check && npm run docs:api:check && npm test"
   },
   "dependencies": {
     "tree-sitter": "0.25.1",
@@ -80,6 +82,7 @@
     "@types/node": "26.6.10",
     "eslint": "9.33.0",
     "prettier": "3.10.1",
+    "typedoc": "0.28.20",
     "typescript": "6.0.3",
     "typescript-eslint": "8.74.0"
   }

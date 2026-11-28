@@ -14,6 +14,7 @@ export default tseslint.config(
       '**/node_modules/**',
       'client/**',
       'dist/**',
+      'docs/api/**',
       'server/**',
       'smoke/**',
       'scripts/e2e.sh',

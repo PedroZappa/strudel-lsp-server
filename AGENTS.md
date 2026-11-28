@@ -34,7 +34,8 @@ Maintain these documents as the project develops:
 | `docs/LSP_FEATURES.md`           | LSP capabilities, behaviour and implementation status            |
 | `docs/TESTING_STRATEGY.md`       | Test architecture, coverage and quality requirements             |
 | `docs/PERFORMANCE.md`            | Benchmarks, performance targets and regression monitoring        |
-| `docs/ROADMAP.md`                | Phases, priorities, dependencies and deferred features           |
+| `docs/ROADMAP.md`                | Active phases, priorities, dependencies and deferred features    |
+| `docs/ROADMAP_ARCHIVE.md`        | Historical phase records and evidence through `v1.0.0`           |
 | `docs/DECISIONS.md`              | Significant architectural and technical decisions                |
 
 Update the relevant document whenever implementation changes affect its area.
@@ -237,13 +238,13 @@ Maintain a `Makefile` as the canonical entry point for developer and agent workf
 
 ## 13. Implementation Roadmap
 
-Implement the project through the explicit phases maintained in `docs/ROADMAP.md`.
+Implement the project through the explicit phases maintained in `docs/ROADMAP.md`. Completed phases and their evidence are preserved in `docs/ROADMAP_ARCHIVE.md`; they remain historical records and are not reopened without an explicit decision.
 
 - Each phase must state its dependencies, tasks and exit criteria.
 - Do not claim a phase is complete until its exit criteria are satisfied and verified.
 - Priorities and candidate capabilities in the roadmap are proposals; implement them only when authorized.
 - Phases may be adjusted when implementation reveals better approaches.
-- Explain significant deviations from the roadmap and record them in `docs/ROADMAP.md` or `docs/DECISIONS.md`.
+- Explain significant deviations from the active roadmap in `docs/ROADMAP.md` or `docs/DECISIONS.md`; corrections to completed records belong in `docs/ROADMAP_ARCHIVE.md` and must not rewrite published evidence.
 
 ## 14. Architectural Decisions
 

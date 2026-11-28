@@ -213,3 +213,102 @@ void test('package metadata describes the published server', () => {
   assert.deepEqual(packageJson.files, ['dist/src', 'LICENSE']);
   assert.equal(packageJson.bin['strudel-lsp-server'], './dist/src/server.js');
 });
+
+function workflowStep(workflow: string, name: string): string {
+  const start = workflow.indexOf(`      - name: ${name}\n`);
+  assert.notEqual(start, -1, `${name} step is missing`);
+  const end = workflow.indexOf('\n      - ', start + 1);
+  return workflow.slice(start, end === -1 ? undefined : end);
+}
+
+void test('dependency audits separate the blocking runtime gate from the advisory full audit', () => {
+  for (const workflowName of ['ci.yml', 'release.yml']) {
+    const workflow = readFileSync(
+      join(repositoryRoot, '.github', 'workflows', workflowName),
+      'utf8',
+    );
+
+    const runtimeAudit = workflowStep(workflow, 'Audit runtime dependencies');
+    assert.match(runtimeAudit, /run: npm audit --omit=dev/);
+    assert.doesNotMatch(runtimeAudit, /continue-on-error/);
+
+    const fullAudit = workflowStep(workflow, 'Audit all dependencies');
+    assert.match(fullAudit, /continue-on-error: true/);
+    assert.match(fullAudit, /run: npm audit\n/);
+  }
+});
+
+void test('docs-open generates and opens the TypeDoc API reference with a browser fallback', () => {
+  const makefile = readFileSync(join(repositoryRoot, 'Makefile'), 'utf8');
+
+  assert.match(makefile, /^DOCS_INDEX := \$\(DOCS_DIR\)\/api\/index\.html$/m);
+  assert.match(
+    makefile,
+    /^FALLBACK_BROWSER := \$\(if \$\(filter Darwin,\$\(HOST_OS\)\),open -a "Google Chrome",xdg-open\)$/m,
+  );
+  assert.match(makefile, /^BROWSER \?= \$\(FALLBACK_BROWSER\)$/m);
+  assert.match(makefile, /^ifeq \(\$\(BROWSER\),\$\(FALLBACK_BROWSER\)\)$/m);
+  assert.match(makefile, /^DOCS_OPEN = \$\(BROWSER\) "\$\(DOCS_INDEX\)"$/m);
+  assert.match(
+    makefile,
+    /^DOCS_OPEN = \$\(BROWSER\) "\$\(DOCS_INDEX\)" \|\| \$\(FALLBACK_BROWSER\) "\$\(DOCS_INDEX\)"$/m,
+  );
+  assert.match(makefile, /^docs-open: docs-api\t## .*falls back to Google Chrome on macOS\)$/m);
+  assert.match(makefile, /^\t@\$\(DOCS_OPEN\)$/m);
+});
+
+void test('TypeDoc API documentation is wired as a local generated artifact', () => {
+  assert.equal(packageJson.devDependencies.typedoc, '0.28.20');
+  assert.equal(packageJson.scripts['docs:api'], 'typedoc');
+  assert.equal(packageJson.scripts['docs:api:check'], 'typedoc --emit none');
+  assert.match(packageJson.scripts.check, /npm run docs:api:check/);
+
+  const typedocConfig = JSON.parse(readFileSync(join(repositoryRoot, 'typedoc.json'), 'utf8')) as {
+    entryPointStrategy: string;
+    entryPoints: string[];
+    exclude: string[];
+    excludeExternals: boolean;
+    excludeInternal: boolean;
+    excludePrivate: boolean;
+    highlightLanguages: string[];
+    out: string;
+    tsconfig: string;
+    treatWarningsAsErrors: boolean;
+  };
+  assert.equal(typedocConfig.entryPointStrategy, 'expand');
+  assert.deepEqual(typedocConfig.entryPoints, ['src']);
+  assert.deepEqual(typedocConfig.exclude, ['**/generated.ts']);
+  assert.equal(typedocConfig.excludeExternals, true);
+  assert.equal(typedocConfig.excludeInternal, true);
+  assert.equal(typedocConfig.excludePrivate, true);
+  assert.deepEqual(typedocConfig.highlightLanguages, ['bash', 'js', 'json', 'vim']);
+  assert.equal(typedocConfig.out, 'docs/api');
+  assert.equal(typedocConfig.tsconfig, 'tsconfig.json');
+  assert.equal(typedocConfig.treatWarningsAsErrors, true);
+
+  const makefile = readFileSync(join(repositoryRoot, 'Makefile'), 'utf8');
+  assert.match(makefile, /^docs-api:\t## Generate TypeDoc API reference into docs\/api$/m);
+  assert.match(
+    makefile,
+    /^docs-api-check:\t## Validate TypeDoc comments and links without emitting files$/m,
+  );
+  assert.match(makefile, /docs docs-open docs-api docs-api-check$/m);
+
+  const gitignore = readFileSync(join(repositoryRoot, '.gitignore'), 'utf8');
+  assert.match(gitignore, /^\/docs\/api\/$/m);
+
+  const prettierIgnore = readFileSync(join(repositoryRoot, '.prettierignore'), 'utf8');
+  assert.match(prettierIgnore, /^\/docs\/api\/$/m);
+
+  const eslintConfig = readFileSync(join(repositoryRoot, 'eslint.config.mjs'), 'utf8');
+  assert.match(eslintConfig, /'docs\/api\/\*\*'/);
+
+  const workflow = readFileSync(join(repositoryRoot, '.github', 'workflows', 'ci.yml'), 'utf8');
+  assert.match(workflow, /npm run docs:api:check/);
+
+  const releaseWorkflow = readFileSync(
+    join(repositoryRoot, '.github', 'workflows', 'release.yml'),
+    'utf8',
+  );
+  assert.match(releaseWorkflow, /npm run docs:api:check/);
+});

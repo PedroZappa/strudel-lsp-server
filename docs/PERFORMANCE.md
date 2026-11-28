@@ -2,7 +2,7 @@
 
 Status: Phase 24 scale and responsiveness work is complete and committed as `0f30fe5` in the published `0.5.0` release. The layer baseline contains 20 measured workloads, including two real-corpus workloads; opt-in local timing is available; performance thresholds remain advisory. Phase 25 published `0.5.0` through the controlled OIDC workflow, with registry, provenance, clean-install and installed stdio evidence recorded in ADR-076. Phase 27 published `1.0.0` through the same controlled workflow with advisory checks recorded in ADR-085; `1.0.0` is the latest release.
 
-Authority: `AGENTS.md` section 6.
+Authority: `AGENTS.md` section 6. Completed phase evidence cited below is preserved in the [roadmap archive](ROADMAP_ARCHIVE.md); active post-v1 performance work is tracked in the [roadmap](ROADMAP.md).
 
 ## Requirements
 

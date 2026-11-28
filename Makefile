@@ -18,17 +18,26 @@ HOMEPAGE_URL := https://github.com/PedroZappa/strudel-lsp-server
 SRC_DIR := src
 TEST_DIR := test
 DOCS_DIR := docs
+DOCS_INDEX := $(DOCS_DIR)/api/index.html
 SCRIPTS_DIR := scripts
 DIST_DIR := dist
 
 # Generated files removed by `make clean`
-GENERATED := $(DIST_DIR)/ tsconfig.tsbuildinfo
+GENERATED := $(DIST_DIR)/ tsconfig.tsbuildinfo $(DOCS_DIR)/api/
 
 # Tools. Override on the command line, e.g. `make benchmark NODE=node`.
 NPM ?= npm
 NODE ?= node
 HOST_OS := $(shell uname -s)
-BROWSER ?= $(if $(filter Darwin,$(HOST_OS)),open,xdg-open)
+FALLBACK_BROWSER := $(if $(filter Darwin,$(HOST_OS)),open -a "Google Chrome",xdg-open)
+BROWSER ?= $(FALLBACK_BROWSER)
+
+# An inherited BROWSER may be broken; macOS retries with Google Chrome rather than the system default.
+ifeq ($(BROWSER),$(FALLBACK_BROWSER))
+DOCS_OPEN = $(BROWSER) "$(DOCS_INDEX)"
+else
+DOCS_OPEN = $(BROWSER) "$(DOCS_INDEX)" || $(FALLBACK_BROWSER) "$(DOCS_INDEX)"
+endif
 
 # Audit scope; override with AUDIT_ARGS= to include development dependencies too.
 # Audits need network access, so `audit` is deliberately outside the verify gates.
@@ -51,7 +60,7 @@ _INFO    = [$(BLU)INFO$(D)]
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install install-dev build typecheck lint format format-check test test-parser test-semantic test-metadata test-configuration test-lsp test-features test-mini test-protocol test-soak smoke-clients smoke-clients-write smoke-vscode smoke-nvim validate-corpus validate-corpus-write generate-metadata benchmark benchmark-check benchmark-baseline benchmark-e2e benchmark-e2e-write benchmark-timing pack-check verify-package verify-consumer verify-release check verify verify-all ci check-static audit audit-client clean docs docs-open
+.PHONY: help install install-dev build typecheck lint format format-check test test-parser test-semantic test-metadata test-configuration test-lsp test-features test-mini test-protocol test-soak smoke-clients smoke-clients-write smoke-vscode smoke-nvim validate-corpus validate-corpus-write generate-metadata benchmark benchmark-check benchmark-baseline benchmark-e2e benchmark-e2e-write benchmark-timing pack-check verify-package verify-consumer verify-release check verify verify-all ci check-static audit audit-client clean docs docs-open docs-api docs-api-check
 
 #==============================================================================#
 #                                  RULES                                       #
@@ -233,7 +242,7 @@ verify-release:	## Verify release identity, immutable tag and matching publish/p
 
 ##@ Verification ✅
 
-check:	## Run typecheck, lint, format-check and test
+check:	## Run typecheck, lint, format-check, API docs check and test
 	@echo "$(YEL)Running correctness checks...$(D)"
 	@$(NPM) run check
 	@echo "$(YEL)* $(_SUCCESS) Correctness checks passed$(D)"
@@ -267,7 +276,7 @@ audit-client:	## Audit prototype client dependencies (network access)
 
 ##@ Utility Rules 🛠
 
-clean:	## Remove generated build output (dist/ and tsconfig.tsbuildinfo)
+clean:	## Remove generated output (dist/, tsconfig.tsbuildinfo and docs/api/)
 	@echo "$(YEL)Removing generated build output...$(D)"
 	$(RM) -r $(GENERATED)
 	@echo "$(YEL)* $(_SUCCESS) Generated build output removed$(D)"
@@ -278,9 +287,19 @@ docs:	## List the project documentation in docs/
 	@echo "$(YEL)Documentation in $(DOCS_DIR):$(D)"
 	@cd "$(DOCS_DIR)" && ls -1 *.md
 
-docs-open:	## Open the documentation roadmap in a browser (BROWSER overrides the viewer)
-	@$(BROWSER) "$(DOCS_DIR)/ROADMAP.md"
-	@echo "$(YEL)* $(_SUCCESS) Documentation viewer launched$(D)"
+docs-open: docs-api	## Generate and open the TypeDoc API reference in a browser (BROWSER overrides the viewer; falls back to Google Chrome on macOS)
+	@$(DOCS_OPEN)
+	@echo "$(YEL)* $(_SUCCESS) API documentation opened in browser$(D)"
+
+docs-api:	## Generate TypeDoc API reference into docs/api
+	@echo "$(YEL)Generating API documentation...$(D)"
+	@$(NPM) run docs:api
+	@echo "$(YEL)* $(_SUCCESS) API documentation generated$(D)"
+
+docs-api-check:	## Validate TypeDoc comments and links without emitting files
+	@echo "$(YEL)Checking API documentation...$(D)"
+	@$(NPM) run docs:api:check
+	@echo "$(YEL)* $(_SUCCESS) API documentation is valid$(D)"
 
 ##@ Help 󰛵
 

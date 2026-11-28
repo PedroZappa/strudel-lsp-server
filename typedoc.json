@@ -1,0 +1,13 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPointStrategy": "expand",
+  "entryPoints": ["src"],
+  "exclude": ["**/generated.ts"],
+  "excludeExternals": true,
+  "excludeInternal": true,
+  "excludePrivate": true,
+  "highlightLanguages": ["bash", "js", "json", "vim"],
+  "out": "docs/api",
+  "tsconfig": "tsconfig.json",
+  "treatWarningsAsErrors": true
+}

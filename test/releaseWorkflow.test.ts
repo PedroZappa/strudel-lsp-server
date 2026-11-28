@@ -11,6 +11,7 @@ const makefile = readFileSync(join(repositoryRoot, 'Makefile'), 'utf8');
 const changelog = readFileSync(join(repositoryRoot, 'CHANGELOG.md'), 'utf8');
 const readme = readFileSync(join(repositoryRoot, 'README.md'), 'utf8');
 const roadmap = readFileSync(join(repositoryRoot, 'docs', 'ROADMAP.md'), 'utf8');
+const roadmapArchive = readFileSync(join(repositoryRoot, 'docs', 'ROADMAP_ARCHIVE.md'), 'utf8');
 const decisions = readFileSync(join(repositoryRoot, 'docs', 'DECISIONS.md'), 'utf8');
 const testingStrategy = readFileSync(join(repositoryRoot, 'docs', 'TESTING_STRATEGY.md'), 'utf8');
 const performanceDoc = readFileSync(join(repositoryRoot, 'docs', 'PERFORMANCE.md'), 'utf8');
@@ -42,6 +43,34 @@ const currentReleaseNotes = readFileSync(
   join(repositoryRoot, '.github', `RELEASE_NOTES_v${packageJson.version}.md`),
   'utf8',
 );
+
+void test('active roadmap contains only post-v1 planning and links the completed-phase archive', () => {
+  assert.match(roadmap, /^# Roadmap$/m);
+  assert.match(roadmap, /^Status: `v1\.0\.0` is published/m);
+  assert.match(roadmap, /\[roadmap archive\]\(ROADMAP_ARCHIVE\.md\)/);
+  assert.match(roadmap, /^### Phase 28 — v1\.1 live-coding semantics/m);
+  assert.match(roadmap, /^### Phase 29 — v1\.x protocol efficiency/m);
+  assert.match(roadmap, /^### Phase 30 — v1\.x semantic depth and workspace navigation/m);
+  assert.match(roadmap, /^### Phase 31 — v1\.x compatibility and release engineering/m);
+  assert.doesNotMatch(roadmap, /^### Phase (?:[0-9]|1[0-9]|2[0-7]) —/m);
+  assert.doesNotMatch(roadmap, /^- \[x\]/m);
+  assert.match(roadmap, /workspace\/didChangeWorkspaceFolders/);
+  assert.match(roadmap, /signature-help `range`/);
+  assert.match(roadmap, /optional, rest and overloaded parameters/);
+  assert.match(roadmap, /bounded cross-file rename/);
+
+  assert.match(roadmapArchive, /^# Roadmap archive — completed phases through v1\.0\.0$/m);
+  for (let phase = 0; phase <= 27; phase += 1) {
+    assert.match(roadmapArchive, new RegExp(`^#{2,3} Phase ${phase} —`, 'm'));
+  }
+  assert.match(roadmapArchive, /^### Phase 27 — `v1\.0\.0` controlled release \(complete\)$/m);
+  assert.match(roadmapArchive, /Phase 27 published that exact commit/m);
+
+  const agents = readFileSync(join(repositoryRoot, 'AGENTS.md'), 'utf8');
+  for (const document of [agents, decisions, testingStrategy, featuresDoc, performanceDoc]) {
+    assert.match(document, /ROADMAP_ARCHIVE\.md/);
+  }
+});
 
 void test('release workflow publishes only from a tagged commit after approval', () => {
   assert.match(workflow, /^[ ]{2}push:\n[ ]{4}tags:\n[ ]{6}- 'v\*'$/m);
@@ -129,7 +158,7 @@ void test('release validation job mirrors the full CI gate', () => {
     /name: Audit all dependencies\n\s+continue-on-error: true\n\s+run: npm audit\n/,
   );
   assert.match(workflow, /timeout-minutes: 45/);
-  assert.match(roadmap, /^Phase 26 release workflow evidence:/m);
+  assert.match(roadmapArchive, /^Phase 26 release workflow evidence:/m);
   assert.match(testingStrategy, /^## Phase 26 release workflow gate alignment/m);
 });
 
@@ -224,7 +253,7 @@ void test('Phase 26 prepares candidate-only v1 changelog and release notes', () 
   assert.doesNotMatch(currentReleaseNotes, /codeLens|inlineValues/);
   assert.doesNotMatch(currentReleaseNotes, /138-file|86\/86/);
   assert.match(
-    roadmap,
+    roadmapArchive,
     /^- \[x\] Prepare versioned changelog and GitHub release notes from the exact candidate, without reusing/m,
   );
 });
@@ -256,7 +285,7 @@ void test('Phase 26 re-freezes v1 with all ADR-077 additions advertised', () => 
   assert.match(architectureDoc, /ADR-082 re-freezes the v1 contract/);
   assert.match(changelog, /ADR-077 v1 capabilities are advertised under ADR-082/);
   assert.match(
-    roadmap,
+    roadmapArchive,
     /^- \[x\] Every ADR-077 v1 addition is implemented, advertised and verified under ADR-082/m,
   );
 });
@@ -278,15 +307,15 @@ void test('Phase 26 exact v1 candidate audit records the local tag identity and 
   assert.match(section, /not part of the tagged tree/);
 
   assert.match(
-    roadmap,
+    roadmapArchive,
     /^- \[x\] The full candidate gate is green on the exact commit proposed for `v1\.0\.0`\. ADR-083 records 172\/172 at commit `447736d3`\.$/m,
   );
   assert.match(
-    roadmap,
+    roadmapArchive,
     /^- \[x\] The v1 tag contains ADR-062 verification and the final capability contract tests\.$/m,
   );
   assert.match(
-    roadmap,
+    roadmapArchive,
     /^- \[x\] Repeat dependency, licence, provenance and secret audits on the exact v1 candidate\. ADR-083/m,
   );
   assert.match(testingStrategy, /^## Phase 26 exact local `v1\.0\.0` candidate audit$/m);
@@ -314,13 +343,13 @@ void test('Phase 27 records exact publication authorization and completed public
     /does not itself push the tag, start the workflow, publish a package or create a GitHub release/,
   );
 
-  assert.match(roadmap, /^### Phase 27 — `v1\.0\.0` controlled release \(complete\)$/m);
+  assert.match(roadmapArchive, /^### Phase 27 — `v1\.0\.0` controlled release \(complete\)$/m);
   assert.match(
-    roadmap,
+    roadmapArchive,
     /^- \[x\] Obtain explicit authorization for exactly `1\.0\.0`, exactly `v1\.0\.0` and the named operator\. ADR-084 records/m,
   );
   assert.match(
-    roadmap,
+    roadmapArchive,
     /Phase 27 published that exact commit through the controlled OIDC workflow under ADR-084, with evidence in ADR-085/,
   );
   assert.match(
@@ -446,7 +475,7 @@ void test('Phase 19 publication evidence records the exact release and completed
   assert.match(evidence, /8ad0ac52f1443648c38b372532d0f2d5306e72d7/);
   assert.match(evidence, /SLSA v1/);
   assert.match(evidence, /No local publish, republish/);
-  assert.match(roadmap, /^### Phase 19 — `v0\.3\.0` controlled release \(complete\)$/m);
+  assert.match(roadmapArchive, /^### Phase 19 — `v0\.3\.0` controlled release \(complete\)$/m);
   assert.match(changelog, /Version `0\.3\.0` was published on 2026-11-27/);
   // The README is live documentation and must name the current registry release.
   assert.match(readme, /latest published version is `1\.0\.0`/);
@@ -464,7 +493,7 @@ void test('Phase 22 authorization records the exact version tag and operator', (
   assert.match(authorization, /controlled OIDC workflow/);
   assert.match(authorization, /RELEASE_NOTES_v0\.4\.0\.md/);
   assert.match(authorization, /does not permit a local publish/);
-  assert.match(roadmap, /^### Phase 22 — `v0\.4\.0` controlled release \(complete\)$/m);
+  assert.match(roadmapArchive, /^### Phase 22 — `v0\.4\.0` controlled release \(complete\)$/m);
 });
 
 void test('Phase 22 publication evidence records the exact release and completed phase', () => {
@@ -484,7 +513,7 @@ void test('Phase 22 publication evidence records the exact release and completed
   );
   assert.match(evidence, /SLSA v1/);
   assert.match(evidence, /No local publish, republish/);
-  assert.match(roadmap, /^### Phase 22 — `v0\.4\.0` controlled release \(complete\)$/m);
+  assert.match(roadmapArchive, /^### Phase 22 — `v0\.4\.0` controlled release \(complete\)$/m);
   assert.match(changelog, /Version `0\.4\.0` was published on 2026-11-27/);
 });
 
@@ -534,7 +563,7 @@ void test('Phase 25 records exact authorization and completed publication eviden
   assert.match(evidence, /`refs\/tags\/v0\.5\.0`/);
   assert.match(evidence, /Phase 25 is complete/);
 
-  assert.match(roadmap, /^### Phase 25 — `v0\.5\.0` controlled release \(complete\)$/m);
+  assert.match(roadmapArchive, /^### Phase 25 — `v0\.5\.0` controlled release \(complete\)$/m);
 });
 
 void test('Phase 17 records the package, support and SBOM readiness decisions', () => {
@@ -613,7 +642,7 @@ void test('Phase 26 confirms the package, support and performance policies', () 
     /name: Run advisory installed-binary JSON-RPC benchmark\n\s+continue-on-error: true\n\s+run: npm run benchmark:e2e/,
   );
   assert.match(
-    roadmap,
+    roadmapArchive,
     /^- \[x\] Confirm the package allowlist, SBOM decision, support guidance and performance policy are implemented and documented\. ADR-080 records/m,
   );
 });
@@ -642,12 +671,14 @@ void test('README support guidance collects safe reproduction evidence', () => {
 
 void test('Phase 17 completion and the historical release body are contractually preserved', () => {
   assert.match(
-    roadmap,
+    roadmapArchive,
     /^### Phase 17 — Documentation, packaging and support readiness \(complete, `v0\.3\.0`\)$/m,
   );
-  const start = roadmap.indexOf('### Phase 17 — Documentation, packaging and support readiness');
+  const start = roadmapArchive.indexOf(
+    '### Phase 17 — Documentation, packaging and support readiness',
+  );
   assert.notEqual(start, -1);
-  const phase = roadmap.slice(start, roadmap.indexOf('### Phase 18 —', start));
+  const phase = roadmapArchive.slice(start, roadmapArchive.indexOf('### Phase 18 —', start));
   assert.doesNotMatch(phase, /^- \[ \]/m);
   assert.match(phase, /ADR-064/);
 

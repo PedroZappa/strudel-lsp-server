@@ -75,6 +75,8 @@ The published `0.5.0` release also accepts `inlayHints.enabled` in the same sect
 
 ```bash
 npm run check
+npm run docs:api
+npm run docs:api:check
 npm run test:configuration
 npm run test:lsp
 npm run test:protocol
@@ -87,14 +89,14 @@ npm run verify:package
 npm run verify:consumer
 ```
 
-The Makefile provides the same workflows through `make check`, `make test-configuration`, `make test-lsp`, `make test-protocol`, `make test-soak`, `make benchmark-check`, `make benchmark-e2e`, `make smoke-clients`, `make pack-check`, `make verify-package`, `make verify-consumer` and `make verify-all`. `npm run verify:contents` previews and checks the tarball allowlist with an isolated npm cache. `npm run verify:package` uses the same isolated cache for packing, performs a clean offline installation from that tarball using the surrounding cache, and verifies the installed stdio executable with an initialize/shutdown handshake. `npm run verify:consumer` checks installation without inherited npm configuration or legacy peer dependencies. `npm run test:soak` exercises rapid edits and repeated initialize/shutdown cycles; RSS growth is reported as advisory test diagnostics rather than production telemetry. `npm run benchmark:e2e` measures one document-symbol request path through stdio JSON-RPC and the installed bin; its p50/p95/p99 are stored in the separate advisory `benchmarks/end-to-end.json` report, not in the layer-level baseline. `npm run smoke:clients` runs local VS Code and Neovim LSP clients against the built server; their configuration stays in `smoke/` and results are recorded in `validation/client-smoke.json`. These editor clients are local evidence only and are not dependencies of the published server.
+The Makefile provides the same workflows through `make check`, `make test-configuration`, `make test-lsp`, `make test-protocol`, `make test-soak`, `make benchmark-check`, `make benchmark-e2e`, `make smoke-clients`, `make pack-check`, `make verify-package`, `make verify-consumer`, `make verify-all`, `make docs-api` and `make docs-api-check`. `npm run verify:contents` previews and checks the tarball allowlist with an isolated npm cache. `npm run verify:package` uses the same isolated cache for packing, performs a clean offline installation from that tarball using the surrounding cache, and verifies the installed stdio executable with an initialize/shutdown handshake. `npm run verify:consumer` checks installation without inherited npm configuration or legacy peer dependencies. `npm run test:soak` exercises rapid edits and repeated initialize/shutdown cycles; RSS growth is reported as advisory test diagnostics rather than production telemetry. `npm run benchmark:e2e` measures one document-symbol request path through stdio JSON-RPC and the installed bin; its p50/p95/p99 are stored in the separate advisory `benchmarks/end-to-end.json` report, not in the layer-level baseline. `npm run smoke:clients` runs local VS Code and Neovim LSP clients against the built server; their configuration stays in `smoke/` and results are recorded in `validation/client-smoke.json`. These editor clients are local evidence only and are not dependencies of the published server. `npm run docs:api` generates a TypeDoc HTML reference in `docs/api`; `npm run docs:api:check` validates comments and links without writing files and is part of `npm run check`, `make check` and CI. The generated directory is gitignored so the hand-authored documents under `docs/` remain the source of truth.
 
 ## Repository layout
 
 ```text
 src/          Server source and feature providers
 test/         Parser, semantic, metadata, configuration, LSP filesystem, feature, mini-notation, protocol, soak and stdio suites
-docs/         Authoritative specifications and decisions
+docs/         Authoritative specifications, decisions and generated TypeDoc API reference under api/
 scripts/      Metadata generation, benchmarks and package verification
 benchmarks/   Synthetic fixtures, committed layer baseline and advisory installed-binary report
 validation/   Corpus and client-smoke evidence reports

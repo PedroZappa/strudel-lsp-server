@@ -38,7 +38,7 @@ interface CorpusReport {
 
 const packageJson = JSON.parse(readProjectFile('package.json')) as PackageManifest;
 const decisions = readProjectFile('docs', 'DECISIONS.md');
-const roadmap = readProjectFile('docs', 'ROADMAP.md');
+const roadmapArchive = readProjectFile('docs', 'ROADMAP_ARCHIVE.md');
 const readme = readProjectFile('README.md');
 const languageSpecification = readProjectFile('docs', 'LANGUAGE_SPECIFICATION.md');
 const parserIntegration = readProjectFile('docs', 'PARSER_INTEGRATION.md');
@@ -146,9 +146,9 @@ void test('Phase 20 records conservative semantic depth and additive signatures'
   assert.match(semanticEngine, /receiver of a known Pattern method/);
   assert.match(lspFeatures, /overload-capable curated signatures/);
 
-  const start = roadmap.indexOf('### Phase 20 — Semantic depth and reference resolution');
+  const start = roadmapArchive.indexOf('### Phase 20 — Semantic depth and reference resolution');
   assert.notEqual(start, -1);
-  const phase = roadmap.slice(start, roadmap.indexOf('### Phase 21 —', start));
+  const phase = roadmapArchive.slice(start, roadmapArchive.indexOf('### Phase 21 —', start));
   assert.match(
     phase,
     /^### Phase 20 — Semantic depth and reference resolution \(complete, unreleased\)$/m,
@@ -174,9 +174,9 @@ void test('Phase 21 records additive mini-notation AST coverage', () => {
   assert.equal(corpusReport.totals.miniNotationArguments, 364);
   assert.equal(corpusReport.totals.miniNotationAstNodes, 2034);
 
-  const start = roadmap.indexOf('### Phase 21 — Mini-notation recovery and structured AST');
+  const start = roadmapArchive.indexOf('### Phase 21 — Mini-notation recovery and structured AST');
   assert.notEqual(start, -1);
-  const phase = roadmap.slice(start, roadmap.indexOf('### Phase 22 —', start));
+  const phase = roadmapArchive.slice(start, roadmapArchive.indexOf('### Phase 22 —', start));
   assert.match(
     phase,
     /^### Phase 21 — Mini-notation recovery and structured AST \(complete, unreleased, `v0\.4\.0`\)$/m,
@@ -202,11 +202,11 @@ void test('Phase 18 support matrix matches compatibility CI', () => {
   );
   assert.match(adr, /remain best-effort until separately validated and accepted by a later ADR/);
 
-  const start = roadmap.indexOf(
+  const start = roadmapArchive.indexOf(
     '### Phase 18 — Parser, metadata and platform compatibility closure',
   );
   assert.notEqual(start, -1);
-  const phase = roadmap.slice(start, roadmap.indexOf('### Phase 19 —', start));
+  const phase = roadmapArchive.slice(start, roadmapArchive.indexOf('### Phase 19 —', start));
   assert.match(
     phase,
     /^### Phase 18 — Parser, metadata and platform compatibility closure \(complete, `v0\.3\.0`\)$/m,
@@ -236,9 +236,9 @@ void test('Phase 26 keeps consumer verification outside the compatibility matrix
     /No workflow, provider, capability, diagnostic code, generated metadata, dependency, version, tag, publication or registry state/,
   );
 
-  const start = roadmap.indexOf('### Phase 26 — v1 readiness freeze');
+  const start = roadmapArchive.indexOf('### Phase 26 — v1 readiness freeze');
   assert.notEqual(start, -1);
-  const phase = roadmap.slice(start, roadmap.indexOf('### Phase 27 —', start));
+  const phase = roadmapArchive.slice(start, roadmapArchive.indexOf('### Phase 27 —', start));
   assert.match(
     phase,
     /^- \[x\] Decide whether the compatibility matrix must run `verify:consumer` on every supported OS\/Node pair\./m,

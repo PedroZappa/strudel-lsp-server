@@ -30,7 +30,7 @@ Source: <https://registry.npmjs.org/@strudel/core>
 
 The long-term objective is comprehensive, useful Strudel IDE support. Candidate capabilities are diagnostics and quick fixes, completion and completion resolution, hover documentation, signature help, go to definition and references, rename, document and workspace symbols, semantic tokens, formatting, code actions and refactoring, folding and selection ranges, inlay hints, call hierarchy, and Strudel mini-notation understanding.
 
-Capabilities are selected by usefulness, correctness, dependency cost and maintenance cost. A feature is not implemented merely to increase the feature count. Status and priority belong in `docs/LSP_FEATURES.md` and `docs/ROADMAP.md`.
+Capabilities are selected by usefulness, correctness, dependency cost and maintenance cost. A feature is not implemented merely to increase the feature count. Status and priority belong in `docs/LSP_FEATURES.md` and `docs/ROADMAP.md`; completed phase evidence is preserved in `docs/ROADMAP_ARCHIVE.md`.
 
 ## Non-goals
 

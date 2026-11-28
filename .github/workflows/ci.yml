@@ -45,6 +45,9 @@ jobs:
       - name: Check formatting
         run: npm run format:check
 
+      - name: Check API documentation
+        run: npm run docs:api:check
+
       - name: Run full test suite
         run: npm test
 

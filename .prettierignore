@@ -8,3 +8,6 @@ README.md
 vsc-extension-quickstart.md
 package-lock.json
 *.tsbuildinfo
+
+# Generated TypeDoc API reference
+/docs/api/
